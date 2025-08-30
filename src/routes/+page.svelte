@@ -115,7 +115,6 @@
             />
           </svg>
           <p class="text-gray-400">Drag and drop spectrum files (.txt) here</p>
-          <p class="text-sm text-gray-500">or click to browse</p>
         </div>
       {/if}
     </div>
