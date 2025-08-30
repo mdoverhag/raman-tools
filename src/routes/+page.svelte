@@ -2,6 +2,7 @@
   import { listen } from "@tauri-apps/api/event";
   import { invoke } from "@tauri-apps/api/core";
   import { onMount } from "svelte";
+  import SpectrumChart from "$lib/SpectrumChart.svelte";
 
   interface Spectrum {
     filename: string;
@@ -14,6 +15,7 @@
   let spectra = $state<Spectrum[]>([]);
   let isLoading = $state(false);
   let error = $state<string | null>(null);
+  let selectedSpectrum = $state<Spectrum | null>(null);
 
   async function handleFileDrop(paths: string[]) {
     console.log("Processing files:", paths);
@@ -103,18 +105,34 @@
   {/if}
 
   {#if spectra.length > 0}
-    <div class="file-list">
-      <h2>Loaded Spectra ({spectra.length} files)</h2>
-      <ul>
-        {#each spectra as spectrum}
-          <li>
-            <button class="file-item">
-              {spectrum.filename}
-              <span class="data-points">({spectrum.wavenumbers.length} points)</span>
-            </button>
-          </li>
-        {/each}
-      </ul>
+    <div class="content-container">
+      <div class="file-list">
+        <h2>Loaded Spectra ({spectra.length} files)</h2>
+        <ul>
+          {#each spectra as spectrum}
+            <li>
+              <button
+                class="file-item"
+                class:selected={selectedSpectrum === spectrum}
+                onclick={() => (selectedSpectrum = spectrum)}
+              >
+                {spectrum.filename}
+                <span class="data-points">({spectrum.wavenumbers.length} points)</span>
+              </button>
+            </li>
+          {/each}
+        </ul>
+      </div>
+
+      {#if selectedSpectrum}
+        <div class="chart-section">
+          <SpectrumChart
+            wavenumbers={selectedSpectrum.wavenumbers}
+            intensities={selectedSpectrum.intensities}
+            title={selectedSpectrum.filename}
+          />
+        </div>
+      {/if}
     </div>
   {/if}
 </main>
@@ -173,13 +191,25 @@
     margin: 0;
   }
 
-  .file-list {
+  .content-container {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 2rem;
     margin-top: 2rem;
+  }
+
+  .file-list {
+    max-height: 600px;
+    overflow-y: auto;
   }
 
   .file-list h2 {
     color: #333;
     margin-bottom: 1rem;
+    position: sticky;
+    top: 0;
+    background: white;
+    padding: 0.5rem 0;
   }
 
   .file-list ul {
@@ -210,9 +240,28 @@
     border-color: #4a90e2;
   }
 
+  .file-item.selected {
+    background: #e8f2ff;
+    border-color: #4a90e2;
+    font-weight: 500;
+  }
+
   .data-points {
     color: #666;
     font-size: 0.9rem;
     margin-left: 0.5rem;
+  }
+
+  .chart-section {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 1rem;
+  }
+
+  @media (max-width: 768px) {
+    .content-container {
+      grid-template-columns: 1fr;
+    }
   }
 </style>
