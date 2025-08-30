@@ -45,6 +45,12 @@ pub fn parse_files(filepaths: Vec<String>) -> Result<Vec<Spectrum>, String> {
                 wavenumbers,
                 intensities,
             });
+        } else {
+            // Log files that couldn't be parsed
+            eprintln!(
+                "Warning: File {} contained no valid spectrum data",
+                filename
+            );
         }
     }
 

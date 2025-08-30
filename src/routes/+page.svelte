@@ -1,19 +1,66 @@
 <script lang="ts">
   import { listen } from "@tauri-apps/api/event";
+  import { invoke } from "@tauri-apps/api/core";
   import { onMount } from "svelte";
 
+  interface Spectrum {
+    filename: string;
+    filepath: string;
+    wavenumbers: number[];
+    intensities: number[];
+  }
+
   let isDragging = $state(false);
+  let spectra = $state<Spectrum[]>([]);
+  let isLoading = $state(false);
+  let error = $state<string | null>(null);
+
+  async function handleFileDrop(paths: string[]) {
+    console.log("Processing files:", paths);
+    isLoading = true;
+    error = null;
+
+    try {
+      // Filter for .txt files only
+      const txtFiles = paths.filter((path) => path.toLowerCase().endsWith(".txt"));
+
+      if (txtFiles.length === 0) {
+        error = "No .txt files found in dropped files";
+        return;
+      }
+
+      // Call Rust command to parse the files
+      const parsedSpectra = await invoke<Spectrum[]>("parse_spectrum_files", {
+        filepaths: txtFiles,
+      });
+
+      console.log("Parsed spectra:", parsedSpectra);
+
+      // Check if some files were skipped
+      const skippedCount = txtFiles.length - parsedSpectra.length;
+      if (skippedCount > 0) {
+        error = `Warning: ${skippedCount} file(s) contained no valid spectrum data`;
+      }
+
+      if (parsedSpectra.length === 0) {
+        error = "No valid spectrum data found in any of the files";
+      } else {
+        spectra = parsedSpectra;
+      }
+    } catch (e) {
+      console.error("Error parsing files:", e);
+      error = e instanceof Error ? e.message : String(e);
+    } finally {
+      isLoading = false;
+    }
+  }
 
   onMount(() => {
     // Listen for file drop events from Tauri v2
     const unlisten = listen<{ paths: string[] }>("tauri://drag-drop", (event) => {
       isDragging = false;
-      console.log("Files dropped:", event.payload);
-      // event.payload.paths is an array of file paths
       if (event.payload?.paths) {
-        event.payload.paths.forEach((path) => {
-          console.log("File path:", path);
-        });
+        handleFileDrop(event.payload.paths);
       }
     });
 
@@ -40,14 +87,36 @@
   <h1>Raman Spectrum Viewer</h1>
 
   <div class="drop-zone" class:dragging={isDragging}>
-    <p>
-      {#if isDragging}
-        Drop files here...
-      {:else}
-        Drag and drop spectrum files (.txt) here
-      {/if}
-    </p>
+    {#if isLoading}
+      <p>Processing files...</p>
+    {:else if isDragging}
+      <p>Drop files here...</p>
+    {:else}
+      <p>Drag and drop spectrum files (.txt) here</p>
+    {/if}
   </div>
+
+  {#if error}
+    <div class="error">
+      <p>Error: {error}</p>
+    </div>
+  {/if}
+
+  {#if spectra.length > 0}
+    <div class="file-list">
+      <h2>Loaded Spectra ({spectra.length} files)</h2>
+      <ul>
+        {#each spectra as spectrum}
+          <li>
+            <button class="file-item">
+              {spectrum.filename}
+              <span class="data-points">({spectrum.wavenumbers.length} points)</span>
+            </button>
+          </li>
+        {/each}
+      </ul>
+    </div>
+  {/if}
 </main>
 
 <style>
@@ -89,5 +158,61 @@
   .drop-zone.dragging p {
     color: #4a90e2;
     font-weight: 500;
+  }
+
+  .error {
+    background-color: #fee;
+    border: 1px solid #fcc;
+    border-radius: 4px;
+    padding: 1rem;
+    margin: 1rem 0;
+  }
+
+  .error p {
+    color: #c00;
+    margin: 0;
+  }
+
+  .file-list {
+    margin-top: 2rem;
+  }
+
+  .file-list h2 {
+    color: #333;
+    margin-bottom: 1rem;
+  }
+
+  .file-list ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .file-list li {
+    margin-bottom: 0.5rem;
+  }
+
+  .file-item {
+    width: 100%;
+    text-align: left;
+    padding: 0.75rem 1rem;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 1rem;
+    font-family: inherit;
+  }
+
+  .file-item:hover {
+    background: #f5f5f5;
+    border-color: #4a90e2;
+  }
+
+  .data-points {
+    color: #666;
+    font-size: 0.9rem;
+    margin-left: 0.5rem;
   }
 </style>

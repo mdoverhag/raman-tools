@@ -28,6 +28,7 @@ Raman Tools is a cross-platform desktop application for analyzing Raman spectros
 ## Code Formatting
 
 **IMPORTANT**: After making code changes, always run:
+
 1. `bun run format` - Formats JavaScript/TypeScript/Svelte files
 2. `cd src-tauri && cargo fmt` - Formats Rust files
 
