@@ -128,6 +128,7 @@ These commands ensure consistent code style across the project.
 - Scientists expect desktop application behavior (file dialogs, drag-and-drop)
 - Need responsive charts for large datasets
 - Batch operations for processing multiple samples
+- **Tailwind UI Plus Available**: User has access to Tailwind UI Plus components. Ask for specific components when needed for better UI patterns (e.g., "Could you provide the Tailwind UI component for [specific pattern]?")
 
 ### Platform-Specific
 

@@ -56,32 +56,72 @@
       .y((d) => yScale(d.intensity));
 
     // Add X axis
-    g.append("g")
+    const xAxis = g
+      .append("g")
       .attr("transform", `translate(0,${height})`)
-      .call(d3.axisBottom(xScale))
+      .call(d3.axisBottom(xScale));
+
+    xAxis.selectAll("text").style("fill", "#9ca3af");
+    xAxis.selectAll("line").style("stroke", "#4b5563");
+    xAxis.select(".domain").style("stroke", "#4b5563");
+
+    xAxis
       .append("text")
       .attr("x", width / 2)
       .attr("y", 40)
-      .attr("fill", "black")
+      .attr("fill", "#9ca3af")
       .style("text-anchor", "middle")
       .text("Wavenumber (cm⁻¹)");
 
     // Add Y axis
-    g.append("g")
-      .call(d3.axisLeft(yScale))
+    const yAxis = g.append("g").call(d3.axisLeft(yScale));
+
+    yAxis.selectAll("text").style("fill", "#9ca3af");
+    yAxis.selectAll("line").style("stroke", "#4b5563");
+    yAxis.select(".domain").style("stroke", "#4b5563");
+
+    yAxis
       .append("text")
       .attr("transform", "rotate(-90)")
       .attr("y", -50)
       .attr("x", -height / 2)
-      .attr("fill", "black")
+      .attr("fill", "#9ca3af")
       .style("text-anchor", "middle")
       .text("Intensity");
+
+    // Add grid lines
+    g.append("g")
+      .attr("class", "grid")
+      .attr("transform", `translate(0,${height})`)
+      .call(
+        d3
+          .axisBottom(xScale)
+          .tickSize(-height)
+          .tickFormat(() => "")
+      )
+      .style("stroke-dasharray", "3,3")
+      .style("opacity", 0.3)
+      .selectAll("line")
+      .style("stroke", "#374151");
+
+    g.append("g")
+      .attr("class", "grid")
+      .call(
+        d3
+          .axisLeft(yScale)
+          .tickSize(-width)
+          .tickFormat(() => "")
+      )
+      .style("stroke-dasharray", "3,3")
+      .style("opacity", 0.3)
+      .selectAll("line")
+      .style("stroke", "#374151");
 
     // Add the line
     g.append("path")
       .datum(data)
       .attr("fill", "none")
-      .attr("stroke", "#4a90e2")
+      .attr("stroke", "#60a5fa")
       .attr("stroke-width", 1.5)
       .attr("d", line);
 
@@ -93,6 +133,7 @@
       .attr("text-anchor", "middle")
       .style("font-size", "16px")
       .style("font-weight", "bold")
+      .style("fill", "#e5e7eb")
       .text(title);
   }
 
