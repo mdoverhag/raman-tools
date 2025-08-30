@@ -15,6 +15,7 @@ Raman Tools is a cross-platform desktop application for analyzing Raman spectros
 - `bun run preview` - Preview the production build
 - `bun run check` - Run svelte-kit sync and type checking
 - `bun run check:watch` - Run type checking in watch mode
+- `bun run format` - Format all JS/TS/Svelte files with Prettier
 
 ### Tauri Development
 
@@ -22,6 +23,15 @@ Raman Tools is a cross-platform desktop application for analyzing Raman spectros
 - `bun run tauri build` - Build the Tauri app for production
 - `cargo build` - Build the Rust backend only (run in src-tauri directory)
 - `cargo test` - Run Rust tests (run in src-tauri directory)
+- `cargo fmt` - Format Rust code (run in src-tauri directory)
+
+## Code Formatting
+
+**IMPORTANT**: After making code changes, always run:
+1. `bun run format` - Formats JavaScript/TypeScript/Svelte files
+2. `cd src-tauri && cargo fmt` - Formats Rust files
+
+These commands ensure consistent code style across the project.
 
 ## Architecture
 
