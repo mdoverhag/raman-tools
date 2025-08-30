@@ -1,0 +1,25 @@
+# Dependencies
+node_modules
+bun.lockb
+
+# Build outputs
+build
+dist
+.svelte-kit
+
+# Rust/Tauri
+src-tauri/target
+src-tauri/gen
+src-tauri/Cargo.lock
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode
+.idea
+
+# Other
+*.min.js
+*.min.css
