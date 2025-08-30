@@ -1,1 +1,15 @@
+/* Import Inter font locally */
+@import "@fontsource-variable/inter";
+
 @import "tailwindcss";
+
+/* Ensure proper font rendering and apply Inter */
+:root {
+  font-family: 'Inter Variable', Inter, system-ui, -apple-system, sans-serif;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: inherit;
+}
