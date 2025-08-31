@@ -149,10 +149,28 @@ To create a new release:
 - **Windows**: x86_64-pc-windows-msvc (creates .msi installer)
 - **macOS**: aarch64-apple-darwin (creates .dmg for Apple Silicon)
 
-Note: macOS builds are currently unsigned. Future work includes:
+### Code Signing
 
-- Code signing with Apple Developer ID certificate
-- Notarization for distribution without security warnings
+#### macOS (Implemented)
+
+- **Signing**: All builds are signed with Apple Developer ID certificate
+- **Notarization**: Release builds (version tags) are notarized by Apple
+- **Required Secrets**:
+  - `MACOS_CERTIFICATE`: Base64-encoded .p12 certificate
+  - `MACOS_CERTIFICATE_PWD`: Certificate password
+  - `APPLE_SIGNING_ID`: Full signing identity string
+  - `APPLE_TEAM_ID`: Team ID (e.g., 3C3KW7PU5V)
+  - `APPLE_ID`: Apple ID email (for notarization)
+  - `APPLE_APP_PASSWORD`: App-specific password (for notarization)
+
+#### Windows (Not Implemented)
+
+- Currently unsigned due to certificate costs ($200-600/year)
+- Users will see SmartScreen warning and need to click "Run anyway"
+- Future options:
+  - **Azure Trusted Signing**: Currently restricted to US/Canada orgs with 3+ year history. Individual developer access is paused. Check [Azure Trusted Signing updates](https://azure.microsoft.com/en-us/products/trusted-signing) and the [Tech Community blog](https://techcommunity.microsoft.com/t5/microsoft-security-blog/bg-p/Microsoft-Security-Blog) for when individual access reopens
+  - **SignPath.io**: Free for open source projects
+  - **Traditional certificates**: $200-600/year from DigiCert, Sectigo, etc.
 
 ## Technical Considerations
 

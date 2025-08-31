@@ -64,7 +64,9 @@ Download the latest release from the [GitHub Releases](https://github.com/yourus
 
 The installer is built automatically by GitHub Actions from public source code.
 
-**macOS**: The app is currently unsigned. You may need to right-click and select "Open" or go to System Settings > Privacy & Security to allow the app to run.
+> **Note**: Microsoft's [Azure Trusted Signing](https://azure.microsoft.com/en-us/products/trusted-signing) service may offer affordable signing for individual developers in the future. Currently restricted to organizations with 3+ year history.
+
+**macOS**: The app is signed with an Apple Developer ID certificate and notarized by Apple. It will open without any security warnings.
 
 ## Development
 
