@@ -55,7 +55,16 @@ Download the latest release from the [GitHub Releases](https://github.com/yourus
 - **Windows**: `Raman Tools_[version]_x64_en-US.msi` - MSI installer for Windows x86_64
 - **macOS**: `Raman Tools_[version]_aarch64.dmg` - DMG installer for Apple Silicon Macs
 
-> Note: The macOS app is currently unsigned. You may need to right-click and select "Open" or go to System Settings > Privacy & Security to allow the app to run.
+#### Installation Notes
+
+**Windows**: The installer is not code signed (certificates cost $200-600/year). Windows Defender SmartScreen will show a warning. To install:
+
+1. Click "More info" on the SmartScreen warning
+2. Click "Run anyway"
+
+The installer is built automatically by GitHub Actions from public source code.
+
+**macOS**: The app is currently unsigned. You may need to right-click and select "Open" or go to System Settings > Privacy & Security to allow the app to run.
 
 ## Development
 
