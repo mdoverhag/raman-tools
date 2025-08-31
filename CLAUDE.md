@@ -123,8 +123,10 @@ The project has automated CI/CD configured in `.github/workflows/build.yml`:
    - Runs Rust linter (`cargo clippy`)
 
 2. **Build Job**: Runs after tests pass
+   - Uses `tauri-apps/tauri-action` for consistent builds
    - Builds Windows MSI installer (x86_64)
-   - Builds macOS DMG installer (Apple Silicon/aarch64)
+   - Builds macOS DMG installer (Apple Silicon/aarch64) with styled installer window
+   - Handles code signing automatically via environment variables
    - Uploads artifacts to GitHub Actions
 
 3. **Release Job**: Only runs on version tags (v\*)

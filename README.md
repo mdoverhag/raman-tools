@@ -106,7 +106,7 @@ bun run tauri build --target aarch64-apple-darwin    # macOS Apple Silicon
 The project uses GitHub Actions for continuous integration and deployment:
 
 - **Tests**: Run on every PR and push to master (TypeScript checks, Rust tests, formatting)
-- **Builds**: Create installers for Windows and macOS on every push
+- **Builds**: Create installers for Windows and macOS on every push using `tauri-action`
 - **Releases**: Automatically create GitHub releases with installers when pushing version tags
 
 To create a new release:
