@@ -90,14 +90,14 @@ jobs:
         if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: raman-tools-${{ matrix.name }}
+          name: raman-tools-${{ matrix.name }}-${{ github.run_id }}
           path: src-tauri/target/${{ matrix.target }}/release/bundle/msi/*.msi
 
       - name: Upload artifacts (macOS)
         if: matrix.os == 'macos-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: raman-tools-${{ matrix.name }}
+          name: raman-tools-${{ matrix.name }}-${{ github.run_id }}
           path: src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
 
   release:
@@ -114,6 +114,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts
+          pattern: raman-tools-*-${{ github.run_id }}
+          merge-multiple: true
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
