@@ -29,7 +29,7 @@ Raman Tools is a cross-platform desktop application for analyzing Raman spectros
 
 **IMPORTANT**: After making code changes, always run:
 
-1. `bun run format` - Formats JavaScript/TypeScript/Svelte files
+1. `bun run format` - Formats JavaScript/TypeScript/Svelte files (also formats YAML files)
 2. `cd src-tauri && cargo fmt` - Formats Rust files
 
 These commands ensure consistent code style across the project.
@@ -108,6 +108,51 @@ These commands ensure consistent code style across the project.
 - Statistical analysis of replicate measurements
 - Integration with scientific Python libraries (via Tauri commands)
 - Report generation and data export
+
+## CI/CD and Releases
+
+### GitHub Actions Workflow
+
+The project has automated CI/CD configured in `.github/workflows/build.yml`:
+
+1. **Test Job**: Runs on all PRs and pushes to master
+   - Installs Linux dependencies (libgtk-3-dev, libwebkit2gtk-4.1-dev, etc.)
+   - Runs TypeScript type checking (`bun run check`)
+   - Runs Rust tests (`cargo test`)
+   - Checks Rust formatting (`cargo fmt --check`)
+   - Runs Rust linter (`cargo clippy`)
+
+2. **Build Job**: Runs after tests pass
+   - Builds Windows MSI installer (x86_64)
+   - Builds macOS DMG installer (Apple Silicon/aarch64)
+   - Uploads artifacts to GitHub Actions
+
+3. **Release Job**: Only runs on version tags (v\*)
+   - Downloads build artifacts
+   - Creates GitHub release with installers attached
+
+### Creating a Release
+
+To create a new release:
+
+1. Update version in `src-tauri/tauri.conf.json`
+2. Commit changes
+3. Create and push a version tag:
+   ```bash
+   git tag v0.1.0
+   git push origin v0.1.0
+   ```
+4. GitHub Actions will automatically build and create a release
+
+### Build Targets
+
+- **Windows**: x86_64-pc-windows-msvc (creates .msi installer)
+- **macOS**: aarch64-apple-darwin (creates .dmg for Apple Silicon)
+
+Note: macOS builds are currently unsigned. Future work includes:
+
+- Code signing with Apple Developer ID certificate
+- Notarization for distribution without security warnings
 
 ## Technical Considerations
 

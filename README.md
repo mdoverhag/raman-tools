@@ -48,7 +48,14 @@ This tool supports PhD research focused on:
 
 ## Installation
 
-_Coming soon - binary releases for Windows and macOS_
+### Download Pre-built Binaries
+
+Download the latest release from the [GitHub Releases](https://github.com/yourusername/raman-tools/releases) page:
+
+- **Windows**: `Raman Tools_[version]_x64_en-US.msi` - MSI installer for Windows x86_64
+- **macOS**: `Raman Tools_[version]_aarch64.dmg` - DMG installer for Apple Silicon Macs
+
+> Note: The macOS app is currently unsigned. You may need to right-click and select "Open" or go to System Settings > Privacy & Security to allow the app to run.
 
 ## Development
 
@@ -77,6 +84,25 @@ bun run tauri dev
 ```bash
 # Build for production
 bun run tauri build
+
+# Build for specific target
+bun run tauri build --target x86_64-pc-windows-msvc  # Windows
+bun run tauri build --target aarch64-apple-darwin    # macOS Apple Silicon
+```
+
+### CI/CD
+
+The project uses GitHub Actions for continuous integration and deployment:
+
+- **Tests**: Run on every PR and push to master (TypeScript checks, Rust tests, formatting)
+- **Builds**: Create installers for Windows and macOS on every push
+- **Releases**: Automatically create GitHub releases with installers when pushing version tags
+
+To create a new release:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
 ```
 
 ## Data Format
