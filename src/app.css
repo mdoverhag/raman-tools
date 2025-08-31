@@ -1,6 +1,3 @@
-/* Import Inter font locally */
-@import "@fontsource-variable/inter";
-
 @import "tailwindcss";
 
 /* Ensure proper font rendering and apply Inter */
