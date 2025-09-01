@@ -170,7 +170,12 @@
     }
 
     // Add legend
-    const legendData: Array<{ label: string; color: string; dasharray: string | null; opacity: number }> = [
+    const legendData: Array<{
+      label: string;
+      color: string;
+      dasharray: string | null;
+      opacity: number;
+    }> = [
       { label: "Original", color: "#60a5fa", dasharray: null, opacity: correctedData ? 0.5 : 1 },
     ];
     if (baselineData) {
