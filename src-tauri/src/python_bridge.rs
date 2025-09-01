@@ -13,11 +13,11 @@
 //! ## Architecture:
 //! - Python runtime is bundled with the app (no user installation required)
 //! - Communication via JSON through subprocess stdin/stdout
-//! - Platform-specific Python paths for Windows and macOS (Linux not currently supported)
+//! - Platform-specific Python paths for Windows, macOS, and Linux
 
 use serde::{Deserialize, Serialize};
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use tauri::{AppHandle, Manager};
 
@@ -50,58 +50,68 @@ pub enum PythonResult {
     Error { error: String, r#type: String },
 }
 
+/// Get the platform-specific directory name
+fn get_platform_dir() -> Result<&'static str, String> {
+    if cfg!(target_os = "macos") {
+        Ok("macos")
+    } else if cfg!(target_os = "windows") {
+        Ok("windows")
+    } else if cfg!(target_os = "linux") {
+        Ok("linux")
+    } else {
+        Err("Unsupported platform".to_string())
+    }
+}
+
+/// Get the Python executable name for the current platform
+fn get_python_executable_name() -> &'static str {
+    if cfg!(target_os = "windows") {
+        "python.exe"
+    } else {
+        "python"
+    }
+}
+
+/// Get the Python executable path within a virtual environment
+fn get_python_executable_path(venv_dir: &Path) -> PathBuf {
+    if cfg!(target_os = "windows") {
+        venv_dir.join("Scripts").join(get_python_executable_name())
+    } else {
+        venv_dir.join("bin").join(get_python_executable_name())
+    }
+}
+
+/// Get the Python directory path for the current platform
+fn get_python_dir(base_dir: &Path) -> Result<PathBuf, String> {
+    let platform = get_platform_dir()?;
+    Ok(base_dir.join("python").join(platform))
+}
+
 /// Get the path to the bundled Python executable
 ///
 /// This function locates the Python runtime that was bundled with the application
 /// during the build process. The location varies by platform:
-/// - macOS: Resources/python/macos/python
+/// - macOS: Resources/python/macos/bin/python
 /// - Windows: Resources/python/windows/Scripts/python.exe
-/// - Linux: Not currently supported
+/// - Linux: Resources/python/linux/bin/python
 ///
-/// In development mode, it falls back to the development bundle location (macOS only)
+/// In development mode, it falls back to the development bundle location
 fn get_python_path(app: &AppHandle) -> Result<PathBuf, String> {
     let resource_dir = app
         .path()
         .resource_dir()
         .map_err(|e| format!("Failed to get resource directory: {}", e))?;
 
-    // Platform-specific Python location
-    let python_path = if cfg!(target_os = "macos") {
-        resource_dir
-            .join("python")
-            .join("macos")
-            .join("bin")
-            .join("python")
-    } else if cfg!(target_os = "windows") {
-        resource_dir
-            .join("python")
-            .join("windows")
-            .join("Scripts")
-            .join("python.exe")
-    } else {
-        return Err("Unsupported platform".to_string());
-    };
+    // Get Python directory and executable path
+    let python_venv_dir = get_python_dir(&resource_dir)?;
+    let python_path = get_python_executable_path(&python_venv_dir);
 
     if !python_path.exists() {
         // Development fallback
         if cfg!(debug_assertions) {
-            let dev_python = if cfg!(target_os = "macos") {
-                PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                    .join("resources")
-                    .join("python")
-                    .join("macos")
-                    .join("bin")
-                    .join("python")
-            } else if cfg!(target_os = "windows") {
-                PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                    .join("resources")
-                    .join("python")
-                    .join("windows")
-                    .join("Scripts")
-                    .join("python.exe")
-            } else {
-                return Err("Unsupported platform in development".to_string());
-            };
+            let dev_base = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("resources");
+            let dev_venv_dir = get_python_dir(&dev_base)?;
+            let dev_python = get_python_executable_path(&dev_venv_dir);
 
             if dev_python.exists() {
                 return Ok(dev_python);
@@ -134,37 +144,17 @@ fn get_script_path(app: &AppHandle) -> Result<PathBuf, String> {
         .resource_dir()
         .map_err(|e| format!("Failed to get resource directory: {}", e))?;
 
-    // Platform-specific script location
-    let script_path = if cfg!(target_os = "macos") {
-        resource_dir
-            .join("python")
-            .join("macos")
-            .join("baseline_correction.py")
-    } else if cfg!(target_os = "windows") {
-        resource_dir
-            .join("python")
-            .join("windows")
-            .join("baseline_correction.py")
-    } else {
-        return Err("Unsupported platform".to_string());
-    };
+    // Get Python directory and script path
+    let python_dir = get_python_dir(&resource_dir)?;
+    let script_path = python_dir.join("baseline_correction.py");
 
     // Development fallback
     if !script_path.exists() && cfg!(debug_assertions) {
         // Try the bundled location first
-        let platform_dir = if cfg!(target_os = "macos") {
-            "macos"
-        } else if cfg!(target_os = "windows") {
-            "windows"
-        } else {
-            return Err("Unsupported platform in development".to_string());
-        };
+        let dev_base = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("resources");
+        let dev_python_dir = get_python_dir(&dev_base)?;
+        let bundled_path = dev_python_dir.join("baseline_correction.py");
 
-        let bundled_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("resources")
-            .join("python")
-            .join(platform_dir)
-            .join("baseline_correction.py");
         if bundled_path.exists() {
             return Ok(bundled_path);
         }

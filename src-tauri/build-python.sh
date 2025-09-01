@@ -1,13 +1,27 @@
 #!/bin/bash
 set -e
 
-# Build Python bundle for macOS
+# Build Python bundle for macOS and Linux
 # This script creates a self-contained Python environment with baseline correction dependencies
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BUNDLE_DIR="$SCRIPT_DIR/resources/python/macos"
 
-echo "Building Python bundle for macOS..."
+# Determine platform
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    PLATFORM="macos"
+    PYTHON_BIN="bin/python"
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    PLATFORM="linux"
+    PYTHON_BIN="bin/python"
+else
+    echo "❌ Error: Unsupported platform: $OSTYPE"
+    echo "This script only supports macOS and Linux"
+    exit 1
+fi
+
+BUNDLE_DIR="$SCRIPT_DIR/resources/python/$PLATFORM"
+
+echo "Building Python bundle for $PLATFORM..."
 
 # Check if uv is installed
 if ! command -v uv &> /dev/null; then
@@ -16,16 +30,11 @@ if ! command -v uv &> /dev/null; then
     echo "Please install uv first:"
     echo "  curl -LsSf https://astral.sh/uv/install.sh | sh"
     echo ""
-    echo "Or via Homebrew:"
-    echo "  brew install uv"
-    echo ""
-    exit 1
-fi
-
-# Check if we're on macOS
-if [[ "$OSTYPE" != "darwin"* ]]; then
-    echo "❌ Error: This script only supports macOS"
-    echo "For other platforms, platform-specific build scripts are needed"
+    if [[ "$PLATFORM" == "macos" ]]; then
+        echo "Or via Homebrew:"
+        echo "  brew install uv"
+        echo ""
+    fi
     exit 1
 fi
 
@@ -50,12 +59,12 @@ cp "$SCRIPT_DIR/python/baseline_correction.py" "$BUNDLE_DIR/baseline_correction.
 
 # Verify the installation
 echo "Verifying installation..."
-"$BUNDLE_DIR/bin/python" -c "import numpy, scipy; print('✅ numpy version:', numpy.__version__); print('✅ scipy version:', scipy.__version__)"
+"$BUNDLE_DIR/$PYTHON_BIN" -c "import numpy, scipy; print('✅ numpy version:', numpy.__version__); print('✅ scipy version:', scipy.__version__)"
 
 # Test the baseline correction script
 echo "Testing baseline correction..."
 echo '{"spectrum": [1,2,3,4,5,4,3,2,1], "lambda_param": 1e7, "p": 0.01, "d": 2}' \
-    | "$BUNDLE_DIR/bin/python" "$BUNDLE_DIR/baseline_correction.py" > /dev/null
+    | "$BUNDLE_DIR/$PYTHON_BIN" "$BUNDLE_DIR/baseline_correction.py" > /dev/null
 
 if [ $? -eq 0 ]; then
     echo "✅ Baseline correction test passed"
@@ -67,6 +76,6 @@ fi
 echo ""
 echo "✅ Python bundle built successfully!"
 echo "   Location: $BUNDLE_DIR"
-echo "   Python: $("$BUNDLE_DIR/bin/python" --version)"
+echo "   Python: $("$BUNDLE_DIR/$PYTHON_BIN" --version)"
 echo ""
 echo "You can now run: bun run tauri dev"
