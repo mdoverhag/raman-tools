@@ -28,53 +28,58 @@
   let progress = $state<Progress | null>(null);
   let error = $state<string | null>(null);
 
-  onMount(async () => {
-    // Check what needs to be installed
-    const uvStatus = await invoke<UvStatus>("check_uv_status");
-    const pythonStatus = await invoke<PythonStatus>("check_python_status");
+  onMount(() => {
+    let unlistenUv: (() => void) | null = null;
+    let unlistenPython: (() => void) | null = null;
 
-    if (!uvStatus.installed) {
-      showModal = true;
-      currentStep = "uv";
-    } else if (
-      !pythonStatus.installed ||
-      !pythonStatus.numpy_version ||
-      !pythonStatus.scipy_version
-    ) {
-      showModal = true;
-      currentStep = "python";
-    }
+    // Check what needs to be installed and set up listeners
+    (async () => {
+      const uvStatus = await invoke<UvStatus>("check_uv_status");
+      const pythonStatus = await invoke<PythonStatus>("check_python_status");
 
-    // Listen for progress events
-    const unlistenUv = await listen<Progress>("uv-download-progress", (event) => {
-      progress = event.payload;
-
-      if (event.payload.stage === "complete") {
-        // uv installed, move to Python setup
-        setTimeout(() => {
-          currentStep = "python";
-          progress = null;
-          startPythonSetup();
-        }, 1000);
+      if (!uvStatus.installed) {
+        showModal = true;
+        currentStep = "uv";
+      } else if (
+        !pythonStatus.installed ||
+        !pythonStatus.numpy_version ||
+        !pythonStatus.scipy_version
+      ) {
+        showModal = true;
+        currentStep = "python";
       }
-    });
 
-    const unlistenPython = await listen<Progress>("python-setup-progress", (event) => {
-      progress = event.payload;
+      // Listen for progress events
+      unlistenUv = await listen<Progress>("uv-download-progress", (event) => {
+        progress = event.payload;
 
-      if (event.payload.stage === "complete") {
-        // Everything complete
-        setTimeout(() => {
-          showModal = false;
-          currentStep = "complete";
-          progress = null;
-        }, 1500);
-      }
-    });
+        if (event.payload.stage === "complete") {
+          // uv installed, move to Python setup
+          setTimeout(() => {
+            currentStep = "python";
+            progress = null;
+            startPythonSetup();
+          }, 1000);
+        }
+      });
+
+      unlistenPython = await listen<Progress>("python-setup-progress", (event) => {
+        progress = event.payload;
+
+        if (event.payload.stage === "complete") {
+          // Everything complete
+          setTimeout(() => {
+            showModal = false;
+            currentStep = "complete";
+            progress = null;
+          }, 1500);
+        }
+      });
+    })();
 
     return () => {
-      unlistenUv();
-      unlistenPython();
+      if (unlistenUv) unlistenUv();
+      if (unlistenPython) unlistenPython();
     };
   });
 

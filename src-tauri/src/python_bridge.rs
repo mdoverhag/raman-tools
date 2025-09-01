@@ -56,25 +56,28 @@ pub enum PythonResult {
 /// Get the path to Python executable from runtime-installed Python
 fn get_python_path(app: &AppHandle) -> Result<PathBuf, String> {
     let runtime_python = python_setup::get_python_path(app)?;
-    
+
     if !runtime_python.exists() {
-        return Err(format!("Python runtime not found at: {:?}. Please ensure Python is installed via the app.", runtime_python));
+        return Err(format!(
+            "Python runtime not found at: {:?}. Please ensure Python is installed via the app.",
+            runtime_python
+        ));
     }
-    
+
     Ok(runtime_python)
 }
 
 /// Get the path to the baseline correction script from runtime installation
 fn get_script_path(app: &AppHandle) -> Result<PathBuf, String> {
     let runtime_script = python_setup::get_baseline_script_path(app)?;
-    
+
     if !runtime_script.exists() {
         return Err(format!(
             "Baseline correction script not found at: {:?}. Please ensure Python environment is properly set up.",
             runtime_script
         ));
     }
-    
+
     Ok(runtime_script)
 }
 

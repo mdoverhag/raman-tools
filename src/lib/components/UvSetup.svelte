@@ -21,33 +21,37 @@
   let error = $state<string | null>(null);
   let uvStatus = $state<UvStatus | null>(null);
 
-  onMount(async () => {
+  onMount(() => {
+    let unlisten: (() => void) | null = null;
+
     // Check if uv is installed
-    uvStatus = await invoke<UvStatus>("check_uv_status");
+    (async () => {
+      uvStatus = await invoke<UvStatus>("check_uv_status");
 
-    if (!uvStatus.installed) {
-      // Show setup modal
-      showModal = true;
-    }
-
-    // Listen for download progress
-    const unlisten = await listen<DownloadProgress>("uv-download-progress", (event) => {
-      progress = event.payload;
-
-      if (event.payload.stage === "complete") {
-        // Download complete
-        setTimeout(async () => {
-          showModal = false;
-          isDownloading = false;
-          progress = null;
-          // Re-check status
-          uvStatus = await invoke<UvStatus>("check_uv_status");
-        }, 1500);
+      if (!uvStatus.installed) {
+        // Show setup modal
+        showModal = true;
       }
-    });
+
+      // Listen for download progress
+      unlisten = await listen<DownloadProgress>("uv-download-progress", (event) => {
+        progress = event.payload;
+
+        if (event.payload.stage === "complete") {
+          // Download complete
+          setTimeout(async () => {
+            showModal = false;
+            isDownloading = false;
+            progress = null;
+            // Re-check status
+            uvStatus = await invoke<UvStatus>("check_uv_status");
+          }, 1500);
+        }
+      });
+    })();
 
     return () => {
-      unlisten();
+      if (unlisten) unlisten();
     };
   });
 
