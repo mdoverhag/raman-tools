@@ -68,6 +68,8 @@ The installer is built automatically by GitHub Actions from public source code.
 
 **macOS**: The app is signed with an Apple Developer ID certificate and notarized by Apple. It will open without any security warnings.
 
+**First Launch**: The application will automatically download and configure Python for baseline correction on first run. This requires an internet connection and takes about 1-2 minutes.
+
 ## Development
 
 ### Prerequisites
@@ -89,6 +91,8 @@ bun install
 # Start development server
 bun run tauri dev
 ```
+
+**Note**: On first launch, the application will automatically download and set up Python with numpy and scipy for baseline correction. This is a one-time setup that requires an internet connection.
 
 ### Building
 

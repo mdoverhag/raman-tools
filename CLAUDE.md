@@ -57,6 +57,16 @@ These commands ensure consistent code style across the project.
 - Example: `await invoke("greet", { name })` calls the `greet` function in Rust
 - Commands must be registered in `tauri::generate_handler![]` in `lib.rs`
 
+### Python Integration for Baseline Correction
+
+- **Purpose**: Leverages Python's scipy for complex matrix operations (ALS algorithm)
+- **Architecture**: Runtime-installed Python with numpy/scipy via uv package manager
+- **Communication**: JSON via subprocess stdin/stdout between Rust and Python
+- **Installation**: Automatic on first launch - downloads uv, installs Python 3.13, and sets up virtual environment
+- **Platform Support**: Full support for Windows, macOS, and Linux
+- **Location**: Python runtime stored in app data directory (`~/Library/Application Support/com.mikaeldoverhag.raman-tools/runtime/` on macOS)
+- **Source Files**: `src-tauri/python/` contains `baseline_correction.py` and `requirements.txt` embedded at compile time
+
 ## Key Configuration Files
 
 - **Frontend Build**: Outputs to `/build/` directory (configured in tauri.conf.json)

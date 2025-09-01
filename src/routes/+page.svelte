@@ -3,12 +3,15 @@
   import { invoke } from "@tauri-apps/api/core";
   import { onMount } from "svelte";
   import SpectrumChart from "$lib/SpectrumChart.svelte";
+  import { applyBaselineCorrection, type BaselineResult } from "$lib/baseline";
 
   interface Spectrum {
     filename: string;
     filepath: string;
     wavenumbers: number[];
     intensities: number[];
+    baseline?: number[];
+    corrected?: number[];
   }
 
   let isDragging = $state(false);
@@ -16,6 +19,13 @@
   let isLoading = $state(false);
   let error = $state<string | null>(null);
   let selectedSpectrum = $state<Spectrum | null>(null);
+  let baselineParams = $state({
+    denoise: true,
+    windowSize: 5,
+    lambdaParam: 1e7,
+    p: 0.01,
+    d: 2,
+  });
 
   async function handleFileDrop(paths: string[]) {
     console.log("Processing files:", paths);
@@ -47,7 +57,25 @@
       if (parsedSpectra.length === 0) {
         error = "No valid spectrum data found in any of the files";
       } else {
-        spectra = parsedSpectra;
+        // Apply baseline correction to each spectrum
+        console.log("Applying baseline correction to spectra...");
+        const correctedSpectra = await Promise.all(
+          parsedSpectra.map(async (spectrum) => {
+            try {
+              const result = await applyBaselineCorrection(spectrum.intensities, baselineParams);
+              return {
+                ...spectrum,
+                baseline: result.baseline,
+                corrected: result.corrected,
+              };
+            } catch (e) {
+              console.error(`Failed to apply baseline correction to ${spectrum.filename}:`, e);
+              // Return spectrum without baseline correction on error
+              return spectrum;
+            }
+          })
+        );
+        spectra = correctedSpectra;
       }
     } catch (e) {
       console.error("Error parsing files:", e);
@@ -168,6 +196,8 @@
             <SpectrumChart
               wavenumbers={selectedSpectrum.wavenumbers}
               intensities={selectedSpectrum.intensities}
+              baseline={selectedSpectrum.baseline}
+              corrected={selectedSpectrum.corrected}
               title={selectedSpectrum.filename}
             />
           </div>
