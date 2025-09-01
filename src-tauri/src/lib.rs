@@ -1,5 +1,6 @@
 mod python_bridge;
 mod spectrum;
+mod uv_installer;
 
 use spectrum::Spectrum;
 
@@ -48,7 +49,9 @@ pub fn run() {
             parse_spectrum_files,
             apply_baseline_correction,
             check_python_runtime,
-            get_python_info
+            get_python_info,
+            uv_installer::check_uv_status,
+            uv_installer::download_uv
         ])
         .setup(|app| {
             // Check Python runtime availability on startup (development only)
