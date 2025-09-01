@@ -5,10 +5,12 @@
   interface Props {
     wavenumbers: number[];
     intensities: number[];
+    baseline?: number[];
+    corrected?: number[];
     title?: string;
   }
 
-  let { wavenumbers, intensities, title = "Spectrum" }: Props = $props();
+  let { wavenumbers, intensities, baseline, corrected, title = "Spectrum" }: Props = $props();
 
   let container: HTMLDivElement;
 
@@ -33,10 +35,24 @@
     const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
     // Prepare data
-    const data = wavenumbers.map((wn, i) => ({
+    const originalData = wavenumbers.map((wn, i) => ({
       wavenumber: wn,
       intensity: intensities[i],
     }));
+
+    const baselineData = baseline
+      ? wavenumbers.map((wn, i) => ({
+          wavenumber: wn,
+          intensity: baseline[i],
+        }))
+      : null;
+
+    const correctedData = corrected
+      ? wavenumbers.map((wn, i) => ({
+          wavenumber: wn,
+          intensity: corrected[i],
+        }))
+      : null;
 
     // Set scales
     const xScale = d3
@@ -44,9 +60,14 @@
       .domain(d3.extent(wavenumbers) as [number, number])
       .range([0, width]);
 
+    // Find the overall min and max for y-scale
+    let allIntensities = [...intensities];
+    if (baseline) allIntensities = allIntensities.concat(baseline);
+    if (corrected) allIntensities = allIntensities.concat(corrected);
+
     const yScale = d3
       .scaleLinear()
-      .domain([0, d3.max(intensities) as number])
+      .domain([d3.min(allIntensities) as number, d3.max(allIntensities) as number])
       .range([height, 0]);
 
     // Create line generator
@@ -117,13 +138,72 @@
       .selectAll("line")
       .style("stroke", "#374151");
 
-    // Add the line
+    // Add the baseline line (if available)
+    if (baselineData) {
+      g.append("path")
+        .datum(baselineData)
+        .attr("fill", "none")
+        .attr("stroke", "#ef4444") // red for baseline
+        .attr("stroke-width", 1.5)
+        .attr("stroke-dasharray", "5,5") // dashed line
+        .attr("d", line)
+        .attr("opacity", 0.8);
+    }
+
+    // Add the original spectrum line
     g.append("path")
-      .datum(data)
+      .datum(originalData)
       .attr("fill", "none")
-      .attr("stroke", "#60a5fa")
+      .attr("stroke", "#60a5fa") // blue for original
       .attr("stroke-width", 1.5)
-      .attr("d", line);
+      .attr("d", line)
+      .attr("opacity", correctedData ? 0.5 : 1); // Make semi-transparent if corrected exists
+
+    // Add the corrected spectrum line (if available)
+    if (correctedData) {
+      g.append("path")
+        .datum(correctedData)
+        .attr("fill", "none")
+        .attr("stroke", "#10b981") // green for corrected
+        .attr("stroke-width", 2)
+        .attr("d", line);
+    }
+
+    // Add legend
+    const legendData: Array<{ label: string; color: string; dasharray: string | null; opacity: number }> = [
+      { label: "Original", color: "#60a5fa", dasharray: null, opacity: correctedData ? 0.5 : 1 },
+    ];
+    if (baselineData) {
+      legendData.push({ label: "Baseline", color: "#ef4444", dasharray: "5,5", opacity: 0.8 });
+    }
+    if (correctedData) {
+      legendData.push({ label: "Corrected", color: "#10b981", dasharray: null, opacity: 1 });
+    }
+
+    const legend = svg.append("g").attr("transform", `translate(${width - 100}, ${margin.top})`);
+
+    legendData.forEach((item, i) => {
+      const legendRow = legend.append("g").attr("transform", `translate(0, ${i * 20})`);
+
+      legendRow
+        .append("line")
+        .attr("x1", 0)
+        .attr("x2", 20)
+        .attr("y1", 0)
+        .attr("y2", 0)
+        .attr("stroke", item.color)
+        .attr("stroke-width", 2)
+        .attr("stroke-dasharray", item.dasharray)
+        .attr("opacity", item.opacity);
+
+      legendRow
+        .append("text")
+        .attr("x", 25)
+        .attr("y", 4)
+        .style("font-size", "12px")
+        .style("fill", "#9ca3af")
+        .text(item.label);
+    });
 
     // Add title
     svg
