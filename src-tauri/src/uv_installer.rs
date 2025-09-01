@@ -183,7 +183,7 @@ pub async fn download_uv(app: AppHandle) -> Result<(), String> {
             .args([
                 "-Command",
                 &format!(
-                    "Expand-Archive -Path '{}' -DestinationPath '{}' -Force; Move-Item -Path '{}\\uv.exe' -Destination '{}' -Force",
+                    "Expand-Archive -Path '{}' -DestinationPath '{}' -Force; Get-ChildItem '{}' -Recurse -Filter 'uv.exe' | Select-Object -First 1 | Move-Item -Destination '{}' -Force",
                     zip_path.display(),
                     runtime_dir.display(),
                     runtime_dir.display(),
