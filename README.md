@@ -75,6 +75,17 @@ The installer is built automatically by GitHub Actions from public source code.
 - [Rust](https://www.rust-lang.org/tools/install)
 - [Bun](https://bun.sh)
 - [Node.js](https://nodejs.org) (for tooling compatibility)
+- [uv](https://docs.astral.sh/uv/) - Python package manager for baseline correction
+
+#### Installing uv
+
+```bash
+# Via installer script (recommended)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Or via Homebrew (macOS)
+brew install uv
+```
 
 ### Setup
 
@@ -86,9 +97,16 @@ cd raman-tools
 # Install dependencies
 bun install
 
+# Build Python bundle for baseline correction (macOS only)
+cd src-tauri
+./build-python.sh
+cd ..
+
 # Start development server
 bun run tauri dev
 ```
+
+**Note**: The baseline correction feature requires a bundled Python environment with numpy and scipy. The `build-python.sh` script creates this bundle using Python 3.13. Currently, only macOS is supported for development.
 
 ### Building
 

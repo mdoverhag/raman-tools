@@ -67,7 +67,11 @@ fn get_python_path(app: &AppHandle) -> Result<PathBuf, String> {
 
     // Platform-specific Python location
     let python_path = if cfg!(target_os = "macos") {
-        resource_dir.join("python").join("macos").join("python")
+        resource_dir
+            .join("python")
+            .join("macos")
+            .join("bin")
+            .join("python")
     } else if cfg!(target_os = "windows") {
         resource_dir
             .join("python")
@@ -87,6 +91,7 @@ fn get_python_path(app: &AppHandle) -> Result<PathBuf, String> {
                 .join("resources")
                 .join("python")
                 .join("macos")
+                .join("bin")
                 .join("python");
             if dev_python.exists() {
                 return Ok(dev_python);
