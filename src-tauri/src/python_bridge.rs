@@ -75,11 +75,7 @@ fn get_python_path(app: &AppHandle) -> Result<PathBuf, String> {
             .join("Scripts")
             .join("python.exe")
     } else {
-        resource_dir
-            .join("python")
-            .join("linux")
-            .join("bin")
-            .join("python3")
+        return Err("Unsupported platform".to_string());
     };
 
     if !python_path.exists() {
@@ -128,10 +124,7 @@ fn get_script_path(app: &AppHandle) -> Result<PathBuf, String> {
             .join("windows")
             .join("baseline_correction.py")
     } else {
-        resource_dir
-            .join("python")
-            .join("linux")
-            .join("baseline_correction.py")
+        return Err("Unsupported platform".to_string());
     };
 
     // Development fallback
