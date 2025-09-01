@@ -56,7 +56,7 @@ pub fn run() {
             {
                 let app_handle = app.handle();
 
-                match python_bridge::check_python_availability(&app_handle) {
+                match python_bridge::check_python_availability(app_handle) {
                     Ok(true) => {
                         println!("✅ Python runtime found");
 

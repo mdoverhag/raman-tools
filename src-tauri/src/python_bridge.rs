@@ -92,9 +92,7 @@ fn get_python_path(app: &AppHandle) -> Result<PathBuf, String> {
                 return Ok(dev_python);
             }
             // No fallback to system Python - bundle must exist
-            return Err(format!(
-                "Python bundle not found. Run build-python.sh to create it."
-            ));
+            return Err("Python bundle not found. Run build-python.sh to create it.".to_string());
         }
         return Err(format!("Python runtime not found at: {:?}", python_path));
     }
