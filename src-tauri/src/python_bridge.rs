@@ -13,7 +13,7 @@
 //! ## Architecture:
 //! - Python runtime is bundled with the app (no user installation required)
 //! - Communication via JSON through subprocess stdin/stdout
-//! - Platform-specific Python paths for Windows, macOS, and Linux
+//! - Platform-specific Python paths for Windows and macOS (Linux not currently supported)
 
 use serde::{Deserialize, Serialize};
 use std::io::Write;
@@ -56,9 +56,9 @@ pub enum PythonResult {
 /// during the build process. The location varies by platform:
 /// - macOS: Resources/python/macos/python
 /// - Windows: Resources/python/windows/Scripts/python.exe
-/// - Linux: Resources/python/linux/bin/python3
+/// - Linux: Not currently supported
 ///
-/// In development mode, it falls back to the development bundle location
+/// In development mode, it falls back to the development bundle location (macOS only)
 fn get_python_path(app: &AppHandle) -> Result<PathBuf, String> {
     let resource_dir = app
         .path()
