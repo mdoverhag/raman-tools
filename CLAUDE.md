@@ -60,14 +60,12 @@ These commands ensure consistent code style across the project.
 ### Python Integration for Baseline Correction
 
 - **Purpose**: Leverages Python's scipy for complex matrix operations (ALS algorithm)
-- **Architecture**: Bundled Python runtime with numpy/scipy, no user installation required
+- **Architecture**: Runtime-installed Python with numpy/scipy via uv package manager
 - **Communication**: JSON via subprocess stdin/stdout between Rust and Python
-- **Build Scripts**:
-  - `src-tauri/build-python.sh` - Creates Python bundle for macOS/Linux
-  - `src-tauri/build-python.ps1` - Creates Python bundle for Windows
-- **Platform Support**: Full support for Windows, macOS, and Linux (Linux mainly for CI)
-- **Location**: Python bundles stored in `src-tauri/resources/python/{platform}/`
-- **Development**: Requires running build script before `bun run tauri dev`
+- **Installation**: Automatic on first launch - downloads uv, installs Python 3.13, and sets up virtual environment
+- **Platform Support**: Full support for Windows, macOS, and Linux
+- **Location**: Python runtime stored in app data directory (`~/Library/Application Support/com.mikaeldoverhag.raman-tools/runtime/` on macOS)
+- **Source Files**: `src-tauri/python/` contains `baseline_correction.py` and `requirements.txt` embedded at compile time
 
 ## Key Configuration Files
 
@@ -129,14 +127,12 @@ The project has automated CI/CD configured in `.github/workflows/build.yml`:
 
 1. **Test Job**: Runs on all PRs and pushes to master
    - Installs Linux dependencies (libgtk-3-dev, libwebkit2gtk-4.1-dev, etc.)
-   - Installs uv and builds Python bundle for Linux
    - Runs TypeScript type checking (`bun run check`)
    - Runs Rust tests (`cargo test`)
    - Checks Rust formatting (`cargo fmt --check`)
    - Runs Rust linter (`cargo clippy`)
 
 2. **Build Job**: Runs after tests pass
-   - Installs uv and builds Python bundle for target platform
    - Uses `tauri-apps/tauri-action` for consistent builds
    - Builds Windows MSI installer (x86_64)
    - Builds macOS DMG installer (Apple Silicon/aarch64) with styled installer window

@@ -68,6 +68,8 @@ The installer is built automatically by GitHub Actions from public source code.
 
 **macOS**: The app is signed with an Apple Developer ID certificate and notarized by Apple. It will open without any security warnings.
 
+**First Launch**: The application will automatically download and configure Python for baseline correction on first run. This requires an internet connection and takes about 1-2 minutes.
+
 ## Development
 
 ### Prerequisites
@@ -75,29 +77,6 @@ The installer is built automatically by GitHub Actions from public source code.
 - [Rust](https://www.rust-lang.org/tools/install)
 - [Bun](https://bun.sh)
 - [Node.js](https://nodejs.org) (for tooling compatibility)
-- [uv](https://docs.astral.sh/uv/) - Python package manager for baseline correction
-
-#### Installing uv
-
-**macOS/Linux:**
-
-```bash
-# Via installer script (recommended)
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Or via Homebrew (macOS)
-brew install uv
-```
-
-**Windows:**
-
-```powershell
-# Via PowerShell installer script
-powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-
-# Or via winget
-winget install --id=astral-sh.uv -e
-```
 
 ### Setup
 
@@ -109,22 +88,11 @@ cd raman-tools
 # Install dependencies
 bun install
 
-# Build Python bundle for baseline correction
-cd src-tauri
-
-# macOS/Linux
-./build-python.sh
-
-# Windows (PowerShell)
-./build-python.ps1
-
-cd ..
-
 # Start development server
 bun run tauri dev
 ```
 
-**Note**: The baseline correction feature requires a bundled Python environment with numpy and scipy. The build scripts create this bundle using Python 3.13.
+**Note**: On first launch, the application will automatically download and set up Python with numpy and scipy for baseline correction. This is a one-time setup that requires an internet connection.
 
 ### Building
 
