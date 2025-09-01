@@ -1,4 +1,4 @@
 # Python dependencies for baseline correction
-# These packages are bundled with the application
+# These packages are installed on first use
 numpy==2.1.3
 scipy==1.14.1

@@ -21,6 +21,9 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use tauri::{AppHandle, Manager};
 
+// Import python_setup for runtime Python
+use crate::python_setup;
+
 /// Request structure sent to Python baseline correction script
 /// Contains the spectrum data and all parameters for the ALS algorithm
 #[derive(Debug, Serialize)]
@@ -87,16 +90,20 @@ fn get_python_dir(base_dir: &Path) -> Result<PathBuf, String> {
     Ok(base_dir.join("python").join(platform))
 }
 
-/// Get the path to the bundled Python executable
+/// Get the path to Python executable
 ///
-/// This function locates the Python runtime that was bundled with the application
-/// during the build process. The location varies by platform:
-/// - macOS: Resources/python/macos/bin/python
-/// - Windows: Resources/python/windows/Scripts/python.exe
-/// - Linux: Resources/python/linux/bin/python
-///
-/// In development mode, it falls back to the development bundle location
+/// Priority:
+/// 1. Runtime-installed Python (downloaded by the app)
+/// 2. Bundled Python (for development/fallback)
 fn get_python_path(app: &AppHandle) -> Result<PathBuf, String> {
+    // First try runtime Python
+    if let Ok(runtime_python) = python_setup::get_python_path(app) {
+        if runtime_python.exists() {
+            return Ok(runtime_python);
+        }
+    }
+
+    // Fall back to bundled Python
     let resource_dir = app
         .path()
         .resource_dir()
@@ -135,10 +142,18 @@ fn get_python_path(app: &AppHandle) -> Result<PathBuf, String> {
 
 /// Get the path to the baseline correction script
 ///
-/// Locates the baseline_correction.py script that implements the ALS algorithm.
-/// The script is bundled alongside the Python runtime in platform-specific locations.
-/// Falls back to development paths when running in debug mode.
+/// Priority:
+/// 1. Runtime script (in app data directory)
+/// 2. Bundled script (for development/fallback)
 fn get_script_path(app: &AppHandle) -> Result<PathBuf, String> {
+    // First try runtime script
+    if let Ok(runtime_script) = python_setup::get_baseline_script_path(app) {
+        if runtime_script.exists() {
+            return Ok(runtime_script);
+        }
+    }
+
+    // Fall back to bundled script
     let resource_dir = app
         .path()
         .resource_dir()

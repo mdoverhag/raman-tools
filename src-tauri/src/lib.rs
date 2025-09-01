@@ -1,4 +1,5 @@
 mod python_bridge;
+mod python_setup;
 mod spectrum;
 mod uv_installer;
 
@@ -51,7 +52,9 @@ pub fn run() {
             check_python_runtime,
             get_python_info,
             uv_installer::check_uv_status,
-            uv_installer::download_uv
+            uv_installer::download_uv,
+            python_setup::check_python_status,
+            python_setup::setup_python_env
         ])
         .setup(|app| {
             // Check Python runtime availability on startup (development only)

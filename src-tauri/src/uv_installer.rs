@@ -180,7 +180,7 @@ pub async fn download_uv(app: AppHandle) -> Result<(), String> {
 
         // Extract using PowerShell
         let output = Command::new("powershell")
-            .args(&[
+            .args([
                 "-Command",
                 &format!(
                     "Expand-Archive -Path '{}' -DestinationPath '{}' -Force; Move-Item -Path '{}\\uv.exe' -Destination '{}' -Force",
@@ -213,7 +213,7 @@ pub async fn download_uv(app: AppHandle) -> Result<(), String> {
 
         // Extract using tar
         let output = Command::new("tar")
-            .args(&[
+            .args([
                 "-xzf",
                 tar_path.to_str().unwrap(),
                 "-C",
