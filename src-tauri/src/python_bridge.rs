@@ -83,21 +83,39 @@ fn get_python_path(app: &AppHandle) -> Result<PathBuf, String> {
     };
 
     if !python_path.exists() {
-        // Development fallback - currently only supports macOS
+        // Development fallback
         if cfg!(debug_assertions) {
-            // In development, we only support macOS
-            // This fallback is hardcoded to macOS paths and won't work on Windows
-            let dev_python = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                .join("resources")
-                .join("python")
-                .join("macos")
-                .join("bin")
-                .join("python");
+            let dev_python = if cfg!(target_os = "macos") {
+                PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                    .join("resources")
+                    .join("python")
+                    .join("macos")
+                    .join("bin")
+                    .join("python")
+            } else if cfg!(target_os = "windows") {
+                PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                    .join("resources")
+                    .join("python")
+                    .join("windows")
+                    .join("Scripts")
+                    .join("python.exe")
+            } else {
+                return Err("Unsupported platform in development".to_string());
+            };
+
             if dev_python.exists() {
                 return Ok(dev_python);
             }
             // No fallback to system Python - bundle must exist
-            return Err("Python bundle not found. Run build-python.sh to create it.".to_string());
+            let script_name = if cfg!(target_os = "windows") {
+                "build-python.ps1"
+            } else {
+                "build-python.sh"
+            };
+            return Err(format!(
+                "Python bundle not found. Run {} to create it.",
+                script_name
+            ));
         }
         return Err(format!("Python runtime not found at: {:?}", python_path));
     }
@@ -131,14 +149,21 @@ fn get_script_path(app: &AppHandle) -> Result<PathBuf, String> {
         return Err("Unsupported platform".to_string());
     };
 
-    // Development fallback - currently only supports macOS
+    // Development fallback
     if !script_path.exists() && cfg!(debug_assertions) {
-        // In development, we only support macOS for now
         // Try the bundled location first
+        let platform_dir = if cfg!(target_os = "macos") {
+            "macos"
+        } else if cfg!(target_os = "windows") {
+            "windows"
+        } else {
+            return Err("Unsupported platform in development".to_string());
+        };
+
         let bundled_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("resources")
             .join("python")
-            .join("macos")
+            .join(platform_dir)
             .join("baseline_correction.py");
         if bundled_path.exists() {
             return Ok(bundled_path);

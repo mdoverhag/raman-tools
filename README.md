@@ -79,12 +79,24 @@ The installer is built automatically by GitHub Actions from public source code.
 
 #### Installing uv
 
+**macOS/Linux:**
+
 ```bash
 # Via installer script (recommended)
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Or via Homebrew (macOS)
 brew install uv
+```
+
+**Windows:**
+
+```powershell
+# Via PowerShell installer script
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# Or via winget
+winget install --id=astral-sh.uv -e
 ```
 
 ### Setup
@@ -97,16 +109,22 @@ cd raman-tools
 # Install dependencies
 bun install
 
-# Build Python bundle for baseline correction (macOS only)
+# Build Python bundle for baseline correction
 cd src-tauri
+
+# macOS/Linux
 ./build-python.sh
+
+# Windows (PowerShell)
+./build-python.ps1
+
 cd ..
 
 # Start development server
 bun run tauri dev
 ```
 
-**Note**: The baseline correction feature requires a bundled Python environment with numpy and scipy. The `build-python.sh` script creates this bundle using Python 3.13. Currently, only macOS is supported for development.
+**Note**: The baseline correction feature requires a bundled Python environment with numpy and scipy. The build scripts create this bundle using Python 3.13.
 
 ### Building
 
