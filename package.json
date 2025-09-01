@@ -12,7 +12,9 @@
     "tauri": "tauri",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "format:python": "black src-tauri/python/"
+    "format:python": "black src-tauri/python/",
+    "format:rust": "cd src-tauri && cargo fmt",
+    "format:all": "bun run format && bun run format:rust && bun run format:python"
   },
   "license": "MIT",
   "dependencies": {
