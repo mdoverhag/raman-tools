@@ -5,6 +5,53 @@ All notable changes to Raman Tools will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2025-09-01
+
+### Added
+
+#### Baseline Correction
+
+- Implemented ALS (Asymmetric Least Squares) baseline correction algorithm
+- Python-based implementation using scipy for accurate scientific computations
+- Real-time baseline correction visualization in the UI
+- Adjustable parameters for fine-tuning correction
+
+#### Automatic Python Runtime Setup
+
+- Runtime installation of Python environment on first launch
+- Automatic download of uv package manager
+- Automatic Python 3.13 installation with numpy and scipy
+- No manual Python installation required by users
+- Progress indicators during setup process
+- Minimal app bundle size - Python downloaded only when needed
+
+#### Enhanced Visualization
+
+- Display both original and baseline-corrected spectra
+- Visual comparison of spectra before and after correction
+- Better chart formatting and presentation
+
+### Changed
+
+#### Build Process
+
+- Simplified CI/CD pipeline
+- Improved cross-platform build support
+
+### Fixed
+
+- TypeScript type errors in Svelte components (`onMount` async handling)
+- Windows compatibility for Python/uv extraction process
+- Cross-platform path handling for Python executables
+
+### Developer Experience
+
+- Added format commands for both Rust and TypeScript/Svelte code
+- Improved error messages for Python setup issues
+- Better documentation of the new architecture in CLAUDE.md and README.md
+
+[0.2.0]: https://github.com/mdoverhag/raman-tools/releases/tag/v0.2.0
+
 ## [0.1.0] - 2025-08-31
 
 ### Added
