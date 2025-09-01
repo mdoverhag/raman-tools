@@ -30,17 +30,6 @@ jobs:
       - name: Install frontend dependencies
         run: bun install
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-
-      - name: Build Python bundle
-        working-directory: src-tauri
-        run: |
-          chmod +x build-python.sh
-          ./build-python.sh
-
       - name: Run frontend type checks
         run: bun run check
 
@@ -83,11 +72,6 @@ jobs:
 
       - name: Install frontend dependencies
         run: bun install
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
 
       - name: Build and sign Tauri app
         uses: tauri-apps/tauri-action@v0
