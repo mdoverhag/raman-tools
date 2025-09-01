@@ -89,20 +89,6 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Build Python bundle (Windows)
-        if: matrix.os == 'windows-latest'
-        working-directory: src-tauri
-        shell: powershell
-        run: |
-          ./build-python.ps1
-
-      - name: Build Python bundle (macOS)
-        if: matrix.os == 'macos-latest'
-        working-directory: src-tauri
-        run: |
-          chmod +x build-python.sh
-          ./build-python.sh
-
       - name: Build and sign Tauri app
         uses: tauri-apps/tauri-action@v0
         env:

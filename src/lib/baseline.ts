@@ -80,32 +80,6 @@ export async function applyBaselineCorrection(
 }
 
 /**
- * Check if the Python runtime is available for baseline correction
- * @returns Promise<boolean> indicating if Python is available
- */
-export async function checkPythonRuntime(): Promise<boolean> {
-  try {
-    return await invoke<boolean>("check_python_runtime");
-  } catch (error) {
-    console.error("Failed to check Python runtime:", error);
-    return false;
-  }
-}
-
-/**
- * Get information about the Python runtime for diagnostics
- * @returns Promise<string> with Python version and path information
- */
-export async function getPythonInfo(): Promise<string> {
-  try {
-    return await invoke<string>("get_python_info");
-  } catch (error) {
-    console.error("Failed to get Python info:", error);
-    throw error;
-  }
-}
-
-/**
  * Apply baseline correction to multiple spectra in parallel
  * @param spectra Array of spectra (each spectrum is an array of intensities)
  * @param params Parameters for baseline correction
@@ -128,32 +102,4 @@ export async function batchBaselineCorrection(
   }
 
   return results;
-}
-
-/**
- * Helper function to subtract baseline from original spectrum
- * @param original Original spectrum intensities
- * @param baseline Baseline intensities
- * @returns Corrected spectrum
- */
-export function subtractBaseline(original: number[], baseline: number[]): number[] {
-  if (original.length !== baseline.length) {
-    throw new Error("Original and baseline must have the same length");
-  }
-
-  return original.map((value, index) => value - baseline[index]);
-}
-
-/**
- * Helper function to add baseline back to corrected spectrum
- * @param corrected Corrected spectrum intensities
- * @param baseline Baseline intensities
- * @returns Original spectrum
- */
-export function addBaseline(corrected: number[], baseline: number[]): number[] {
-  if (corrected.length !== baseline.length) {
-    throw new Error("Corrected and baseline must have the same length");
-  }
-
-  return corrected.map((value, index) => value + baseline[index]);
 }

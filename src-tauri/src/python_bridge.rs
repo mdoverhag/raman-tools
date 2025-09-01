@@ -1,25 +1,25 @@
 //! Python Bridge Module for Baseline Correction
 //!
 //! This module provides a bridge between Rust/Tauri and Python for performing
-//! baseline correction on Raman spectra. It uses a bundled Python runtime with
+//! baseline correction on Raman spectra. It uses a runtime-installed Python with
 //! numpy and scipy to execute the ALS (Asymmetric Least Squares) algorithm.
 //!
 //! ## Why this exists:
 //! - Baseline correction algorithms like ALS require complex matrix operations
 //! - Python's scipy provides optimized sparse matrix solvers that would be complex to reimplement in Rust
 //! - Scientists are familiar with Python implementations and can verify/modify the algorithm
-//! - Bundling Python ensures users don't need to install Python or manage dependencies
+//! - Python is installed at runtime using uv for minimal bundle size
 //!
 //! ## Architecture:
-//! - Python runtime is bundled with the app (no user installation required)
+//! - Python runtime is downloaded and installed on first run
 //! - Communication via JSON through subprocess stdin/stdout
 //! - Platform-specific Python paths for Windows, macOS, and Linux
 
 use serde::{Deserialize, Serialize};
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::{Command, Stdio};
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
 
 // Import python_setup for runtime Python
 use crate::python_setup;
@@ -53,147 +53,32 @@ pub enum PythonResult {
     Error { error: String, r#type: String },
 }
 
-/// Get the platform-specific directory name
-fn get_platform_dir() -> Result<&'static str, String> {
-    if cfg!(target_os = "macos") {
-        Ok("macos")
-    } else if cfg!(target_os = "windows") {
-        Ok("windows")
-    } else if cfg!(target_os = "linux") {
-        Ok("linux")
-    } else {
-        Err("Unsupported platform".to_string())
-    }
-}
-
-/// Get the Python executable name for the current platform
-fn get_python_executable_name() -> &'static str {
-    if cfg!(target_os = "windows") {
-        "python.exe"
-    } else {
-        "python"
-    }
-}
-
-/// Get the Python executable path within a virtual environment
-fn get_python_executable_path(venv_dir: &Path) -> PathBuf {
-    if cfg!(target_os = "windows") {
-        venv_dir.join("Scripts").join(get_python_executable_name())
-    } else {
-        venv_dir.join("bin").join(get_python_executable_name())
-    }
-}
-
-/// Get the Python directory path for the current platform
-fn get_python_dir(base_dir: &Path) -> Result<PathBuf, String> {
-    let platform = get_platform_dir()?;
-    Ok(base_dir.join("python").join(platform))
-}
-
-/// Get the path to Python executable
-///
-/// Priority:
-/// 1. Runtime-installed Python (downloaded by the app)
-/// 2. Bundled Python (for development/fallback)
+/// Get the path to Python executable from runtime-installed Python
 fn get_python_path(app: &AppHandle) -> Result<PathBuf, String> {
-    // First try runtime Python
-    if let Ok(runtime_python) = python_setup::get_python_path(app) {
-        if runtime_python.exists() {
-            return Ok(runtime_python);
-        }
+    let runtime_python = python_setup::get_python_path(app)?;
+    
+    if !runtime_python.exists() {
+        return Err(format!("Python runtime not found at: {:?}. Please ensure Python is installed via the app.", runtime_python));
     }
-
-    // Fall back to bundled Python
-    let resource_dir = app
-        .path()
-        .resource_dir()
-        .map_err(|e| format!("Failed to get resource directory: {}", e))?;
-
-    // Get Python directory and executable path
-    let python_venv_dir = get_python_dir(&resource_dir)?;
-    let python_path = get_python_executable_path(&python_venv_dir);
-
-    if !python_path.exists() {
-        // Development fallback
-        if cfg!(debug_assertions) {
-            let dev_base = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("resources");
-            let dev_venv_dir = get_python_dir(&dev_base)?;
-            let dev_python = get_python_executable_path(&dev_venv_dir);
-
-            if dev_python.exists() {
-                return Ok(dev_python);
-            }
-            // No fallback to system Python - bundle must exist
-            let script_name = if cfg!(target_os = "windows") {
-                "build-python.ps1"
-            } else {
-                "build-python.sh"
-            };
-            return Err(format!(
-                "Python bundle not found. Run {} to create it.",
-                script_name
-            ));
-        }
-        return Err(format!("Python runtime not found at: {:?}", python_path));
-    }
-
-    Ok(python_path)
+    
+    Ok(runtime_python)
 }
 
-/// Get the path to the baseline correction script
-///
-/// Priority:
-/// 1. Runtime script (in app data directory)
-/// 2. Bundled script (for development/fallback)
+/// Get the path to the baseline correction script from runtime installation
 fn get_script_path(app: &AppHandle) -> Result<PathBuf, String> {
-    // First try runtime script
-    if let Ok(runtime_script) = python_setup::get_baseline_script_path(app) {
-        if runtime_script.exists() {
-            return Ok(runtime_script);
-        }
-    }
-
-    // Fall back to bundled script
-    let resource_dir = app
-        .path()
-        .resource_dir()
-        .map_err(|e| format!("Failed to get resource directory: {}", e))?;
-
-    // Get Python directory and script path
-    let python_dir = get_python_dir(&resource_dir)?;
-    let script_path = python_dir.join("baseline_correction.py");
-
-    // Development fallback
-    if !script_path.exists() && cfg!(debug_assertions) {
-        // Try the bundled location first
-        let dev_base = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("resources");
-        let dev_python_dir = get_python_dir(&dev_base)?;
-        let bundled_path = dev_python_dir.join("baseline_correction.py");
-
-        if bundled_path.exists() {
-            return Ok(bundled_path);
-        }
-
-        // Then try the source location
-        let dev_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("python")
-            .join("baseline_correction.py");
-        if dev_path.exists() {
-            return Ok(dev_path);
-        }
-    }
-
-    if !script_path.exists() {
+    let runtime_script = python_setup::get_baseline_script_path(app)?;
+    
+    if !runtime_script.exists() {
         return Err(format!(
-            "Baseline correction script not found at: {:?}",
-            script_path
+            "Baseline correction script not found at: {:?}. Please ensure Python environment is properly set up.",
+            runtime_script
         ));
     }
-
-    Ok(script_path)
+    
+    Ok(runtime_script)
 }
 
-/// Apply baseline correction to a spectrum using the bundled Python runtime
+/// Apply baseline correction to a spectrum using the runtime-installed Python
 ///
 /// This is the main entry point for baseline correction. It:
 /// 1. Locates the bundled Python runtime and baseline correction script
@@ -283,35 +168,4 @@ pub async fn apply_baseline_correction(
             Err(format!("Python error ({}): {}", r#type, error))
         }
     }
-}
-
-/// Check if Python runtime is available
-///
-/// Verifies that both the Python executable and baseline correction script
-/// are present and accessible. Used by the frontend to check if baseline
-/// correction functionality is available before attempting to use it.
-pub fn check_python_availability(app: &AppHandle) -> Result<bool, String> {
-    let python_path = get_python_path(app)?;
-    let script_path = get_script_path(app)?;
-
-    Ok(python_path.exists() && script_path.exists())
-}
-
-/// Get Python runtime information for diagnostics
-///
-/// Returns version and path information about the bundled Python runtime.
-/// Useful for debugging issues and verifying the correct Python is being used.
-pub fn get_python_info(app: &AppHandle) -> Result<String, String> {
-    let python_path = get_python_path(app)?;
-
-    let output = Command::new(&python_path)
-        .arg("--version")
-        .output()
-        .map_err(|e| format!("Failed to get Python version: {}", e))?;
-
-    let version = String::from_utf8_lossy(&output.stdout);
-    Ok(format!(
-        "Python path: {:?}\nVersion: {}",
-        python_path, version
-    ))
 }
