@@ -20,11 +20,19 @@
   let isLoading = $state(false);
   let error = $state<string | null>(null);
   let selectedSpectrum = $state<Spectrum | null>(null);
+  let importProgress = $state<{
+    stage: string;
+    current: number;
+    total: number;
+    filename: string;
+  } | null>(null);
 
   async function handleFileDrop(paths: string[]) {
     console.log("Processing files:", paths);
     isLoading = true;
     error = null;
+    importProgress = null;
+    spectra = []; // Clear existing spectra
 
     try {
       // Filter for .txt files only
@@ -40,24 +48,23 @@
         filepaths: txtFiles,
       });
 
-      console.log("Parsed spectra with baseline correction:", parsedSpectra);
-
-      // Check if some files were skipped
-      const skippedCount = txtFiles.length - parsedSpectra.length;
-      if (skippedCount > 0) {
-        error = `Warning: ${skippedCount} file(s) contained no valid spectrum data`;
-      }
+      console.log("Import complete:", parsedSpectra);
 
       if (parsedSpectra.length === 0) {
         error = "No valid spectrum data found in any of the files";
       } else {
         spectra = parsedSpectra;
+        // Auto-select first spectrum
+        if (!selectedSpectrum && spectra.length > 0) {
+          selectedSpectrum = spectra[0];
+        }
       }
     } catch (e) {
       console.error("Error parsing files:", e);
       error = e instanceof Error ? e.message : String(e);
     } finally {
       isLoading = false;
+      importProgress = null;
     }
   }
 
@@ -80,11 +87,46 @@
       isDragging = false;
     });
 
+    // Listen for import progress events
+    const unlistenProgress = listen<any>("import:progress", (event) => {
+      if (event.payload) {
+        importProgress = {
+          stage: event.payload.stage,
+          current: event.payload.current,
+          total: event.payload.total,
+          filename: event.payload.filename,
+        };
+      }
+    });
+
+    // Listen for spectrum ready events (could use to show spectra as they're processed)
+    const unlistenSpectrumReady = listen<any>("import:spectrum_ready", (event) => {
+      if (event.payload?.spectrum) {
+        // Add spectrum as it becomes ready
+        spectra = [...spectra, event.payload.spectrum];
+        // Auto-select first spectrum
+        if (!selectedSpectrum) {
+          selectedSpectrum = event.payload.spectrum;
+        }
+      }
+    });
+
+    // Listen for import error events
+    const unlistenError = listen<any>("import:error", (event) => {
+      if (event.payload) {
+        console.error(`Import error for ${event.payload.filename}: ${event.payload.error}`);
+        // Could accumulate errors or show them in UI
+      }
+    });
+
     // Cleanup listeners
     return () => {
       unlisten.then((fn) => fn());
       unlistenHover.then((fn) => fn());
       unlistenCancelled.then((fn) => fn());
+      unlistenProgress.then((fn) => fn());
+      unlistenSpectrumReady.then((fn) => fn());
+      unlistenError.then((fn) => fn());
     };
   });
 </script>
@@ -115,7 +157,22 @@
             stroke-linejoin="round"
           />
         </svg>
-        {#if isLoading}
+        {#if isLoading && importProgress}
+          <div class="space-y-2">
+            <p class="text-gray-400">
+              {importProgress.stage === "parsing" ? "Reading" : "Processing"} files...
+            </p>
+            <p class="text-sm text-gray-500">
+              {importProgress.filename} ({importProgress.current}/{importProgress.total})
+            </p>
+            <div class="w-64 mx-auto bg-gray-700 rounded-full h-2">
+              <div
+                class="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                style="width: {(importProgress.current / importProgress.total) * 100}%"
+              ></div>
+            </div>
+          </div>
+        {:else if isLoading}
           <p class="text-gray-400">Processing files...</p>
         {:else if isDragging}
           <p class="text-blue-400 font-medium">Drop files here...</p>

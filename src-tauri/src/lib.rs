@@ -2,6 +2,7 @@ mod python_bridge;
 mod python_setup;
 mod samples;
 mod spectrum;
+mod spectrum_importer;
 mod uv_installer;
 
 use samples::{Sample, SampleStorage, UpdateSampleData};
@@ -14,47 +15,7 @@ async fn parse_spectrum_files(
     app: tauri::AppHandle,
     filepaths: Vec<String>,
 ) -> Result<Vec<Spectrum>, String> {
-    // Parse the files first
-    let mut spectra = spectrum::parse_files(filepaths)?;
-
-    // Apply baseline correction to each spectrum
-    // Using default parameters for now - could be made configurable later
-    let denoise = true;
-    let window_size = 5;
-    let lambda_param = 1e7;
-    let p = 0.01;
-    let d = 2;
-
-    for spectrum in &mut spectra {
-        // Convert u16 intensities to f64 for baseline correction
-        let intensities_f64: Vec<f64> = spectrum.intensities.iter().map(|&i| i as f64).collect();
-
-        match python_bridge::apply_baseline_correction(
-            app.clone(),
-            intensities_f64,
-            denoise,
-            window_size,
-            lambda_param,
-            p,
-            d,
-        )
-        .await
-        {
-            Ok(result) => {
-                spectrum.baseline = Some(result.baseline);
-                spectrum.corrected = Some(result.corrected);
-            }
-            Err(e) => {
-                eprintln!(
-                    "Failed to apply baseline correction to {}: {}",
-                    spectrum.filename, e
-                );
-                // Continue without baseline for this spectrum
-            }
-        }
-    }
-
-    Ok(spectra)
+    spectrum_importer::import_spectra(app, filepaths).await
 }
 
 #[tauri::command]
