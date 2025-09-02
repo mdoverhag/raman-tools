@@ -90,6 +90,7 @@
     // Listen for import progress events
     const unlistenProgress = listen<any>("import:progress", (event) => {
       if (event.payload) {
+        console.log("Progress event:", event.payload);
         importProgress = {
           stage: event.payload.stage,
           current: event.payload.current,
@@ -183,8 +184,8 @@
             </p>
             <div class="w-64 mx-auto bg-gray-700 rounded-full h-2">
               <div
-                class="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                style="width: {(importProgress.current / importProgress.total) * 100}%"
+                class="bg-blue-500 h-2 rounded-full"
+                style:width="{(importProgress.current / importProgress.total) * 100}%"
               ></div>
             </div>
           </div>
@@ -220,8 +221,8 @@
               {#each spectra as spectrum}
                 <li>
                   <button
-                    class="w-full text-left px-4 py-3 hover:bg-gray-700/50 transition-colors {selectedSpectrum ===
-                    spectrum
+                    class="w-full text-left px-4 py-3 hover:bg-gray-700/50 transition-colors {selectedSpectrum?.id ===
+                    spectrum.id
                       ? 'bg-blue-900/30 border-l-2 border-blue-500'
                       : ''}"
                     onclick={() => (selectedSpectrum = spectrum)}

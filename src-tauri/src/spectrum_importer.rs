@@ -1,4 +1,4 @@
-use crate::batch_baseline::{process_batch, BaselineParams};
+use crate::batch_baseline::{process_batch_streaming, BaselineParams, BatchUpdate};
 use crate::spectrum::Spectrum;
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -144,41 +144,72 @@ pub async fn import_spectra(
         // Use default baseline parameters
         let params = BaselineParams::default();
 
-        // Process all spectra in a single batch
-        match process_batch(
-            app.clone(),
-            intensities_batch,
-            params,
-            "import:progress", // Event name for progress updates
-        )
-        .await
-        {
-            Ok(results) => {
-                // Update each spectrum with its baseline correction results
-                for result in results {
-                    if result.index < spectra.len() {
-                        let spectrum = &mut spectra[result.index];
-                        spectrum.baseline = Some(result.baseline);
-                        spectrum.corrected = Some(result.corrected);
+        // Process spectra with streaming iterator
+        match process_batch_streaming(app.clone(), intensities_batch, params) {
+            Ok(processor) => {
+                // Process updates as they stream in
+                for update in processor {
+                    match update {
+                        BatchUpdate::Progress(progress) => {
+                            // Get the filename from the spectrum being processed
+                            let filename =
+                                if progress.current > 0 && progress.current <= spectra.len() {
+                                    spectra[progress.current - 1].filename.clone()
+                                } else {
+                                    format!("Processing {} of {}", progress.current, progress.total)
+                                };
 
-                        // Emit spectrum updated event
-                        app.emit(
-                            "import:spectrum_updated",
-                            ImportEvent::SpectrumUpdated {
-                                spectrum: spectrum.clone(),
-                            },
-                        )
-                        .map_err(|e| format!("Failed to emit spectrum updated event: {}", e))?;
+                            // Emit progress event for baseline correction
+                            app.emit(
+                                "import:progress",
+                                ImportEvent::Progress {
+                                    stage: "baseline".to_string(),
+                                    current: progress.current,
+                                    total: progress.total,
+                                    filename,
+                                },
+                            )
+                            .map_err(|e| format!("Failed to emit progress event: {}", e))?;
+                        }
+                        BatchUpdate::Result(Ok(spectrum_result)) => {
+                            if spectrum_result.index < spectra.len() {
+                                let spectrum = &mut spectra[spectrum_result.index];
+                                spectrum.baseline = Some(spectrum_result.baseline);
+                                spectrum.corrected = Some(spectrum_result.corrected);
+
+                                // Emit spectrum updated event immediately
+                                app.emit(
+                                    "import:spectrum_updated",
+                                    ImportEvent::SpectrumUpdated {
+                                        spectrum: spectrum.clone(),
+                                    },
+                                )
+                                .map_err(|e| {
+                                    format!("Failed to emit spectrum updated event: {}", e)
+                                })?;
+                            }
+                        }
+                        BatchUpdate::Result(Err(e)) => {
+                            // Log individual spectrum error but continue processing
+                            app.emit(
+                                "import:error",
+                                ImportEvent::Error {
+                                    filename: "spectrum".to_string(),
+                                    error: e,
+                                },
+                            )
+                            .map_err(|e| format!("Failed to emit error event: {}", e))?;
+                        }
                     }
                 }
             }
             Err(e) => {
-                // Emit error for batch processing failure
+                // Emit error for batch processing setup failure
                 app.emit(
                     "import:error",
                     ImportEvent::Error {
                         filename: "batch_processing".to_string(),
-                        error: format!("Batch baseline correction failed: {}", e),
+                        error: format!("Failed to start batch baseline correction: {}", e),
                     },
                 )
                 .map_err(|e| format!("Failed to emit error event: {}", e))?;

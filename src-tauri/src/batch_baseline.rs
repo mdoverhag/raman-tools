@@ -5,8 +5,10 @@
 
 use serde::{Deserialize, Serialize};
 use std::io::{BufRead, BufReader, Write};
-use std::process::{Command, Stdio};
-use tauri::{AppHandle, Emitter};
+use std::process::{Child, Command, Stdio};
+use std::sync::mpsc::{self, Receiver};
+use std::thread;
+use tauri::AppHandle;
 
 use crate::python_setup;
 
@@ -82,19 +84,60 @@ pub struct SpectrumResult {
     pub corrected: Vec<f64>,
 }
 
-/// Process multiple spectra in a single Python session
+/// Progress update from batch processing
+#[derive(Debug, Clone)]
+pub struct BatchProgress {
+    pub current: usize,
+    pub total: usize,
+}
+
+/// Update from batch processor - either progress or a result
+#[derive(Debug)]
+pub enum BatchUpdate {
+    Progress(BatchProgress),
+    Result(Result<SpectrumResult, String>),
+}
+
+/// Holds the Python child process and receiver for cleanup
+pub struct BatchProcessor {
+    child: Option<Child>,
+    receiver: Receiver<BatchUpdate>,
+}
+
+impl Drop for BatchProcessor {
+    fn drop(&mut self) {
+        // Ensure Python process is terminated when iterator is dropped
+        if let Some(mut child) = self.child.take() {
+            let _ = child.kill();
+            let _ = child.wait();
+        }
+    }
+}
+
+impl Iterator for BatchProcessor {
+    type Item = BatchUpdate;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        // Receive next update from channel
+        match self.receiver.recv() {
+            Ok(update) => Some(update),
+            Err(_) => None, // Channel closed, iteration complete
+        }
+    }
+}
+
+/// Process multiple spectra in a single Python session, returning an iterator
 ///
 /// This function:
 /// 1. Starts a single Python process with the batch processor script
 /// 2. Sends all spectra data at once
-/// 3. Reads results as they stream back, emitting progress events
-/// 4. Returns all results when complete
-pub async fn process_batch(
+/// 3. Returns an iterator that yields results as they stream back
+/// 4. Emits progress events as processing occurs
+pub fn process_batch_streaming(
     app: AppHandle,
     spectra: Vec<Vec<f64>>,
     params: BaselineParams,
-    progress_event: &str,
-) -> Result<Vec<SpectrumResult>, String> {
+) -> Result<BatchProcessor, String> {
     // Get Python and script paths
     let python_path = python_setup::get_python_path(&app)?;
     let batch_script_path = python_setup::get_batch_processor_path(&app)?;
@@ -121,19 +164,6 @@ pub async fn process_batch(
     let request_json = serde_json::to_string(&request)
         .map_err(|e| format!("Failed to serialize batch request: {}", e))?;
 
-    eprintln!(
-        "Sending batch request with {} spectra",
-        request.spectra.len()
-    );
-    eprintln!(
-        "First spectrum has {} intensities",
-        request
-            .spectra
-            .first()
-            .map(|s| s.intensities.len())
-            .unwrap_or(0)
-    );
-
     // Start Python process
     let mut child = Command::new(&python_path)
         .arg(&batch_script_path)
@@ -149,93 +179,94 @@ pub async fn process_batch(
         stdin
             .write_all(request_json.as_bytes())
             .map_err(|e| format!("Failed to write batch request: {}", e))?;
-        // Close stdin to signal we're done sending
         stdin
             .flush()
             .map_err(|e| format!("Failed to flush stdin: {}", e))?;
     }
     child.stdin.take(); // Drop stdin to close it
 
-    // Read streaming results
+    // Take stdout for processing
     let stdout = child.stdout.take().ok_or("Failed to get stdout handle")?;
-    let reader = BufReader::new(stdout);
-    let mut results = Vec::new();
-    let mut errors = Vec::new();
 
-    for line in reader.lines() {
-        let line = line.map_err(|e| format!("Failed to read output line: {}", e))?;
+    // Create channel for results
+    let (sender, receiver) = mpsc::channel();
 
-        // Parse the JSON message
-        let message: BatchMessage = serde_json::from_str(&line)
-            .map_err(|e| format!("Failed to parse message: {}. Line: {}", e, line))?;
+    // Spawn thread to read Python output and send to channel
+    thread::spawn(move || {
+        let reader = BufReader::new(stdout);
 
-        match message {
-            BatchMessage::Progress { current, total } => {
-                // Emit progress event if event name provided
-                if !progress_event.is_empty() {
-                    app.emit(
-                        progress_event,
-                        serde_json::json!({
-                            "stage": "baseline",
-                            "current": current,
-                            "total": total,
-                            "filename": format!("Processing {} of {}", current, total),
-                        }),
-                    )
-                    .ok(); // Ignore emission errors
+        for line in reader.lines() {
+            match line {
+                Ok(line) => {
+                    // Parse the JSON message
+                    match serde_json::from_str::<BatchMessage>(&line) {
+                        Ok(message) => {
+                            match message {
+                                BatchMessage::Progress { current, total } => {
+                                    // Send progress update through channel
+                                    let _ = sender.send(BatchUpdate::Progress(BatchProgress {
+                                        current,
+                                        total,
+                                    }));
+                                }
+
+                                BatchMessage::Result {
+                                    index,
+                                    baseline,
+                                    corrected,
+                                } => {
+                                    // Send result through channel
+                                    let _ = sender.send(BatchUpdate::Result(Ok(SpectrumResult {
+                                        index,
+                                        baseline,
+                                        corrected,
+                                    })));
+                                }
+
+                                BatchMessage::Error {
+                                    index,
+                                    error,
+                                    error_type,
+                                } => {
+                                    // Send error through channel
+                                    let _ = sender.send(BatchUpdate::Result(Err(format!(
+                                        "Spectrum {} failed ({}): {}",
+                                        index, error_type, error
+                                    ))));
+                                }
+
+                                BatchMessage::Complete {} => {
+                                    // Processing complete, close channel
+                                    break;
+                                }
+
+                                BatchMessage::FatalError { error, error_type } => {
+                                    // Send fatal error and close
+                                    let _ = sender.send(BatchUpdate::Result(Err(format!(
+                                        "Fatal Python error ({}): {}",
+                                        error_type, error
+                                    ))));
+                                    break;
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Ignore parse errors, could be stderr output
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Failed to read output line: {}", e);
+                    break;
                 }
             }
-
-            BatchMessage::Result {
-                index,
-                baseline,
-                corrected,
-            } => {
-                results.push(SpectrumResult {
-                    index,
-                    baseline,
-                    corrected,
-                });
-            }
-
-            BatchMessage::Error {
-                index,
-                error,
-                error_type,
-            } => {
-                errors.push(format!(
-                    "Spectrum {} failed ({}): {}",
-                    index, error_type, error
-                ));
-            }
-
-            BatchMessage::Complete {} => {
-                break;
-            }
-
-            BatchMessage::FatalError { error, error_type } => {
-                return Err(format!("Fatal Python error ({}): {}", error_type, error));
-            }
         }
-    }
 
-    // Wait for process to complete
-    let output = child
-        .wait_with_output()
-        .map_err(|e| format!("Failed to wait for Python process: {}", e))?;
+        // Channel will close when sender is dropped
+    });
 
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(format!("Python process failed: {}", stderr));
-    }
-
-    // Report any individual errors
-    if !errors.is_empty() {
-        eprintln!("Some spectra failed processing:\n{}", errors.join("\n"));
-    }
-
-    // Sort results by index to maintain order
-    results.sort_by_key(|r| r.index);
-
-    Ok(results)
+    Ok(BatchProcessor {
+        child: Some(child),
+        receiver,
+    })
 }
