@@ -135,6 +135,18 @@ pub async fn import_spectra(
 
     // Stage 2: Apply baseline correction using batch processing
     if !spectra.is_empty() {
+        // Emit event that we're preparing Python
+        app.emit(
+            "import:progress",
+            ImportEvent::Progress {
+                stage: "preparing".to_string(),
+                current: 0,
+                total: 1,
+                filename: "".to_string(),
+            },
+        )
+        .map_err(|e| format!("Failed to emit progress event: {}", e))?;
+
         // Prepare intensities for batch processing
         let intensities_batch: Vec<Vec<f64>> = spectra
             .iter()

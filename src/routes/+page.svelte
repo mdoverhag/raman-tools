@@ -177,10 +177,12 @@
             <p class="text-gray-400">
               {importProgress.stage === "parsing"
                 ? `Parsing files... ${importProgress.current}/${importProgress.total}`
-                : `Applying baseline correction... ${importProgress.current}/${importProgress.total}`}
+                : importProgress.stage === "preparing"
+                  ? "Initializing baseline correction..."
+                  : `Applying baseline correction... ${importProgress.current}/${importProgress.total}`}
             </p>
-            <p class="text-sm text-gray-500">
-              {importProgress.filename}
+            <p class="text-sm text-gray-500 h-5">
+              {importProgress.filename || "\u00A0"}
             </p>
             <div class="w-64 mx-auto bg-gray-700 rounded-full h-2">
               <div
