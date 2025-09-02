@@ -6,12 +6,14 @@
   import { applyBaselineCorrection, type BaselineResult } from "$lib/baseline";
 
   interface Spectrum {
+    id: string;
     filename: string;
-    filepath: string;
-    wavenumbers: number[];
+    wavenumber_start: number;
+    wavenumber_end: number;
+    wavenumber_step: number;
     intensities: number[];
-    baseline?: number[];
-    corrected?: number[];
+    baseline?: number[] | null;
+    corrected?: number[] | null;
   }
 
   let isDragging = $state(false);
@@ -181,7 +183,7 @@
                       {spectrum.filename}
                     </div>
                     <div class="text-sm text-gray-500">
-                      {spectrum.wavenumbers.length} data points
+                      {spectrum.intensities.length} data points
                     </div>
                   </button>
                 </li>
@@ -194,10 +196,7 @@
         {#if selectedSpectrum}
           <div class="bg-gray-800 rounded-lg border border-gray-700 p-6">
             <SpectrumChart
-              wavenumbers={selectedSpectrum.wavenumbers}
-              intensities={selectedSpectrum.intensities}
-              baseline={selectedSpectrum.baseline}
-              corrected={selectedSpectrum.corrected}
+              spectrum={selectedSpectrum}
               title={selectedSpectrum.filename}
             />
           </div>

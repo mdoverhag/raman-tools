@@ -1,13 +1,26 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
+use uuid::Uuid;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Spectrum {
+    pub id: Uuid,
     pub filename: String,
-    pub filepath: String,
-    pub wavenumbers: Vec<f32>,
-    pub intensities: Vec<f32>,
+    pub wavenumber_start: u16,
+    pub wavenumber_end: u16,
+    pub wavenumber_step: u16,
+    pub intensities: Vec<u16>,
+
+    // Baseline calculated by ALS algorithm - stored to preserve analysis parameters
+    // Not serialized when None to save disk space
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub baseline: Option<Vec<f64>>,
+
+    // Baseline-corrected intensities (intensity - baseline)
+    // Never serialized - always calculated on-demand to save disk space
+    #[serde(skip)]
+    pub corrected: Option<Vec<f64>>,
 }
 
 pub fn parse_files(filepaths: Vec<String>) -> Result<Vec<Spectrum>, String> {
@@ -24,8 +37,8 @@ pub fn parse_files(filepaths: Vec<String>) -> Result<Vec<Spectrum>, String> {
         let content = fs::read_to_string(&filepath)
             .map_err(|e| format!("Failed to read file {}: {}", filepath, e))?;
 
-        let mut wavenumbers = Vec::new();
-        let mut intensities = Vec::new();
+        let mut wavenumbers: Vec<f32> = Vec::new();
+        let mut intensities: Vec<u16> = Vec::new();
 
         for line in content.lines() {
             let parts: Vec<&str> = line.split('\t').collect();
@@ -33,17 +46,30 @@ pub fn parse_files(filepaths: Vec<String>) -> Result<Vec<Spectrum>, String> {
                 if let (Ok(wn), Ok(intensity)) = (parts[0].parse::<f32>(), parts[1].parse::<f32>())
                 {
                     wavenumbers.push(wn);
-                    intensities.push(intensity);
+                    intensities.push(intensity as u16);
                 }
             }
         }
 
         if !wavenumbers.is_empty() {
+            // Extract wavenumber parameters
+            let wavenumber_start = wavenumbers[0] as u16;
+            let wavenumber_end = wavenumbers.last().unwrap().round() as u16;
+            let wavenumber_step = if wavenumbers.len() > 1 {
+                (wavenumbers[1] - wavenumbers[0]).round() as u16
+            } else {
+                1
+            };
+
             spectra.push(Spectrum {
+                id: Uuid::new_v4(),
                 filename,
-                filepath,
-                wavenumbers,
+                wavenumber_start,
+                wavenumber_end,
+                wavenumber_step,
                 intensities,
+                baseline: None,
+                corrected: None,
             });
         } else {
             // Log files that couldn't be parsed
@@ -82,8 +108,10 @@ mod tests {
         let spectra = result.unwrap();
         assert_eq!(spectra.len(), 1);
         assert_eq!(spectra[0].filename, "test_spectrum.txt");
-        assert_eq!(spectra[0].wavenumbers, vec![200.0, 201.0, 202.0, 203.0]);
-        assert_eq!(spectra[0].intensities, vec![145.0, 143.0, 143.0, 144.0]);
+        assert_eq!(spectra[0].wavenumber_start, 200);
+        assert_eq!(spectra[0].wavenumber_end, 203);
+        assert_eq!(spectra[0].wavenumber_step, 1);
+        assert_eq!(spectra[0].intensities, vec![145, 143, 143, 144]);
     }
 
     #[test]
@@ -127,8 +155,7 @@ mod tests {
         assert!(result.is_ok());
         let spectra = result.unwrap();
         assert_eq!(spectra.len(), 1);
-        assert_eq!(spectra[0].wavenumbers.len(), 2); // Only valid lines
-        assert_eq!(spectra[0].intensities.len(), 2);
+        assert_eq!(spectra[0].intensities.len(), 2); // Only valid lines
     }
 
     #[test]
