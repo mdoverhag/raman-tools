@@ -2,6 +2,15 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Changelog Style
+
+When updating CHANGELOG.md:
+- Use technical, straightforward language - describe what actually changed in the code
+- Avoid marketing-style language or embellishments
+- List each change only once in the most appropriate section
+- Focus on concrete changes: new files, moved code, refactored modules, etc.
+- Don't duplicate items across multiple sections
+
 ## Project Overview
 
 Raman Tools is a cross-platform desktop application for analyzing Raman spectroscopy data, built with Tauri and SvelteKit. The application supports scientific research on detecting circulating tumor cells (CTCs) in blood for breast cancer diagnosis.
