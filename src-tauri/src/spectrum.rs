@@ -18,8 +18,6 @@ pub struct Spectrum {
     pub baseline: Option<Vec<f64>>,
 
     // Baseline-corrected intensities (intensity - baseline)
-    // Never serialized - always calculated on-demand to save disk space
-    #[serde(skip)]
     pub corrected: Option<Vec<f64>>,
 }
 

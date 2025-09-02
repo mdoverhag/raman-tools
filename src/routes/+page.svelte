@@ -3,7 +3,6 @@
   import { invoke } from "@tauri-apps/api/core";
   import { onMount } from "svelte";
   import SpectrumChart from "$lib/SpectrumChart.svelte";
-  import { applyBaselineCorrection, type BaselineResult } from "$lib/baseline";
 
   interface Spectrum {
     id: string;
@@ -21,13 +20,6 @@
   let isLoading = $state(false);
   let error = $state<string | null>(null);
   let selectedSpectrum = $state<Spectrum | null>(null);
-  let baselineParams = $state({
-    denoise: true,
-    windowSize: 5,
-    lambdaParam: 1e7,
-    p: 0.01,
-    d: 2,
-  });
 
   async function handleFileDrop(paths: string[]) {
     console.log("Processing files:", paths);
@@ -43,12 +35,12 @@
         return;
       }
 
-      // Call Rust command to parse the files
+      // Call Rust command to parse the files and apply baseline correction
       const parsedSpectra = await invoke<Spectrum[]>("parse_spectrum_files", {
         filepaths: txtFiles,
       });
 
-      console.log("Parsed spectra:", parsedSpectra);
+      console.log("Parsed spectra with baseline correction:", parsedSpectra);
 
       // Check if some files were skipped
       const skippedCount = txtFiles.length - parsedSpectra.length;
@@ -59,25 +51,7 @@
       if (parsedSpectra.length === 0) {
         error = "No valid spectrum data found in any of the files";
       } else {
-        // Apply baseline correction to each spectrum
-        console.log("Applying baseline correction to spectra...");
-        const correctedSpectra = await Promise.all(
-          parsedSpectra.map(async (spectrum) => {
-            try {
-              const result = await applyBaselineCorrection(spectrum.intensities, baselineParams);
-              return {
-                ...spectrum,
-                baseline: result.baseline,
-                corrected: result.corrected,
-              };
-            } catch (e) {
-              console.error(`Failed to apply baseline correction to ${spectrum.filename}:`, e);
-              // Return spectrum without baseline correction on error
-              return spectrum;
-            }
-          })
-        );
-        spectra = correctedSpectra;
+        spectra = parsedSpectra;
       }
     } catch (e) {
       console.error("Error parsing files:", e);
@@ -195,10 +169,7 @@
         <!-- Chart Section -->
         {#if selectedSpectrum}
           <div class="bg-gray-800 rounded-lg border border-gray-700 p-6">
-            <SpectrumChart
-              spectrum={selectedSpectrum}
-              title={selectedSpectrum.filename}
-            />
+            <SpectrumChart spectrum={selectedSpectrum} title={selectedSpectrum.filename} />
           </div>
         {:else}
           <div
