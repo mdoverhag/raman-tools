@@ -2,20 +2,46 @@
   import { onMount } from "svelte";
   import * as d3 from "d3";
 
-  interface Props {
-    wavenumbers: number[];
+  interface Spectrum {
+    id: string;
+    filename: string;
+    wavenumber_start: number;
+    wavenumber_end: number;
+    wavenumber_step: number;
     intensities: number[];
-    baseline?: number[];
-    corrected?: number[];
+    baseline?: number[] | null;
+    corrected?: number[] | null;
+  }
+
+  interface Props {
+    spectrum: Spectrum;
     title?: string;
   }
 
-  let { wavenumbers, intensities, baseline, corrected, title = "Spectrum" }: Props = $props();
+  let { spectrum, title = "Spectrum" }: Props = $props();
 
   let container: HTMLDivElement;
 
+  // Helper function to generate wavenumbers array from start/end/step
+  function generateWavenumbers(start: number, end: number, step: number): number[] {
+    const count = Math.floor((end - start) / step) + 1;
+    return Array.from({ length: count }, (_, i) => start + i * step);
+  }
+
   function drawChart() {
-    if (!container || !wavenumbers?.length || !intensities?.length) return;
+    if (!container || !spectrum) return;
+
+    // Generate wavenumbers array from spectrum parameters
+    const wavenumbers = generateWavenumbers(
+      spectrum.wavenumber_start,
+      spectrum.wavenumber_end,
+      spectrum.wavenumber_step
+    );
+    const intensities = spectrum.intensities;
+    const baseline = spectrum.baseline;
+    const corrected = spectrum.corrected;
+
+    if (!wavenumbers?.length || !intensities?.length) return;
 
     // Set dimensions and margins
     const margin = { top: 40, right: 30, bottom: 50, left: 70 };
@@ -227,8 +253,9 @@
     drawChart();
   });
 
-  // Redraw chart when props change
+  // Redraw chart when spectrum changes
   $effect(() => {
+    spectrum; // Track spectrum changes
     drawChart();
   });
 </script>

@@ -3,15 +3,16 @@
   import { invoke } from "@tauri-apps/api/core";
   import { onMount } from "svelte";
   import SpectrumChart from "$lib/SpectrumChart.svelte";
-  import { applyBaselineCorrection, type BaselineResult } from "$lib/baseline";
 
   interface Spectrum {
+    id: string;
     filename: string;
-    filepath: string;
-    wavenumbers: number[];
+    wavenumber_start: number;
+    wavenumber_end: number;
+    wavenumber_step: number;
     intensities: number[];
-    baseline?: number[];
-    corrected?: number[];
+    baseline?: number[] | null;
+    corrected?: number[] | null;
   }
 
   let isDragging = $state(false);
@@ -19,18 +20,19 @@
   let isLoading = $state(false);
   let error = $state<string | null>(null);
   let selectedSpectrum = $state<Spectrum | null>(null);
-  let baselineParams = $state({
-    denoise: true,
-    windowSize: 5,
-    lambdaParam: 1e7,
-    p: 0.01,
-    d: 2,
-  });
+  let importProgress = $state<{
+    stage: string;
+    current: number;
+    total: number;
+    filename: string;
+  } | null>(null);
 
   async function handleFileDrop(paths: string[]) {
     console.log("Processing files:", paths);
     isLoading = true;
     error = null;
+    importProgress = null;
+    spectra = []; // Clear existing spectra
 
     try {
       // Filter for .txt files only
@@ -41,47 +43,28 @@
         return;
       }
 
-      // Call Rust command to parse the files
+      // Call Rust command to parse the files and apply baseline correction
       const parsedSpectra = await invoke<Spectrum[]>("parse_spectrum_files", {
         filepaths: txtFiles,
       });
 
-      console.log("Parsed spectra:", parsedSpectra);
-
-      // Check if some files were skipped
-      const skippedCount = txtFiles.length - parsedSpectra.length;
-      if (skippedCount > 0) {
-        error = `Warning: ${skippedCount} file(s) contained no valid spectrum data`;
-      }
+      console.log("Import complete:", parsedSpectra);
 
       if (parsedSpectra.length === 0) {
         error = "No valid spectrum data found in any of the files";
       } else {
-        // Apply baseline correction to each spectrum
-        console.log("Applying baseline correction to spectra...");
-        const correctedSpectra = await Promise.all(
-          parsedSpectra.map(async (spectrum) => {
-            try {
-              const result = await applyBaselineCorrection(spectrum.intensities, baselineParams);
-              return {
-                ...spectrum,
-                baseline: result.baseline,
-                corrected: result.corrected,
-              };
-            } catch (e) {
-              console.error(`Failed to apply baseline correction to ${spectrum.filename}:`, e);
-              // Return spectrum without baseline correction on error
-              return spectrum;
-            }
-          })
-        );
-        spectra = correctedSpectra;
+        spectra = parsedSpectra;
+        // Auto-select first spectrum
+        if (!selectedSpectrum && spectra.length > 0) {
+          selectedSpectrum = spectra[0];
+        }
       }
     } catch (e) {
       console.error("Error parsing files:", e);
       error = e instanceof Error ? e.message : String(e);
     } finally {
       isLoading = false;
+      importProgress = null;
     }
   }
 
@@ -104,11 +87,61 @@
       isDragging = false;
     });
 
+    // Listen for import progress events
+    const unlistenProgress = listen<any>("import:progress", (event) => {
+      if (event.payload) {
+        console.log("Progress event:", event.payload);
+        importProgress = {
+          stage: event.payload.stage,
+          current: event.payload.current,
+          total: event.payload.total,
+          filename: event.payload.filename,
+        };
+      }
+    });
+
+    // Listen for spectrum ready events (parsed but no baseline yet)
+    const unlistenSpectrumReady = listen<any>("import:spectrum_ready", (event) => {
+      if (event.payload?.spectrum) {
+        // Add spectrum as soon as it's parsed
+        spectra = [...spectra, event.payload.spectrum];
+        // Auto-select first spectrum
+        if (!selectedSpectrum) {
+          selectedSpectrum = event.payload.spectrum;
+        }
+      }
+    });
+
+    // Listen for spectrum updated events (baseline correction complete)
+    const unlistenSpectrumUpdated = listen<any>("import:spectrum_updated", (event) => {
+      if (event.payload?.spectrum) {
+        // Update the spectrum with baseline correction
+        const updatedSpectrum = event.payload.spectrum;
+        spectra = spectra.map((s) => (s.id === updatedSpectrum.id ? updatedSpectrum : s));
+        // Update selected spectrum if it's the one being updated
+        if (selectedSpectrum?.id === updatedSpectrum.id) {
+          selectedSpectrum = updatedSpectrum;
+        }
+      }
+    });
+
+    // Listen for import error events
+    const unlistenError = listen<any>("import:error", (event) => {
+      if (event.payload) {
+        console.error(`Import error for ${event.payload.filename}: ${event.payload.error}`);
+        // Could accumulate errors or show them in UI
+      }
+    });
+
     // Cleanup listeners
     return () => {
       unlisten.then((fn) => fn());
       unlistenHover.then((fn) => fn());
       unlistenCancelled.then((fn) => fn());
+      unlistenProgress.then((fn) => fn());
+      unlistenSpectrumReady.then((fn) => fn());
+      unlistenSpectrumUpdated.then((fn) => fn());
+      unlistenError.then((fn) => fn());
     };
   });
 </script>
@@ -139,7 +172,26 @@
             stroke-linejoin="round"
           />
         </svg>
-        {#if isLoading}
+        {#if isLoading && importProgress}
+          <div class="space-y-2">
+            <p class="text-gray-400">
+              {importProgress.stage === "parsing"
+                ? `Parsing files... ${importProgress.current}/${importProgress.total}`
+                : importProgress.stage === "preparing"
+                  ? "Initializing baseline correction..."
+                  : `Applying baseline correction... ${importProgress.current}/${importProgress.total}`}
+            </p>
+            <p class="text-sm text-gray-500 h-5">
+              {importProgress.filename || "\u00A0"}
+            </p>
+            <div class="w-64 mx-auto bg-gray-700 rounded-full h-2">
+              <div
+                class="bg-blue-500 h-2 rounded-full"
+                style:width="{(importProgress.current / importProgress.total) * 100}%"
+              ></div>
+            </div>
+          </div>
+        {:else if isLoading}
           <p class="text-gray-400">Processing files...</p>
         {:else if isDragging}
           <p class="text-blue-400 font-medium">Drop files here...</p>
@@ -171,8 +223,8 @@
               {#each spectra as spectrum}
                 <li>
                   <button
-                    class="w-full text-left px-4 py-3 hover:bg-gray-700/50 transition-colors {selectedSpectrum ===
-                    spectrum
+                    class="w-full text-left px-4 py-3 hover:bg-gray-700/50 transition-colors {selectedSpectrum?.id ===
+                    spectrum.id
                       ? 'bg-blue-900/30 border-l-2 border-blue-500'
                       : ''}"
                     onclick={() => (selectedSpectrum = spectrum)}
@@ -181,7 +233,7 @@
                       {spectrum.filename}
                     </div>
                     <div class="text-sm text-gray-500">
-                      {spectrum.wavenumbers.length} data points
+                      {spectrum.intensities.length} data points
                     </div>
                   </button>
                 </li>
@@ -193,13 +245,7 @@
         <!-- Chart Section -->
         {#if selectedSpectrum}
           <div class="bg-gray-800 rounded-lg border border-gray-700 p-6">
-            <SpectrumChart
-              wavenumbers={selectedSpectrum.wavenumbers}
-              intensities={selectedSpectrum.intensities}
-              baseline={selectedSpectrum.baseline}
-              corrected={selectedSpectrum.corrected}
-              title={selectedSpectrum.filename}
-            />
+            <SpectrumChart spectrum={selectedSpectrum} title={selectedSpectrum.filename} />
           </div>
         {:else}
           <div

@@ -5,6 +5,25 @@ All notable changes to Raman Tools will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2025-09-02
+
+### Added
+
+- Batch processing for baseline correction - single Python subprocess handles all spectra
+- New `batch_processor.py` script that streams JSON results as each spectrum completes
+- `batch_baseline.rs` module providing iterator-based interface for batch processing
+- `spectrum_importer.rs` module to handle file imports and emit progress events
+- `samples.rs` module with CRUD operations for sample management
+- Three-stage progress reporting (parsing files, setting up Python, applying baseline correction)
+
+### Changed
+
+- Moved file parsing code from `spectrum.rs` to `spectrum_importer.rs`
+- Baseline correction now uses streaming results via Rust channels and iterators
+- Backend initiates baseline correction instead of frontend
+- Updated spectrum struct and related data handling
+- Split Python baseline correction into two files: core algorithm (`baseline_correction.py`) and batch processing (`batch_processor.py`)
+
 ## [0.2.0] - 2025-09-01
 
 ### Added
