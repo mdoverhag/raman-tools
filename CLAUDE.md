@@ -65,7 +65,25 @@ These commands ensure consistent code style across the project.
 - **Installation**: Automatic on first launch - downloads uv, installs Python 3.13, and sets up virtual environment
 - **Platform Support**: Full support for Windows, macOS, and Linux
 - **Location**: Python runtime stored in app data directory (`~/Library/Application Support/com.mikaeldoverhag.raman-tools/runtime/` on macOS)
-- **Source Files**: `src-tauri/python/` contains `baseline_correction.py` and `requirements.txt` embedded at compile time
+- **Source Files**: 
+  - `baseline_correction.py`: Pure algorithm implementation (ALS and denoising)
+  - `batch_processor.py`: Handles batch processing with streaming JSON output
+  - `requirements.txt`: Python dependencies (numpy, scipy)
+- **File Syncing**: Python files are automatically synced to runtime directory on app startup via `sync_python_files()`
+
+### Batch Processing Architecture
+
+- **Performance Optimization**: Single Python process handles all spectra (avoids ~150 process starts)
+- **Streaming Results**: Uses Rust channels and iterators to stream results as they complete
+- **Real-time Updates**: UI updates immediately as each spectrum is processed
+- **Progress Tracking**: Three-stage progress reporting:
+  1. Parsing files (shows filename)
+  2. Preparing baseline correction (Python bytecode compilation on first run)
+  3. Applying baseline correction (shows filename)
+- **Module Separation**:
+  - `batch_baseline.rs`: Manages Python process, provides iterator interface with `BatchUpdate` enum
+  - `spectrum_importer.rs`: Orchestrates import flow and emits UI events
+  - Clean separation between data processing and UI event emission
 
 ## Key Configuration Files
 
