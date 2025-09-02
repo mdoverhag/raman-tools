@@ -1,4 +1,4 @@
-use crate::python_bridge;
+use crate::batch_baseline::{process_batch, BaselineParams};
 use crate::spectrum::Spectrum;
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -133,71 +133,55 @@ pub async fn import_spectra(
         }
     }
 
-    // Stage 2: Apply baseline correction
-    let total_spectra = spectra.len();
+    // Stage 2: Apply baseline correction using batch processing
+    if !spectra.is_empty() {
+        // Prepare intensities for batch processing
+        let intensities_batch: Vec<Vec<f64>> = spectra
+            .iter()
+            .map(|s| s.intensities.iter().map(|&i| i as f64).collect())
+            .collect();
 
-    // Baseline correction parameters (default for now)
-    let denoise = true;
-    let window_size = 5;
-    let lambda_param = 1e7;
-    let p = 0.01;
-    let d = 2;
+        // Use default baseline parameters
+        let params = BaselineParams::default();
 
-    for (index, spectrum) in spectra.iter_mut().enumerate() {
-        // Emit baseline correction progress
-        app.emit(
-            "import:progress",
-            ImportEvent::Progress {
-                stage: "baseline".to_string(),
-                current: index + 1,
-                total: total_spectra,
-                filename: spectrum.filename.clone(),
-            },
-        )
-        .map_err(|e| format!("Failed to emit progress event: {}", e))?;
-
-        // Convert u16 intensities to f64 for baseline correction
-        let intensities_f64: Vec<f64> = spectrum.intensities.iter().map(|&i| i as f64).collect();
-
-        match python_bridge::apply_baseline_correction(
+        // Process all spectra in a single batch
+        match process_batch(
             app.clone(),
-            intensities_f64,
-            denoise,
-            window_size,
-            lambda_param,
-            p,
-            d,
+            intensities_batch,
+            params,
+            "import:progress", // Event name for progress updates
         )
         .await
         {
-            Ok(result) => {
-                spectrum.baseline = Some(result.baseline);
-                spectrum.corrected = Some(result.corrected);
+            Ok(results) => {
+                // Update each spectrum with its baseline correction results
+                for result in results {
+                    if result.index < spectra.len() {
+                        let spectrum = &mut spectra[result.index];
+                        spectrum.baseline = Some(result.baseline);
+                        spectrum.corrected = Some(result.corrected);
 
-                // Emit spectrum updated event with baseline correction
-                app.emit(
-                    "import:spectrum_updated",
-                    ImportEvent::SpectrumUpdated {
-                        spectrum: spectrum.clone(),
-                    },
-                )
-                .map_err(|e| format!("Failed to emit spectrum updated event: {}", e))?;
+                        // Emit spectrum updated event
+                        app.emit(
+                            "import:spectrum_updated",
+                            ImportEvent::SpectrumUpdated {
+                                spectrum: spectrum.clone(),
+                            },
+                        )
+                        .map_err(|e| format!("Failed to emit spectrum updated event: {}", e))?;
+                    }
+                }
             }
             Err(e) => {
-                // Emit error event but continue
+                // Emit error for batch processing failure
                 app.emit(
                     "import:error",
                     ImportEvent::Error {
-                        filename: spectrum.filename.clone(),
-                        error: format!("Baseline correction failed: {}", e),
+                        filename: "batch_processing".to_string(),
+                        error: format!("Batch baseline correction failed: {}", e),
                     },
                 )
                 .map_err(|e| format!("Failed to emit error event: {}", e))?;
-
-                eprintln!(
-                    "Failed to apply baseline correction to {}: {}",
-                    spectrum.filename, e
-                );
             }
         }
     }

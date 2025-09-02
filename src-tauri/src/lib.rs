@@ -1,3 +1,4 @@
+mod batch_baseline;
 mod python_bridge;
 mod python_setup;
 mod samples;
@@ -87,6 +88,11 @@ pub fn run() {
             python_setup::check_python_status,
             python_setup::setup_python_env
         ])
+        .setup(|app| {
+            // Sync Python files on every app start
+            python_setup::sync_python_files(app.handle().clone())?;
+            Ok(())
+        })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

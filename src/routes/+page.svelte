@@ -174,7 +174,7 @@
         {#if isLoading && importProgress}
           <div class="space-y-2">
             <p class="text-gray-400">
-              {importProgress.stage === "parsing" 
+              {importProgress.stage === "parsing"
                 ? `Parsing files... ${importProgress.current}/${importProgress.total}`
                 : `Applying baseline correction... ${importProgress.current}/${importProgress.total}`}
             </p>
