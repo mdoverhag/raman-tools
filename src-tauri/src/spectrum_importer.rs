@@ -1,6 +1,8 @@
 use crate::python_bridge;
-use crate::spectrum::{self, Spectrum};
+use crate::spectrum::Spectrum;
 use serde::{Deserialize, Serialize};
+use std::fs;
+use std::path::Path;
 use tauri::{AppHandle, Emitter};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -25,6 +27,53 @@ pub enum ImportEvent {
         filename: String,
         error: String,
     },
+}
+
+// Parse a single spectrum file
+fn parse_file(filepath: &str) -> Result<Spectrum, String> {
+    let path = Path::new(filepath);
+    let filename = path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("unknown")
+        .to_string();
+
+    let content = fs::read_to_string(filepath)
+        .map_err(|e| format!("Failed to read file {}: {}", filepath, e))?;
+
+    let mut wavenumbers: Vec<f32> = Vec::new();
+    let mut intensities: Vec<u16> = Vec::new();
+
+    for line in content.lines() {
+        let parts: Vec<&str> = line.split('\t').collect();
+        if parts.len() == 2 {
+            if let (Ok(wn), Ok(intensity)) = (parts[0].parse::<f32>(), parts[1].parse::<f32>()) {
+                wavenumbers.push(wn);
+                intensities.push(intensity as u16);
+            }
+        }
+    }
+
+    if wavenumbers.is_empty() {
+        return Err(format!("No valid spectrum data found in {}", filename));
+    }
+
+    // Extract wavenumber parameters
+    let wavenumber_start = wavenumbers[0] as u16;
+    let wavenumber_end = wavenumbers.last().unwrap().round() as u16;
+    let wavenumber_step = if wavenumbers.len() > 1 {
+        (wavenumbers[1] - wavenumbers[0]).round() as u16
+    } else {
+        1
+    };
+
+    Ok(Spectrum::new(
+        filename,
+        wavenumber_start,
+        wavenumber_end,
+        wavenumber_step,
+        intensities,
+    ))
 }
 
 pub async fn import_spectra(
@@ -55,20 +104,18 @@ pub async fn import_spectra(
         .map_err(|e| format!("Failed to emit progress event: {}", e))?;
 
         // Parse single file
-        match spectrum::parse_files(vec![filepath.clone()]) {
-            Ok(mut parsed) => {
-                if let Some(spectrum) = parsed.pop() {
-                    // Emit spectrum ready event immediately after parsing
-                    app.emit(
-                        "import:spectrum_ready",
-                        ImportEvent::SpectrumReady {
-                            spectrum: spectrum.clone(),
-                        },
-                    )
-                    .map_err(|e| format!("Failed to emit spectrum ready event: {}", e))?;
+        match parse_file(filepath) {
+            Ok(spectrum) => {
+                // Emit spectrum ready event immediately after parsing
+                app.emit(
+                    "import:spectrum_ready",
+                    ImportEvent::SpectrumReady {
+                        spectrum: spectrum.clone(),
+                    },
+                )
+                .map_err(|e| format!("Failed to emit spectrum ready event: {}", e))?;
 
-                    spectra.push(spectrum);
-                }
+                spectra.push(spectrum);
             }
             Err(e) => {
                 // Emit error event but continue with other files
@@ -165,4 +212,66 @@ pub async fn import_spectra(
     .map_err(|e| format!("Failed to emit complete event: {}", e))?;
 
     Ok(spectra)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use std::path::PathBuf;
+    use tempfile::TempDir;
+
+    fn create_test_spectrum_file(dir: &TempDir, filename: &str, content: &str) -> PathBuf {
+        let file_path = dir.path().join(filename);
+        fs::write(&file_path, content).unwrap();
+        file_path
+    }
+
+    #[test]
+    fn test_parse_valid_spectrum_file() {
+        let temp_dir = TempDir::new().unwrap();
+        let content = "200\t145\n201\t143\n202\t143\n203\t144";
+        let file_path = create_test_spectrum_file(&temp_dir, "test_spectrum.txt", content);
+
+        let result = parse_file(file_path.to_str().unwrap());
+
+        assert!(result.is_ok());
+        let spectrum = result.unwrap();
+        assert_eq!(spectrum.filename, "test_spectrum.txt");
+        assert_eq!(spectrum.wavenumber_start, 200);
+        assert_eq!(spectrum.wavenumber_end, 203);
+        assert_eq!(spectrum.wavenumber_step, 1);
+        assert_eq!(spectrum.intensities, vec![145, 143, 143, 144]);
+    }
+
+    #[test]
+    fn test_parse_empty_file() {
+        let temp_dir = TempDir::new().unwrap();
+        let file_path = create_test_spectrum_file(&temp_dir, "empty.txt", "");
+
+        let result = parse_file(file_path.to_str().unwrap());
+
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("No valid spectrum data"));
+    }
+
+    #[test]
+    fn test_parse_malformed_lines() {
+        let temp_dir = TempDir::new().unwrap();
+        let content = "200\t145\ninvalid line\n202\t143\n203\tnot_a_number";
+        let file_path = create_test_spectrum_file(&temp_dir, "malformed.txt", content);
+
+        let result = parse_file(file_path.to_str().unwrap());
+
+        assert!(result.is_ok());
+        let spectrum = result.unwrap();
+        assert_eq!(spectrum.intensities.len(), 2); // Only valid lines
+    }
+
+    #[test]
+    fn test_file_not_found() {
+        let result = parse_file("non_existent_file.txt");
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Failed to read file"));
+    }
 }
