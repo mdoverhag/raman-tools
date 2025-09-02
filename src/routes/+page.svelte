@@ -99,14 +99,27 @@
       }
     });
 
-    // Listen for spectrum ready events (could use to show spectra as they're processed)
+    // Listen for spectrum ready events (parsed but no baseline yet)
     const unlistenSpectrumReady = listen<any>("import:spectrum_ready", (event) => {
       if (event.payload?.spectrum) {
-        // Add spectrum as it becomes ready
+        // Add spectrum as soon as it's parsed
         spectra = [...spectra, event.payload.spectrum];
         // Auto-select first spectrum
         if (!selectedSpectrum) {
           selectedSpectrum = event.payload.spectrum;
+        }
+      }
+    });
+
+    // Listen for spectrum updated events (baseline correction complete)
+    const unlistenSpectrumUpdated = listen<any>("import:spectrum_updated", (event) => {
+      if (event.payload?.spectrum) {
+        // Update the spectrum with baseline correction
+        const updatedSpectrum = event.payload.spectrum;
+        spectra = spectra.map((s) => (s.id === updatedSpectrum.id ? updatedSpectrum : s));
+        // Update selected spectrum if it's the one being updated
+        if (selectedSpectrum?.id === updatedSpectrum.id) {
+          selectedSpectrum = updatedSpectrum;
         }
       }
     });
@@ -126,6 +139,7 @@
       unlistenCancelled.then((fn) => fn());
       unlistenProgress.then((fn) => fn());
       unlistenSpectrumReady.then((fn) => fn());
+      unlistenSpectrumUpdated.then((fn) => fn());
       unlistenError.then((fn) => fn());
     };
   });
@@ -160,10 +174,12 @@
         {#if isLoading && importProgress}
           <div class="space-y-2">
             <p class="text-gray-400">
-              {importProgress.stage === "parsing" ? "Reading" : "Processing"} files...
+              {importProgress.stage === "parsing" 
+                ? `Parsing files... ${importProgress.current}/${importProgress.total}`
+                : `Applying baseline correction... ${importProgress.current}/${importProgress.total}`}
             </p>
             <p class="text-sm text-gray-500">
-              {importProgress.filename} ({importProgress.current}/{importProgress.total})
+              {importProgress.filename}
             </p>
             <div class="w-64 mx-auto bg-gray-700 rounded-full h-2">
               <div

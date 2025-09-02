@@ -15,6 +15,9 @@ pub enum ImportEvent {
     SpectrumReady {
         spectrum: Spectrum,
     },
+    SpectrumUpdated {
+        spectrum: Spectrum,
+    },
     Complete {
         spectra: Vec<Spectrum>,
     },
@@ -55,6 +58,15 @@ pub async fn import_spectra(
         match spectrum::parse_files(vec![filepath.clone()]) {
             Ok(mut parsed) => {
                 if let Some(spectrum) = parsed.pop() {
+                    // Emit spectrum ready event immediately after parsing
+                    app.emit(
+                        "import:spectrum_ready",
+                        ImportEvent::SpectrumReady {
+                            spectrum: spectrum.clone(),
+                        },
+                    )
+                    .map_err(|e| format!("Failed to emit spectrum ready event: {}", e))?;
+
                     spectra.push(spectrum);
                 }
             }
@@ -115,14 +127,14 @@ pub async fn import_spectra(
                 spectrum.baseline = Some(result.baseline);
                 spectrum.corrected = Some(result.corrected);
 
-                // Emit spectrum ready event
+                // Emit spectrum updated event with baseline correction
                 app.emit(
-                    "import:spectrum_ready",
-                    ImportEvent::SpectrumReady {
+                    "import:spectrum_updated",
+                    ImportEvent::SpectrumUpdated {
                         spectrum: spectrum.clone(),
                     },
                 )
-                .map_err(|e| format!("Failed to emit spectrum ready event: {}", e))?;
+                .map_err(|e| format!("Failed to emit spectrum updated event: {}", e))?;
             }
             Err(e) => {
                 // Emit error event but continue
