@@ -15,10 +15,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `spectrum_importer.rs` module to handle file imports and emit progress events
 - `samples.rs` module with CRUD operations for sample management
 - Three-stage progress reporting (parsing files, setting up Python, applying baseline correction)
+- Sample-spectrum linking - `parse_spectrum_files` command now accepts `sample_id` parameter
+- `add_spectra_to_sample` method in `SampleStorage` to track spectrum ownership
+- Frontend sample management UI with sidebar navigation and header editing
+- Molecule dropdown selectors for Raman (DTNB, MBA, TFMBA) and Target (IgG, BSA, HER2, EpCAM, TROP2) molecules
+- Auto-focus name field when creating new samples
 
 ### Changed
 
 - Moved file parsing code from `spectrum.rs` to `spectrum_importer.rs`
+- Updated Rust structs to use `#[serde(rename_all = "camelCase")]` for JavaScript compatibility
 - Baseline correction now uses streaming results via Rust channels and iterators
 - Backend initiates baseline correction instead of frontend
 - Updated spectrum struct and related data handling

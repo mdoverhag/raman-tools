@@ -66,6 +66,7 @@ These commands ensure consistent code style across the project.
 - Frontend uses `@tauri-apps/api/core` to invoke Rust commands
 - Example: `await invoke("greet", { name })` calls the `greet` function in Rust
 - Commands must be registered in `tauri::generate_handler![]` in `lib.rs`
+- **Important**: Rust structs use snake_case but must serialize to camelCase for JavaScript using `#[serde(rename_all = "camelCase")]`
 
 ### Python Integration for Baseline Correction
 
@@ -101,6 +102,23 @@ These commands ensure consistent code style across the project.
 - **Tauri Config**: Uses Bun commands for development and build processes
 - **Package Manager**: Uses Bun (not npm/yarn/pnpm)
 
+## Sample Management System
+
+- **Storage**: In-memory HashMap in Rust backend (`src-tauri/src/samples.rs`)
+- **Sample Model**: Each sample has:
+  - ID (UUID)
+  - Name
+  - Raman molecules (DTNB, MBA, TFMBA)
+  - Target molecules (IgG, BSA, HER2, EpCAM, TROP2)
+  - Spectrum IDs (links to uploaded spectra)
+- **UI Patterns**:
+  - Left sidebar shows sample list (read-only)
+  - Double-click sample name in header to edit
+  - Click molecule pills to open dropdown selector
+  - Spectra automatically link to selected sample on upload
+- **Frontend State**: Svelte store (`samples.svelte.ts`) caches data and manages UI state
+- **Key Flow**: Select sample → Drop files → Files linked to sample → Spectrum count updates
+
 ## Domain Context
 
 ### Scientific Background
@@ -112,40 +130,43 @@ These commands ensure consistent code style across the project.
 - **Data Structure**: Samples typically contain 150 replicate spectrum measurements
 - **File Format**: .txt files with wavenumber (200-2000 cm⁻¹) and intensity columns
 
-### Data Model Concepts
+### Data Model (Implemented)
 
-- **Experiments**: Research projects containing multiple samples
-- **Samples**: Collections of spectra, can be:
-  - Single: One Raman molecule + one target
-  - Multiplex: Multiple molecules for simultaneous detection
-- **Spectra**: Individual measurements with wavenumber/intensity arrays (~1801 data points each)
+- **Samples**: Container for organizing spectra
+  - Has name and molecule configuration
+  - Tracks which spectra belong to it
+  - Can have multiple Raman and Target molecules
+- **Spectra**: Individual measurements (~1801 data points each)
+  - Linked to a sample via sample_id
+  - Contains wavenumber/intensity arrays
+  - Has baseline correction applied automatically
+- **Future**: Experiments (collections of samples) not yet implemented
 
-## Implementation Roadmap
+## Implementation Status
 
-### Phase 1: Core Infrastructure (Current)
+### Completed Features
 
-- Set up basic Tauri application structure
-- Implement file system access for bulk file uploads
-- Design local data storage (consider SQLite for portability)
+- ✅ Basic Tauri application with dark theme UI
+- ✅ Drag-and-drop bulk file upload (150+ files)
+- ✅ Spectrum file parser for .txt format
+- ✅ Real-time plotting with Chart.js
+- ✅ Sample management system (CRUD operations)
+- ✅ Baseline correction via Python integration (ALS algorithm)
+- ✅ Batch processing with progress updates
+- ✅ Linking spectra to samples
 
-### Phase 2: Data Import & Visualization
+### In Progress
 
-- Build spectrum file parser for .txt format
-- Create UI for drag-and-drop bulk file upload (150+ files)
-- Implement basic plotting using a JavaScript charting library
-- Design sample and experiment management interface
+- 🔄 Data persistence (currently in-memory only)
+- 🔄 Export functionality
 
-### Phase 3: Analysis Features
-
-- Implement baseline correction algorithms (ALS)
-- Add peak detection and quantification
-- Create data export functionality for Python/R workflows
-
-### Phase 4: Advanced Features
+### Future Features
 
 - Statistical analysis of replicate measurements
-- Integration with scientific Python libraries (via Tauri commands)
-- Report generation and data export
+- Peak detection and quantification
+- Experiment management (grouping samples)
+- Report generation
+- SQLite or file-based persistence
 
 ## CI/CD and Releases
 

@@ -19,7 +19,13 @@ This tool supports PhD research focused on:
 
 ### Implemented Features
 
+- **Sample Management**: Organize spectra into samples with molecular configurations
+  - Create and manage samples with custom names
+  - Assign Raman molecules (DTNB, MBA, TFMBA) and target molecules (IgG, BSA, HER2, EpCAM, TROP2)
+  - Track spectrum count per sample
 - **Bulk File Upload**: Drag-and-drop support for 150+ spectrum files with real-time progress
+  - Automatic linking to selected sample
+  - Progress tracking for parsing and baseline correction
 - **Spectrum Parser**: Imports .txt format files with wavenumber/intensity data
 - **Baseline Correction**: ALS (Asymmetric Least Squares) algorithm via integrated Python runtime
   - Single Python process for all spectra (optimized performance)
@@ -28,7 +34,6 @@ This tool supports PhD research focused on:
 - **Interactive Visualization**: Real-time spectrum plotting with Chart.js
   - Display raw intensities, baseline, and corrected spectra
   - Zoom and pan functionality
-- **Sample Management**: Basic CRUD operations for organizing spectra into samples
 
 ### In Development
 
