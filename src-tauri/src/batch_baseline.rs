@@ -118,11 +118,8 @@ impl Iterator for BatchProcessor {
     type Item = BatchUpdate;
 
     fn next(&mut self) -> Option<Self::Item> {
-        // Receive next update from channel
-        match self.receiver.recv() {
-            Ok(update) => Some(update),
-            Err(_) => None, // Channel closed, iteration complete
-        }
+        // Receive next update from channel - returns None when channel is closed
+        self.receiver.recv().ok()
     }
 }
 
