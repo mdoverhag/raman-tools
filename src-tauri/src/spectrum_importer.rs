@@ -44,10 +44,36 @@ fn parse_file(filepath: &str) -> Result<Spectrum, String> {
     let mut wavenumbers: Vec<f32> = Vec::new();
     let mut intensities: Vec<u16> = Vec::new();
 
-    for line in content.lines() {
+    for (line_num, line) in content.lines().enumerate() {
         let parts: Vec<&str> = line.split('\t').collect();
         if parts.len() == 2 {
             if let (Ok(wn), Ok(intensity)) = (parts[0].parse::<f32>(), parts[1].parse::<f32>()) {
+                // Validate intensity value
+                if intensity < 0.0 {
+                    return Err(format!(
+                        "Invalid intensity in {} at line {}: negative value ({}) not allowed",
+                        filename,
+                        line_num + 1,
+                        intensity
+                    ));
+                }
+                if intensity > 65535.0 {
+                    return Err(format!(
+                        "Invalid intensity in {} at line {}: value ({}) exceeds maximum (65535)",
+                        filename,
+                        line_num + 1,
+                        intensity
+                    ));
+                }
+                if intensity.fract() != 0.0 {
+                    return Err(format!(
+                        "Invalid intensity in {} at line {}: fractional value ({}) not allowed",
+                        filename,
+                        line_num + 1,
+                        intensity
+                    ));
+                }
+
                 wavenumbers.push(wn);
                 intensities.push(intensity as u16);
             }
@@ -300,5 +326,64 @@ mod tests {
         let result = parse_file("non_existent_file.txt");
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("Failed to read file"));
+    }
+
+    #[test]
+    fn test_negative_intensity_values() {
+        let temp_dir = TempDir::new().unwrap();
+        let content = "200\t145\n201\t-50\n202\t143";
+        let file_path = create_test_spectrum_file(&temp_dir, "negative.txt", content);
+
+        let result = parse_file(file_path.to_str().unwrap());
+
+        assert!(result.is_err());
+        let error = result.unwrap_err();
+        assert!(error.contains("negative value"));
+        assert!(error.contains("line 2"));
+        assert!(error.contains("-50"));
+    }
+
+    #[test]
+    fn test_intensity_exceeds_maximum() {
+        let temp_dir = TempDir::new().unwrap();
+        let content = "200\t145\n201\t70000\n202\t143";
+        let file_path = create_test_spectrum_file(&temp_dir, "overflow.txt", content);
+
+        let result = parse_file(file_path.to_str().unwrap());
+
+        assert!(result.is_err());
+        let error = result.unwrap_err();
+        assert!(error.contains("exceeds maximum"));
+        assert!(error.contains("line 2"));
+        assert!(error.contains("70000"));
+    }
+
+    #[test]
+    fn test_fractional_intensity_values() {
+        let temp_dir = TempDir::new().unwrap();
+        let content = "200\t145\n201\t143.5\n202\t143";
+        let file_path = create_test_spectrum_file(&temp_dir, "fractional.txt", content);
+
+        let result = parse_file(file_path.to_str().unwrap());
+
+        assert!(result.is_err());
+        let error = result.unwrap_err();
+        assert!(error.contains("fractional value"));
+        assert!(error.contains("line 2"));
+        assert!(error.contains("143.5"));
+    }
+
+    #[test]
+    fn test_valid_edge_cases() {
+        let temp_dir = TempDir::new().unwrap();
+        // Test edge values: 0 and 65535
+        let content = "200\t0\n201\t65535\n202\t1000";
+        let file_path = create_test_spectrum_file(&temp_dir, "edge_cases.txt", content);
+
+        let result = parse_file(file_path.to_str().unwrap());
+
+        assert!(result.is_ok());
+        let spectrum = result.unwrap();
+        assert_eq!(spectrum.intensities, vec![0, 65535, 1000]);
     }
 }
