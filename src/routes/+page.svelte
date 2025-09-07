@@ -11,7 +11,7 @@
   let editingTarget = $state(false);
   let editingHeaderName = $state(false);
   let editingName = $state("");
-  let headerNameInput: HTMLInputElement | null = null;
+  let headerNameInput = $state<HTMLInputElement | null>(null);
 
   const availableRamanMolecules = ["DTNB", "MBA", "TFMBA"];
   const availableTargetMolecules = ["IgG", "BSA", "HER2", "EpCAM", "TROP2"];
@@ -81,15 +81,16 @@
   });
 
   // Watch for "New Sample" being selected and auto-edit
-  $effect(async () => {
+  $effect(() => {
     if (sampleStore.selectedSample?.name === "New Sample" && !editingHeaderName) {
       startEditingName();
       // Wait for DOM update
-      await tick();
-      if (headerNameInput) {
-        headerNameInput.focus();
-        headerNameInput.select();
-      }
+      tick().then(() => {
+        if (headerNameInput) {
+          headerNameInput.focus();
+          headerNameInput.select();
+        }
+      });
     }
   });
 
