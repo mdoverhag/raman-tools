@@ -92,6 +92,18 @@ impl SampleStorage {
             .ok_or_else(|| format!("Sample with id {} not found", id))?;
         Ok(())
     }
+
+    pub fn add_spectra_to_sample(&self, id: Uuid, spectrum_ids: Vec<Uuid>) -> Result<(), String> {
+        let mut samples = self.samples.lock().map_err(|e| e.to_string())?;
+        let sample = samples
+            .get_mut(&id)
+            .ok_or_else(|| format!("Sample with id {} not found", id))?;
+
+        // Add the new spectrum IDs to the sample
+        sample.spectrum_ids.extend(spectrum_ids);
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -217,5 +229,61 @@ mod tests {
         let result = storage.delete_sample(Uuid::new_v4());
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("not found"));
+    }
+
+    #[test]
+    fn test_add_spectra_to_sample() {
+        let storage = SampleStorage::new();
+        let sample = storage.create_sample("Test Sample".to_string()).unwrap();
+
+        // Add first batch of spectrum IDs
+        let spectrum_ids_1 = vec![Uuid::new_v4(), Uuid::new_v4()];
+        let result = storage.add_spectra_to_sample(sample.id, spectrum_ids_1.clone());
+        assert!(result.is_ok());
+
+        // Verify the spectra were added
+        let updated_sample = storage.get_sample(sample.id).unwrap();
+        assert_eq!(updated_sample.spectrum_ids.len(), 2);
+        assert_eq!(updated_sample.spectrum_ids, spectrum_ids_1);
+
+        // Add more spectrum IDs (should extend, not replace)
+        let spectrum_ids_2 = vec![Uuid::new_v4(), Uuid::new_v4(), Uuid::new_v4()];
+        let result = storage.add_spectra_to_sample(sample.id, spectrum_ids_2.clone());
+        assert!(result.is_ok());
+
+        // Verify all spectra are present
+        let updated_sample = storage.get_sample(sample.id).unwrap();
+        assert_eq!(updated_sample.spectrum_ids.len(), 5);
+
+        // Check that original IDs are still there
+        assert!(updated_sample.spectrum_ids[0..2]
+            .iter()
+            .all(|id| spectrum_ids_1.contains(id)));
+        assert!(updated_sample.spectrum_ids[2..5]
+            .iter()
+            .all(|id| spectrum_ids_2.contains(id)));
+    }
+
+    #[test]
+    fn test_add_spectra_to_nonexistent_sample() {
+        let storage = SampleStorage::new();
+        let spectrum_ids = vec![Uuid::new_v4()];
+
+        let result = storage.add_spectra_to_sample(Uuid::new_v4(), spectrum_ids);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("not found"));
+    }
+
+    #[test]
+    fn test_add_empty_spectra_list() {
+        let storage = SampleStorage::new();
+        let sample = storage.create_sample("Test Sample".to_string()).unwrap();
+
+        // Add empty list (should succeed but not change anything)
+        let result = storage.add_spectra_to_sample(sample.id, Vec::new());
+        assert!(result.is_ok());
+
+        let updated_sample = storage.get_sample(sample.id).unwrap();
+        assert_eq!(updated_sample.spectrum_ids.len(), 0);
     }
 }

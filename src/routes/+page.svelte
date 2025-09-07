@@ -131,9 +131,13 @@
         return;
       }
 
+      // Check if we have a selected sample
+      const sampleId = sampleStore.selectedSampleId;
+
       // Call Rust command to parse the files and apply baseline correction
       const parsedSpectra = await invoke<Spectrum[]>("parse_spectrum_files", {
         filepaths: txtFiles,
+        sampleId: sampleId, // Pass the sample ID (could be null)
       });
 
       if (parsedSpectra.length === 0) {
@@ -144,6 +148,8 @@
         if (!selectedSpectrum && spectra.length > 0) {
           selectedSpectrum = spectra[0];
         }
+        // Reload samples to get updated spectrum counts
+        await sampleStore.loadSamples();
       }
     } catch (e) {
       console.error("Error parsing files:", e);

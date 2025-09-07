@@ -15,8 +15,23 @@ use uuid::Uuid;
 async fn parse_spectrum_files(
     app: tauri::AppHandle,
     filepaths: Vec<String>,
+    sample_id: String, // Now required since drop zone only shows with selected sample
+    storage: State<'_, SampleStorage>,
 ) -> Result<Vec<Spectrum>, String> {
-    spectrum_importer::import_spectra(app, filepaths).await
+    // Parse the sample ID
+    let sample_uuid =
+        Uuid::parse_str(&sample_id).map_err(|e| format!("Invalid sample ID: {}", e))?;
+
+    // Import the spectra
+    let spectra = spectrum_importer::import_spectra(app, filepaths).await?;
+
+    // Collect the spectrum IDs
+    let spectrum_ids: Vec<Uuid> = spectra.iter().map(|s| s.id).collect();
+
+    // Add spectrum IDs to the sample
+    storage.add_spectra_to_sample(sample_uuid, spectrum_ids.clone())?;
+
+    Ok(spectra)
 }
 
 #[tauri::command]
