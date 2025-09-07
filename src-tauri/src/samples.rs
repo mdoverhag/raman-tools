@@ -4,6 +4,7 @@ use std::sync::Mutex;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Sample {
     pub id: Uuid,
     pub name: String,
@@ -13,6 +14,7 @@ pub struct Sample {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UpdateSampleData {
     pub name: Option<String>,
     pub raman_molecules: Option<Vec<String>>,

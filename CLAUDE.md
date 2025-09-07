@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Changelog Style
 
 When updating CHANGELOG.md:
+
 - Use technical, straightforward language - describe what actually changed in the code
 - Avoid marketing-style language or embellishments
 - List each change only once in the most appropriate section
@@ -74,7 +75,7 @@ These commands ensure consistent code style across the project.
 - **Installation**: Automatic on first launch - downloads uv, installs Python 3.13, and sets up virtual environment
 - **Platform Support**: Full support for Windows, macOS, and Linux
 - **Location**: Python runtime stored in app data directory (`~/Library/Application Support/com.mikaeldoverhag.raman-tools/runtime/` on macOS)
-- **Source Files**: 
+- **Source Files**:
   - `baseline_correction.py`: Pure algorithm implementation (ALS and denoising)
   - `batch_processor.py`: Handles batch processing with streaming JSON output
   - `requirements.txt`: Python dependencies (numpy, scipy)
