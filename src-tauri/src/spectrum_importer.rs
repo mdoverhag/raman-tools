@@ -5,6 +5,53 @@ use std::fs;
 use std::path::Path;
 use tauri::{AppHandle, Emitter};
 
+// Helper function to convert f32 to u16 with validation
+fn f32_to_u16(value: f32) -> Result<u16, String> {
+    if value < 0.0 {
+        return Err(format!("negative value ({})", value));
+    }
+    if value > 65535.0 {
+        return Err(format!("value ({}) exceeds maximum (65535)", value));
+    }
+    if value.fract() != 0.0 {
+        return Err(format!("fractional value ({})", value));
+    }
+    Ok(value as u16)
+}
+
+fn validate_wavenumber_sequence(wavenumbers: &[u16]) -> Result<(u16, u16, u16), String> {
+    if wavenumbers.is_empty() {
+        return Err("No wavenumbers found".to_string());
+    }
+
+    let first = wavenumbers[0];
+    let last = *wavenumbers.last().unwrap();
+
+    // For single point, use step of 1
+    if wavenumbers.len() == 1 {
+        return Ok((first, last, 1));
+    }
+
+    // Calculate expected step from first two points
+    let first_step = wavenumbers[1].saturating_sub(wavenumbers[0]);
+    if first_step == 0 {
+        return Err("wavenumbers must be in ascending order".to_string());
+    }
+
+    // Validate that all steps are consistent
+    for i in 2..wavenumbers.len() {
+        let step = wavenumbers[i].saturating_sub(wavenumbers[i - 1]);
+        if step != first_step {
+            return Err(format!(
+                "inconsistent wavenumber steps: expected {}, found {} at position {}",
+                first_step, step, i
+            ));
+        }
+    }
+
+    Ok((first, last, first_step))
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum ImportEvent {
@@ -41,41 +88,37 @@ fn parse_file(filepath: &str) -> Result<Spectrum, String> {
     let content = fs::read_to_string(filepath)
         .map_err(|e| format!("Failed to read file {}: {}", filepath, e))?;
 
-    let mut wavenumbers: Vec<f32> = Vec::new();
+    let mut wavenumbers: Vec<u16> = Vec::new();
     let mut intensities: Vec<u16> = Vec::new();
 
     for (line_num, line) in content.lines().enumerate() {
         let parts: Vec<&str> = line.split('\t').collect();
         if parts.len() == 2 {
-            if let (Ok(wn), Ok(intensity)) = (parts[0].parse::<f32>(), parts[1].parse::<f32>()) {
-                // Validate intensity value
-                if intensity < 0.0 {
-                    return Err(format!(
-                        "Invalid intensity in {} at line {}: negative value ({}) not allowed",
+            if let (Ok(wn_f32), Ok(intensity_f32)) =
+                (parts[0].parse::<f32>(), parts[1].parse::<f32>())
+            {
+                // Convert wavenumber to u16
+                let wn = f32_to_u16(wn_f32).map_err(|e| {
+                    format!(
+                        "Invalid wavenumber in {} at line {}: {}",
                         filename,
                         line_num + 1,
-                        intensity
-                    ));
-                }
-                if intensity > 65535.0 {
-                    return Err(format!(
-                        "Invalid intensity in {} at line {}: value ({}) exceeds maximum (65535)",
+                        e
+                    )
+                })?;
+
+                // Convert intensity to u16
+                let intensity = f32_to_u16(intensity_f32).map_err(|e| {
+                    format!(
+                        "Invalid intensity in {} at line {}: {}",
                         filename,
                         line_num + 1,
-                        intensity
-                    ));
-                }
-                if intensity.fract() != 0.0 {
-                    return Err(format!(
-                        "Invalid intensity in {} at line {}: fractional value ({}) not allowed",
-                        filename,
-                        line_num + 1,
-                        intensity
-                    ));
-                }
+                        e
+                    )
+                })?;
 
                 wavenumbers.push(wn);
-                intensities.push(intensity as u16);
+                intensities.push(intensity);
             }
         }
     }
@@ -84,14 +127,10 @@ fn parse_file(filepath: &str) -> Result<Spectrum, String> {
         return Err(format!("No valid spectrum data found in {}", filename));
     }
 
-    // Extract wavenumber parameters
-    let wavenumber_start = wavenumbers[0] as u16;
-    let wavenumber_end = wavenumbers.last().unwrap().round() as u16;
-    let wavenumber_step = if wavenumbers.len() > 1 {
-        (wavenumbers[1] - wavenumbers[0]).round() as u16
-    } else {
-        1
-    };
+    // Validate wavenumbers form a consistent sequence and extract parameters
+    let (wavenumber_start, wavenumber_end, wavenumber_step) =
+        validate_wavenumber_sequence(&wavenumbers)
+            .map_err(|e| format!("Invalid wavenumber sequence in {}: {}", filename, e))?;
 
     Ok(Spectrum::new(
         filename,
@@ -385,5 +424,116 @@ mod tests {
         assert!(result.is_ok());
         let spectrum = result.unwrap();
         assert_eq!(spectrum.intensities, vec![0, 65535, 1000]);
+    }
+
+    #[test]
+    fn test_wavenumber_negative() {
+        let temp_dir = TempDir::new().unwrap();
+        let content = "-100\t145\n201\t143\n202\t143";
+        let file_path = create_test_spectrum_file(&temp_dir, "negative_wn.txt", content);
+
+        let result = parse_file(file_path.to_str().unwrap());
+
+        assert!(result.is_err());
+        let error = result.unwrap_err();
+        assert!(error.contains("negative value"));
+        assert!(error.contains("-100"));
+    }
+
+    #[test]
+    fn test_wavenumber_too_large() {
+        let temp_dir = TempDir::new().unwrap();
+        let content = "200\t145\n201\t143\n70000\t143";
+        let file_path = create_test_spectrum_file(&temp_dir, "large_wn.txt", content);
+
+        let result = parse_file(file_path.to_str().unwrap());
+
+        assert!(result.is_err());
+        let error = result.unwrap_err();
+        assert!(error.contains("exceeds maximum"));
+        assert!(error.contains("70000"));
+    }
+
+    #[test]
+    fn test_descending_wavenumbers() {
+        let temp_dir = TempDir::new().unwrap();
+        let content = "203\t145\n202\t143\n201\t143\n200\t144";
+        let file_path = create_test_spectrum_file(&temp_dir, "descending.txt", content);
+
+        let result = parse_file(file_path.to_str().unwrap());
+
+        assert!(result.is_err());
+        let error = result.unwrap_err();
+        // With u16 arithmetic, 202 - 203 saturates to 0
+        assert!(error.contains("ascending order"));
+    }
+
+    #[test]
+    fn test_zero_step_wavenumbers() {
+        let temp_dir = TempDir::new().unwrap();
+        let content = "200\t145\n200\t143\n201\t143";
+        let file_path = create_test_spectrum_file(&temp_dir, "zero_step.txt", content);
+
+        let result = parse_file(file_path.to_str().unwrap());
+
+        assert!(result.is_err());
+        let error = result.unwrap_err();
+        assert!(error.contains("ascending order"));
+    }
+
+    #[test]
+    fn test_fractional_wavenumber_rejected() {
+        let temp_dir = TempDir::new().unwrap();
+        // Fractional wavenumbers should be rejected
+        let content = "200.4\t145\n201.4\t143\n202.4\t143";
+        let file_path = create_test_spectrum_file(&temp_dir, "fractional_wn.txt", content);
+
+        let result = parse_file(file_path.to_str().unwrap());
+
+        assert!(result.is_err());
+        let error = result.unwrap_err();
+        assert!(error.contains("fractional value"));
+        assert!(error.contains("200.4"));
+    }
+
+    #[test]
+    fn test_wavenumber_at_boundary() {
+        let temp_dir = TempDir::new().unwrap();
+        // Test wavenumbers at the exact boundaries - need consistent step!
+        let content = "0\t100\n1\t101\n2\t102";
+        let file_path = create_test_spectrum_file(&temp_dir, "boundary.txt", content);
+
+        let result = parse_file(file_path.to_str().unwrap());
+
+        assert!(result.is_ok());
+        let spectrum = result.unwrap();
+        assert_eq!(spectrum.wavenumber_start, 0);
+        assert_eq!(spectrum.wavenumber_end, 2);
+        assert_eq!(spectrum.wavenumber_step, 1);
+
+        // Test upper boundary
+        let content = "65533\t100\n65534\t101\n65535\t102";
+        let file_path = create_test_spectrum_file(&temp_dir, "boundary_upper.txt", content);
+
+        let result = parse_file(file_path.to_str().unwrap());
+        assert!(result.is_ok());
+        let spectrum = result.unwrap();
+        assert_eq!(spectrum.wavenumber_start, 65533);
+        assert_eq!(spectrum.wavenumber_end, 65535);
+    }
+
+    #[test]
+    fn test_inconsistent_wavenumber_steps() {
+        let temp_dir = TempDir::new().unwrap();
+        // Wavenumbers with inconsistent steps: 1, 1, 2
+        let content = "200\t145\n201\t143\n202\t144\n204\t146";
+        let file_path = create_test_spectrum_file(&temp_dir, "inconsistent.txt", content);
+
+        let result = parse_file(file_path.to_str().unwrap());
+
+        assert!(result.is_err());
+        let error = result.unwrap_err();
+        assert!(error.contains("inconsistent wavenumber steps"));
+        assert!(error.contains("position 3"));
     }
 }
