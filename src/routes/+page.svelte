@@ -4,7 +4,7 @@
   import { onMount } from "svelte";
   import SpectrumChart from "$lib/SpectrumChart.svelte";
   import SampleSidebar from "$lib/components/SampleSidebar.svelte";
-  import { sampleStore, type Spectrum } from "$lib/stores/samples.svelte";
+  import { sampleStore } from "$lib/stores/samples.svelte";
   import { getMoleculeClasses } from "$lib/utils/molecule-colors";
 
   let editingRaman = $state(false);
@@ -90,6 +90,12 @@
     filename: string;
   } | null>(null);
 
+  type ImportResult = {
+    success: boolean;
+    count: number;
+    sampleId: string;
+  };
+
   async function handleFileDrop(paths: string[]) {
     // Check if we have a selected sample first
     if (!sampleStore.selectedSampleId) {
@@ -114,12 +120,12 @@
       const sampleId = sampleStore.selectedSampleId;
 
       // Call Rust command to parse the files and apply baseline correction
-      const parsedSpectra = await invoke<Spectrum[]>("parse_spectrum_files", {
+      const result = await invoke<ImportResult>("parse_spectrum_files", {
         filepaths: txtFiles,
-        sampleId: sampleId, // Pass the sample ID (could be null)
+        sampleId: sampleId,
       });
 
-      if (parsedSpectra.length === 0) {
+      if (!result.success || result.count === 0) {
         error = "No valid spectrum data found in any of the files";
       } else {
         // Reload the current sample's spectra from the backend

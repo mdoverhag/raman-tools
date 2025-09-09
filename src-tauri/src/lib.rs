@@ -7,9 +7,18 @@ mod spectrum_importer;
 mod uv_installer;
 
 use samples::{Sample, SampleStorage, UpdateSampleData};
+use serde::Serialize;
 use spectrum::{Spectrum, SpectrumStorage};
 use tauri::State;
 use uuid::Uuid;
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ImportResult {
+    success: bool,
+    count: usize,
+    sample_id: String,
+}
 
 #[tauri::command]
 async fn parse_spectrum_files(
@@ -18,7 +27,7 @@ async fn parse_spectrum_files(
     sample_id: String, // Now required since drop zone only shows with selected sample
     sample_storage: State<'_, SampleStorage>,
     spectrum_storage: State<'_, SpectrumStorage>,
-) -> Result<Vec<Spectrum>, String> {
+) -> Result<ImportResult, String> {
     // Parse the sample ID
     let sample_uuid =
         Uuid::parse_str(&sample_id).map_err(|e| format!("Invalid sample ID: {}", e))?;
@@ -26,20 +35,22 @@ async fn parse_spectrum_files(
     // Import the spectra
     let spectra = spectrum_importer::import_spectra(app, filepaths).await?;
 
-    // Save each spectrum to storage
-    let mut saved_spectra = Vec::new();
+    // Save each spectrum to storage and collect IDs
+    let mut spectrum_ids = Vec::new();
     for spectrum in spectra {
         let saved = spectrum_storage.create_spectrum(spectrum)?;
-        saved_spectra.push(saved);
+        spectrum_ids.push(saved.id);
     }
 
-    // Collect the spectrum IDs
-    let spectrum_ids: Vec<Uuid> = saved_spectra.iter().map(|s| s.id).collect();
-
     // Add spectrum IDs to the sample
-    sample_storage.add_spectra_to_sample(sample_uuid, spectrum_ids.clone())?;
+    let count = spectrum_ids.len();
+    sample_storage.add_spectra_to_sample(sample_uuid, spectrum_ids)?;
 
-    Ok(saved_spectra)
+    Ok(ImportResult {
+        success: count > 0,
+        count,
+        sample_id,
+    })
 }
 
 #[tauri::command]
