@@ -59,26 +59,28 @@ class SampleStore {
 
   private async setupEventListeners() {
     // Listen for spectrum ready events (when a new spectrum is parsed)
-    this.unlistenSpectrumReady = await listen<{ spectrum: Spectrum }>(
+    this.unlistenSpectrumReady = await listen<{ spectrum: Spectrum; sampleId: string }>(
       "import:spectrum_ready",
       (event) => {
-        // Only add if it belongs to the selected sample
-        if (this.selectedSampleId && event.payload?.spectrum) {
-          // Add the new spectrum to our list
-          this.spectra = [...this.spectra, event.payload.spectrum];
-
-          // Auto-select first spectrum if none selected
-          if (!this.selectedSpectrumId && this.spectra.length === 1) {
-            this.selectedSpectrumId = event.payload.spectrum.id;
-          }
-
+        if (event.payload?.spectrum && event.payload?.sampleId) {
           // Update the sample's spectrumIds array to include this new spectrum
-          const sampleIndex = this.samples.findIndex((s) => s.id === this.selectedSampleId);
+          const sampleIndex = this.samples.findIndex((s) => s.id === event.payload.sampleId);
           if (sampleIndex !== -1) {
             const sample = this.samples[sampleIndex];
             if (!sample.spectrumIds.includes(event.payload.spectrum.id)) {
               sample.spectrumIds = [...sample.spectrumIds, event.payload.spectrum.id];
               this.samples = [...this.samples]; // Trigger reactivity
+            }
+          }
+
+          // Only add to spectra list if it belongs to the currently selected sample
+          if (this.selectedSampleId === event.payload.sampleId) {
+            // Add the new spectrum to our list
+            this.spectra = [...this.spectra, event.payload.spectrum];
+
+            // Auto-select first spectrum if none selected
+            if (!this.selectedSpectrumId && this.spectra.length === 1) {
+              this.selectedSpectrumId = event.payload.spectrum.id;
             }
           }
         }

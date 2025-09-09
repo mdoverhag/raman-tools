@@ -55,7 +55,7 @@ fn validate_wavenumber_sequence(wavenumbers: &[u16]) -> Result<(u16, u16, u16), 
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type")]
+#[serde(tag = "type", rename_all = "camelCase")]
 pub enum ImportEvent {
     Progress {
         stage: String,
@@ -65,6 +65,8 @@ pub enum ImportEvent {
     },
     SpectrumReady {
         spectrum: Spectrum,
+        #[serde(rename = "sampleId")]
+        sample_id: Uuid,
     },
     SpectrumUpdated {
         spectrum: Spectrum,
@@ -187,6 +189,7 @@ pub async fn import_spectra(
                     "import:spectrum_ready",
                     ImportEvent::SpectrumReady {
                         spectrum: saved_spectrum.clone(),
+                        sample_id,
                     },
                 )
                 .map_err(|e| format!("Failed to emit spectrum ready event: {}", e))?;
