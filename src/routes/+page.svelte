@@ -1,7 +1,7 @@
 <script lang="ts">
   import { listen } from "@tauri-apps/api/event";
   import { invoke } from "@tauri-apps/api/core";
-  import { onMount, tick } from "svelte";
+  import { onMount } from "svelte";
   import SpectrumChart from "$lib/SpectrumChart.svelte";
   import SampleSidebar from "$lib/components/SampleSidebar.svelte";
   import { sampleStore } from "$lib/stores/samples.svelte";
@@ -80,19 +80,6 @@
     return () => document.removeEventListener("click", handleClickOutside);
   });
 
-  // Watch for "New Sample" being selected and auto-edit
-  $effect(() => {
-    if (sampleStore.selectedSample?.name === "New Sample" && !editingHeaderName) {
-      startEditingName();
-      // Wait for DOM update
-      tick().then(() => {
-        if (headerNameInput) {
-          headerNameInput.focus();
-          headerNameInput.select();
-        }
-      });
-    }
-  });
 
   interface Spectrum {
     id: string;
@@ -117,11 +104,52 @@
     filename: string;
   } | null>(null);
 
+  // Load spectra for the selected sample
+  async function loadSpectraForSample() {
+    if (!sampleStore.selectedSample) {
+      spectra = [];
+      selectedSpectrum = null;
+      return;
+    }
+
+    const spectrumIds = sampleStore.selectedSample.spectrumIds;
+    if (spectrumIds.length === 0) {
+      spectra = [];
+      selectedSpectrum = null;
+      return;
+    }
+
+    try {
+      // Fetch each spectrum from the backend
+      const loadedSpectra: Spectrum[] = [];
+      for (const id of spectrumIds) {
+        const spectrum = await invoke<Spectrum>("get_spectrum", { id });
+        loadedSpectra.push(spectrum);
+      }
+      spectra = loadedSpectra;
+      
+      // Auto-select first spectrum if none selected
+      if (!selectedSpectrum && spectra.length > 0) {
+        selectedSpectrum = spectra[0];
+      }
+    } catch (e) {
+      console.error("Error loading spectra:", e);
+      error = e instanceof Error ? e.message : String(e);
+    }
+  }
+
+  // Watch for sample changes
+  $effect(() => {
+    const sample = sampleStore.selectedSample;
+    if (sample) {
+      loadSpectraForSample();
+    }
+  });
+
   async function handleFileDrop(paths: string[]) {
     isLoading = true;
     error = null;
     importProgress = null;
-    spectra = []; // Clear existing spectra
 
     try {
       // Filter for .txt files only
@@ -144,13 +172,10 @@
       if (parsedSpectra.length === 0) {
         error = "No valid spectrum data found in any of the files";
       } else {
-        spectra = parsedSpectra;
-        // Auto-select first spectrum
-        if (!selectedSpectrum && spectra.length > 0) {
-          selectedSpectrum = spectra[0];
-        }
         // Reload samples to get updated spectrum counts
         await sampleStore.loadSamples();
+        // Reload spectra for the current sample
+        await loadSpectraForSample();
       }
     } catch (e) {
       console.error("Error parsing files:", e);
@@ -192,30 +217,8 @@
       }
     });
 
-    // Listen for spectrum ready events (parsed but no baseline yet)
-    const unlistenSpectrumReady = listen<any>("import:spectrum_ready", (event) => {
-      if (event.payload?.spectrum) {
-        // Add spectrum as soon as it's parsed
-        spectra = [...spectra, event.payload.spectrum];
-        // Auto-select first spectrum
-        if (!selectedSpectrum) {
-          selectedSpectrum = event.payload.spectrum;
-        }
-      }
-    });
-
-    // Listen for spectrum updated events (baseline correction complete)
-    const unlistenSpectrumUpdated = listen<any>("import:spectrum_updated", (event) => {
-      if (event.payload?.spectrum) {
-        // Update the spectrum with baseline correction
-        const updatedSpectrum = event.payload.spectrum;
-        spectra = spectra.map((s) => (s.id === updatedSpectrum.id ? updatedSpectrum : s));
-        // Update selected spectrum if it's the one being updated
-        if (selectedSpectrum?.id === updatedSpectrum.id) {
-          selectedSpectrum = updatedSpectrum;
-        }
-      }
-    });
+    // Note: Spectrum ready/updated events are no longer needed
+    // since we fetch spectra from the backend when sample changes
 
     // Listen for import error events
     const unlistenError = listen<any>("import:error", (event) => {
@@ -231,8 +234,6 @@
       unlistenHover.then((fn) => fn());
       unlistenCancelled.then((fn) => fn());
       unlistenProgress.then((fn) => fn());
-      unlistenSpectrumReady.then((fn) => fn());
-      unlistenSpectrumUpdated.then((fn) => fn());
       unlistenError.then((fn) => fn());
     };
   });

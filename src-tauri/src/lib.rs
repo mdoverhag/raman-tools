@@ -7,7 +7,7 @@ mod spectrum_importer;
 mod uv_installer;
 
 use samples::{Sample, SampleStorage, UpdateSampleData};
-use spectrum::Spectrum;
+use spectrum::{Spectrum, SpectrumStorage};
 use tauri::State;
 use uuid::Uuid;
 
@@ -16,7 +16,8 @@ async fn parse_spectrum_files(
     app: tauri::AppHandle,
     filepaths: Vec<String>,
     sample_id: String, // Now required since drop zone only shows with selected sample
-    storage: State<'_, SampleStorage>,
+    sample_storage: State<'_, SampleStorage>,
+    spectrum_storage: State<'_, SpectrumStorage>,
 ) -> Result<Vec<Spectrum>, String> {
     // Parse the sample ID
     let sample_uuid =
@@ -25,13 +26,20 @@ async fn parse_spectrum_files(
     // Import the spectra
     let spectra = spectrum_importer::import_spectra(app, filepaths).await?;
 
+    // Save each spectrum to storage
+    let mut saved_spectra = Vec::new();
+    for spectrum in spectra {
+        let saved = spectrum_storage.create_spectrum(spectrum)?;
+        saved_spectra.push(saved);
+    }
+
     // Collect the spectrum IDs
-    let spectrum_ids: Vec<Uuid> = spectra.iter().map(|s| s.id).collect();
+    let spectrum_ids: Vec<Uuid> = saved_spectra.iter().map(|s| s.id).collect();
 
     // Add spectrum IDs to the sample
-    storage.add_spectra_to_sample(sample_uuid, spectrum_ids.clone())?;
+    sample_storage.add_spectra_to_sample(sample_uuid, spectrum_ids.clone())?;
 
-    Ok(spectra)
+    Ok(saved_spectra)
 }
 
 #[tauri::command]
@@ -64,6 +72,11 @@ fn delete_sample(storage: State<SampleStorage>, id: Uuid) -> Result<(), String> 
 }
 
 #[tauri::command]
+fn get_spectrum(storage: State<SpectrumStorage>, id: Uuid) -> Result<Spectrum, String> {
+    storage.get_spectrum(id)
+}
+
+#[tauri::command]
 async fn apply_baseline_correction(
     app: tauri::AppHandle,
     spectrum: Vec<f64>,
@@ -89,6 +102,7 @@ async fn apply_baseline_correction(
 pub fn run() {
     tauri::Builder::default()
         .manage(SampleStorage::new())
+        .manage(SpectrumStorage::new())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             parse_spectrum_files,
@@ -97,6 +111,7 @@ pub fn run() {
             get_sample,
             update_sample,
             delete_sample,
+            get_spectrum,
             apply_baseline_correction,
             uv_installer::check_uv_status,
             uv_installer::download_uv,
