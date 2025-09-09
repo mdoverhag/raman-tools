@@ -145,6 +145,12 @@
   });
 
   async function handleFileDrop(paths: string[]) {
+    // Check if we have a selected sample first
+    if (!sampleStore.selectedSampleId) {
+      error = "Please select a sample before importing spectra";
+      return;
+    }
+
     isLoading = true;
     error = null;
     importProgress = null;
@@ -158,7 +164,7 @@
         return;
       }
 
-      // Check if we have a selected sample
+      // Get the selected sample ID
       const sampleId = sampleStore.selectedSampleId;
 
       // Call Rust command to parse the files and apply baseline correction
@@ -188,14 +194,17 @@
     // Listen for file drop events from Tauri v2
     const unlisten = listen<{ paths: string[] }>("tauri://drag-drop", (event) => {
       isDragging = false;
-      if (event.payload?.paths) {
+      if (event.payload?.paths && sampleStore.selectedSampleId) {
         handleFileDrop(event.payload.paths);
       }
     });
 
     // Listen for drag over events
     const unlistenHover = listen("tauri://drag-over", () => {
-      isDragging = true;
+      // Only show dragging state if a sample is selected
+      if (sampleStore.selectedSampleId) {
+        isDragging = true;
+      }
     });
 
     // Listen for drag leave
