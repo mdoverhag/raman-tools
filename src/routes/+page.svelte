@@ -139,10 +139,9 @@
 
   // Watch for sample changes
   $effect(() => {
-    const sample = sampleStore.selectedSample;
-    if (sample) {
-      loadSpectraForSample();
-    }
+    // Track the selected sample ID to ensure we reload when it changes
+    const sampleId = sampleStore.selectedSampleId;
+    loadSpectraForSample();
   });
 
   async function handleFileDrop(paths: string[]) {
