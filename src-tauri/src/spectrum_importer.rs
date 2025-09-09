@@ -1,9 +1,11 @@
 use crate::batch_baseline::{process_batch_streaming, BaselineParams, BatchUpdate};
-use crate::spectrum::Spectrum;
+use crate::samples::SampleStorage;
+use crate::spectrum::{Spectrum, SpectrumStorage};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
 use tauri::{AppHandle, Emitter};
+use uuid::Uuid;
 
 // Helper function to convert f32 to u16 with validation
 fn f32_to_u16(value: f32) -> Result<u16, String> {
@@ -144,6 +146,9 @@ fn parse_file(filepath: &str) -> Result<Spectrum, String> {
 pub async fn import_spectra(
     app: AppHandle,
     filepaths: Vec<String>,
+    spectrum_storage: &SpectrumStorage,
+    sample_storage: &SampleStorage,
+    sample_id: Uuid,
 ) -> Result<Vec<Spectrum>, String> {
     let total_files = filepaths.len();
     let mut spectra = Vec::new();
@@ -171,16 +176,22 @@ pub async fn import_spectra(
         // Parse single file
         match parse_file(filepath) {
             Ok(spectrum) => {
-                // Emit spectrum ready event immediately after parsing
+                // Save spectrum to storage immediately after parsing
+                let saved_spectrum = spectrum_storage.create_spectrum(spectrum)?;
+
+                // Add spectrum ID to the sample immediately
+                sample_storage.add_spectra_to_sample(sample_id, vec![saved_spectrum.id])?;
+
+                // Emit spectrum ready event with saved spectrum (includes ID)
                 app.emit(
                     "import:spectrum_ready",
                     ImportEvent::SpectrumReady {
-                        spectrum: spectrum.clone(),
+                        spectrum: saved_spectrum.clone(),
                     },
                 )
                 .map_err(|e| format!("Failed to emit spectrum ready event: {}", e))?;
 
-                spectra.push(spectrum);
+                spectra.push(saved_spectrum);
             }
             Err(e) => {
                 // Emit error event but continue with other files
@@ -251,6 +262,15 @@ pub async fn import_spectra(
                         BatchUpdate::Result(Ok(spectrum_result)) => {
                             if spectrum_result.index < spectra.len() {
                                 let spectrum = &mut spectra[spectrum_result.index];
+
+                                // Update the spectrum in storage with baseline data
+                                let updated_spectrum = spectrum_storage.update_spectrum(
+                                    spectrum.id,
+                                    spectrum_result.baseline.clone(),
+                                    spectrum_result.corrected.clone(),
+                                )?;
+
+                                // Update local spectrum with the updated data
                                 spectrum.baseline = Some(spectrum_result.baseline);
                                 spectrum.corrected = Some(spectrum_result.corrected);
 
@@ -258,7 +278,7 @@ pub async fn import_spectra(
                                 app.emit(
                                     "import:spectrum_updated",
                                     ImportEvent::SpectrumUpdated {
-                                        spectrum: spectrum.clone(),
+                                        spectrum: updated_spectrum,
                                     },
                                 )
                                 .map_err(|e| {

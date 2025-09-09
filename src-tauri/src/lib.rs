@@ -32,19 +32,17 @@ async fn parse_spectrum_files(
     let sample_uuid =
         Uuid::parse_str(&sample_id).map_err(|e| format!("Invalid sample ID: {}", e))?;
 
-    // Import the spectra
-    let spectra = spectrum_importer::import_spectra(app, filepaths).await?;
+    // Import the spectra (they're saved to storage and linked to sample during import)
+    let spectra = spectrum_importer::import_spectra(
+        app,
+        filepaths,
+        &spectrum_storage,
+        &sample_storage,
+        sample_uuid,
+    )
+    .await?;
 
-    // Save each spectrum to storage and collect IDs
-    let mut spectrum_ids = Vec::new();
-    for spectrum in spectra {
-        let saved = spectrum_storage.create_spectrum(spectrum)?;
-        spectrum_ids.push(saved.id);
-    }
-
-    // Add spectrum IDs to the sample
-    let count = spectrum_ids.len();
-    sample_storage.add_spectra_to_sample(sample_uuid, spectrum_ids)?;
+    let count = spectra.len();
 
     Ok(ImportResult {
         success: count > 0,
