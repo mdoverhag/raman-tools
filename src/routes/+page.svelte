@@ -127,10 +127,8 @@
 
       if (!result.success || result.count === 0) {
         error = "No valid spectrum data found in any of the files";
-      } else {
-        // Reload the current sample's spectra from the backend
-        await sampleStore.reloadCurrentSampleSpectra();
       }
+      // No need to reload - the store updates automatically via events
     } catch (e) {
       console.error("Error parsing files:", e);
       error = e instanceof Error ? e.message : String(e);

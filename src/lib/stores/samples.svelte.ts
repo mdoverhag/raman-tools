@@ -1,4 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
+import type { UnlistenFn } from "@tauri-apps/api/event";
 
 export interface Sample {
   id: string;
@@ -37,6 +39,10 @@ class SampleStore {
   selectedSpectrumId = $state<string | null>(null);
   spectraLoading = $state(false);
 
+  // Event listeners
+  private unlistenSpectrumReady?: UnlistenFn;
+  private unlistenSpectrumUpdated?: UnlistenFn;
+
   get selectedSample() {
     return this.samples.find((s) => s.id === this.selectedSampleId) || null;
   }
@@ -48,6 +54,58 @@ class SampleStore {
   constructor() {
     // Start with empty samples, will load from backend
     this.loadSamples();
+    this.setupEventListeners();
+  }
+
+  private async setupEventListeners() {
+    // Listen for spectrum ready events (when a new spectrum is parsed)
+    this.unlistenSpectrumReady = await listen<{ spectrum: Spectrum }>(
+      "import:spectrum_ready",
+      (event) => {
+        // Only add if it belongs to the selected sample
+        if (this.selectedSampleId && event.payload?.spectrum) {
+          // Add the new spectrum to our list
+          this.spectra = [...this.spectra, event.payload.spectrum];
+
+          // Auto-select first spectrum if none selected
+          if (!this.selectedSpectrumId && this.spectra.length === 1) {
+            this.selectedSpectrumId = event.payload.spectrum.id;
+          }
+
+          // Update the sample's spectrumIds array to include this new spectrum
+          const sampleIndex = this.samples.findIndex((s) => s.id === this.selectedSampleId);
+          if (sampleIndex !== -1) {
+            const sample = this.samples[sampleIndex];
+            if (!sample.spectrumIds.includes(event.payload.spectrum.id)) {
+              sample.spectrumIds = [...sample.spectrumIds, event.payload.spectrum.id];
+              this.samples = [...this.samples]; // Trigger reactivity
+            }
+          }
+        }
+      }
+    );
+
+    // Listen for spectrum updated events (when baseline is applied)
+    this.unlistenSpectrumUpdated = await listen<{ spectrum: Spectrum }>(
+      "import:spectrum_updated",
+      (event) => {
+        if (event.payload?.spectrum) {
+          // Find and update the spectrum in our list
+          const index = this.spectra.findIndex((s) => s.id === event.payload.spectrum.id);
+          if (index !== -1) {
+            this.spectra[index] = event.payload.spectrum;
+            // Trigger reactivity with array reassignment
+            this.spectra = [...this.spectra];
+          }
+        }
+      }
+    );
+  }
+
+  // Clean up listeners when store is destroyed
+  destroy() {
+    this.unlistenSpectrumReady?.();
+    this.unlistenSpectrumUpdated?.();
   }
 
   async loadSamples() {
