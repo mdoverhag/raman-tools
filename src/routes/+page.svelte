@@ -4,7 +4,7 @@
   import { onMount } from "svelte";
   import SpectrumChart from "$lib/SpectrumChart.svelte";
   import SampleSidebar from "$lib/components/SampleSidebar.svelte";
-  import { sampleStore } from "$lib/stores/samples.svelte";
+  import { sampleStore, type Spectrum } from "$lib/stores/samples.svelte";
   import { getMoleculeClasses } from "$lib/utils/molecule-colors";
 
   let editingRaman = $state(false);
@@ -80,69 +80,15 @@
     return () => document.removeEventListener("click", handleClickOutside);
   });
 
-  interface Spectrum {
-    id: string;
-    filename: string;
-    wavenumber_start: number;
-    wavenumber_end: number;
-    wavenumber_step: number;
-    intensities: number[];
-    baseline?: number[] | null;
-    corrected?: number[] | null;
-  }
-
   let isDragging = $state(false);
-  let spectra = $state<Spectrum[]>([]);
   let isLoading = $state(false);
   let error = $state<string | null>(null);
-  let selectedSpectrum = $state<Spectrum | null>(null);
   let importProgress = $state<{
     stage: string;
     current: number;
     total: number;
     filename: string;
   } | null>(null);
-
-  // Load spectra for the selected sample
-  async function loadSpectraForSample() {
-    if (!sampleStore.selectedSample) {
-      spectra = [];
-      selectedSpectrum = null;
-      return;
-    }
-
-    const spectrumIds = sampleStore.selectedSample.spectrumIds;
-    if (spectrumIds.length === 0) {
-      spectra = [];
-      selectedSpectrum = null;
-      return;
-    }
-
-    try {
-      // Fetch each spectrum from the backend
-      const loadedSpectra: Spectrum[] = [];
-      for (const id of spectrumIds) {
-        const spectrum = await invoke<Spectrum>("get_spectrum", { id });
-        loadedSpectra.push(spectrum);
-      }
-      spectra = loadedSpectra;
-
-      // Auto-select first spectrum if none selected
-      if (!selectedSpectrum && spectra.length > 0) {
-        selectedSpectrum = spectra[0];
-      }
-    } catch (e) {
-      console.error("Error loading spectra:", e);
-      error = e instanceof Error ? e.message : String(e);
-    }
-  }
-
-  // Watch for sample changes
-  $effect(() => {
-    // Track the selected sample ID to ensure we reload when it changes
-    const sampleId = sampleStore.selectedSampleId;
-    loadSpectraForSample();
-  });
 
   async function handleFileDrop(paths: string[]) {
     // Check if we have a selected sample first
@@ -176,10 +122,8 @@
       if (parsedSpectra.length === 0) {
         error = "No valid spectrum data found in any of the files";
       } else {
-        // Reload samples to get updated spectrum counts
-        await sampleStore.loadSamples();
-        // Reload spectra for the current sample
-        await loadSpectraForSample();
+        // Reload the current sample's spectra from the backend
+        await sampleStore.reloadCurrentSampleSpectra();
       }
     } catch (e) {
       console.error("Error parsing files:", e);
@@ -502,25 +446,25 @@
         {/if}
 
         <!-- Content Grid -->
-        {#if spectra.length > 0}
+        {#if sampleStore.spectra.length > 0}
           <div class="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6 mt-8">
             <!-- File List -->
             <div class="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
               <div class="p-4 border-b border-gray-700 bg-gray-800/50">
                 <h2 class="text-lg font-semibold text-gray-100">
-                  Loaded Spectra ({spectra.length} files)
+                  Loaded Spectra ({sampleStore.spectra.length} files)
                 </h2>
               </div>
               <div class="max-h-[600px] overflow-y-auto">
                 <ul class="divide-y divide-gray-700">
-                  {#each spectra as spectrum}
+                  {#each sampleStore.spectra as spectrum}
                     <li>
                       <button
-                        class="w-full text-left px-4 py-3 hover:bg-gray-700/50 transition-colors {selectedSpectrum?.id ===
+                        class="w-full text-left px-4 py-3 hover:bg-gray-700/50 transition-colors {sampleStore.selectedSpectrumId ===
                         spectrum.id
                           ? 'bg-blue-900/30 border-l-2 border-blue-500'
                           : ''}"
-                        onclick={() => (selectedSpectrum = spectrum)}
+                        onclick={() => sampleStore.selectSpectrum(spectrum.id)}
                       >
                         <div class="font-medium text-gray-200">
                           {spectrum.filename}
@@ -536,9 +480,12 @@
             </div>
 
             <!-- Chart Section -->
-            {#if selectedSpectrum}
+            {#if sampleStore.selectedSpectrum}
               <div class="bg-gray-800 rounded-lg border border-gray-700 p-6">
-                <SpectrumChart spectrum={selectedSpectrum} title={selectedSpectrum.filename} />
+                <SpectrumChart
+                  spectrum={sampleStore.selectedSpectrum}
+                  title={sampleStore.selectedSpectrum.filename}
+                />
               </div>
             {:else}
               <div
