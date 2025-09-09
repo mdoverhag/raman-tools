@@ -67,8 +67,22 @@ fn update_sample(
 }
 
 #[tauri::command]
-fn delete_sample(storage: State<SampleStorage>, id: Uuid) -> Result<(), String> {
-    storage.delete_sample(id)
+fn delete_sample(
+    sample_storage: State<SampleStorage>,
+    spectrum_storage: State<SpectrumStorage>,
+    id: Uuid,
+) -> Result<(), String> {
+    // First get the sample to find its spectrum IDs
+    let sample = sample_storage.get_sample(id)?;
+
+    // Delete all spectra associated with this sample
+    for spectrum_id in sample.spectrum_ids {
+        // Ignore errors for missing spectra (they may have been deleted already)
+        let _ = spectrum_storage.delete_spectrum(spectrum_id);
+    }
+
+    // Now delete the sample
+    sample_storage.delete_sample(id)
 }
 
 #[tauri::command]

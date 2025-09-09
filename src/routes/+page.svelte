@@ -80,7 +80,6 @@
     return () => document.removeEventListener("click", handleClickOutside);
   });
 
-
   interface Spectrum {
     id: string;
     filename: string;
@@ -127,7 +126,7 @@
         loadedSpectra.push(spectrum);
       }
       spectra = loadedSpectra;
-      
+
       // Auto-select first spectrum if none selected
       if (!selectedSpectrum && spectra.length > 0) {
         selectedSpectrum = spectra[0];

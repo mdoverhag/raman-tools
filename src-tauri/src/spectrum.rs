@@ -86,6 +86,15 @@ impl SpectrumStorage {
 
         Ok(spectrum.clone())
     }
+
+    // Delete a spectrum by ID
+    pub fn delete_spectrum(&self, id: Uuid) -> Result<(), String> {
+        let mut spectra = self.spectra.lock().map_err(|e| e.to_string())?;
+        spectra
+            .remove(&id)
+            .ok_or_else(|| format!("Spectrum with id {} not found", id))?;
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -171,6 +180,35 @@ mod tests {
         let corrected = vec![0.5];
 
         let result = storage.update_spectrum(id, baseline, corrected);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("not found"));
+    }
+
+    #[test]
+    fn test_delete_spectrum() {
+        let storage = SpectrumStorage::new();
+        let spectrum = create_test_spectrum();
+        let id = spectrum.id;
+
+        storage.create_spectrum(spectrum).unwrap();
+
+        // Verify it exists
+        assert!(storage.get_spectrum(id).is_ok());
+
+        // Delete it
+        let result = storage.delete_spectrum(id);
+        assert!(result.is_ok());
+
+        // Verify it's gone
+        assert!(storage.get_spectrum(id).is_err());
+    }
+
+    #[test]
+    fn test_delete_nonexistent_spectrum() {
+        let storage = SpectrumStorage::new();
+        let id = Uuid::new_v4();
+
+        let result = storage.delete_spectrum(id);
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("not found"));
     }
