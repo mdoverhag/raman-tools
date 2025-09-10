@@ -4,6 +4,7 @@
     "": {
       "name": "raman-tools",
       "dependencies": {
+        "@babeard/svelte-heroicons": "^2.0.3",
         "@fontsource-variable/inter": "^5.2.6",
         "@tauri-apps/api": "^2",
         "@tauri-apps/plugin-opener": "^2",
@@ -27,6 +28,8 @@
   },
   "packages": {
     "@alloc/quick-lru": ["@alloc/quick-lru@5.2.0", "", {}, "sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw=="],
+
+    "@babeard/svelte-heroicons": ["@babeard/svelte-heroicons@2.0.3", "", { "peerDependencies": { "svelte": "^4.0.0" } }, "sha512-ceFS04F1E41WKX57sV2pqJXMO1by0VgrNTQLHat7sqploiv+be4flREyImVHYcJSyjTNmlXGXx/G3g4IXqxstw=="],
 
     "@esbuild/aix-ppc64": ["@esbuild/aix-ppc64@0.25.9", "", { "os": "aix", "cpu": "ppc64" }, "sha512-OaGtL73Jck6pBKjNIe24BnFE6agGl+6KxDtTfHhy1HmhthfKouEcOhqpSL64K4/0WCtbKFLOdzD/44cJ4k9opA=="],
 

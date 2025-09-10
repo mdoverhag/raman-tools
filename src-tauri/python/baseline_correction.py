@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 """
-Minimal baseline correction module for Raman Tools.
+baseline correction algorithm for Raman Tools.
 """
 
-import json
-import sys
 import numpy as np
 from scipy import sparse
 from scipy.sparse.linalg import spsolve
@@ -102,67 +100,30 @@ def moving_average_denoise(spectrum, window_size=5):
     return denoised.tolist()
 
 
-def process_spectrum(data):
+def process_spectrum(
+    spectrum, denoise=False, window_size=5, lambda_param=1e7, p=0.01, d=2
+):
     """
     Process a single spectrum with optional denoising and baseline correction.
 
     Args:
-        data: Dict with keys:
-            - spectrum: List of intensity values
-            - denoise: Boolean, whether to apply denoising
-            - window_size: Denoising window size
-            - lambda_param: ALS lambda parameter
-            - p: ALS asymmetry parameter
-            - d: ALS order of differences
+        spectrum: List of intensity values
+        denoise: Boolean, whether to apply denoising
+        window_size: Denoising window size
+        lambda_param: ALS lambda parameter
+        p: ALS asymmetry parameter
+        d: ALS order of differences
 
     Returns:
-        Dict with corrected spectrum, baseline, and optionally denoised spectrum
+        Tuple of (corrected, baseline, denoised_or_none)
     """
-    spectrum = data["spectrum"]
-
     # Optional denoising
-    if data.get("denoise", False):
-        window_size = data.get("window_size", 5)
+    if denoise:
         denoised = moving_average_denoise(spectrum, window_size)
     else:
         denoised = spectrum
 
     # Baseline correction
-    lambda_param = data.get("lambda_param", 1e7)
-    p = data.get("p", 0.01)
-    d = data.get("d", 2)
-
     corrected, baseline = als_baseline(denoised, lambda_param, p, d)
 
-    result = {
-        "corrected": corrected,
-        "baseline": baseline,
-    }
-
-    if data.get("denoise", False):
-        result["denoised"] = denoised
-
-    return result
-
-
-def main():
-    """Main entry point for command-line usage."""
-    try:
-        # Read JSON from stdin
-        input_data = json.loads(sys.stdin.read())
-
-        # Process the spectrum
-        result = process_spectrum(input_data)
-
-        # Output JSON to stdout
-        print(json.dumps(result))
-
-    except Exception as e:
-        # Return error as JSON
-        error_result = {"error": str(e), "type": type(e).__name__}
-        print(json.dumps(error_result))
-        sys.exit(1)
-
-
-if __name__ == "__main__":
-    main()
+    return corrected, baseline, (denoised if denoise else None)

@@ -85,6 +85,51 @@ pub fn get_baseline_script_path(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(script_path)
 }
 
+/// Get the path to the batch processor script
+pub fn get_batch_processor_path(app: &AppHandle) -> Result<PathBuf, String> {
+    let runtime_dir = get_runtime_dir(app)?;
+    let script_path = runtime_dir.join("batch_processor.py");
+
+    if !script_path.exists() {
+        return Err("Batch processor script not found".to_string());
+    }
+
+    Ok(script_path)
+}
+
+/// Sync Python files to runtime directory
+/// This ensures all embedded Python scripts are copied to the runtime directory
+/// Called on every app start to handle updates
+pub fn sync_python_files(app: AppHandle) -> Result<(), String> {
+    let runtime_dir = get_runtime_dir(&app)?;
+
+    // Create runtime directory if it doesn't exist
+    if !runtime_dir.exists() {
+        fs::create_dir_all(&runtime_dir)
+            .map_err(|e| format!("Failed to create runtime directory: {}", e))?;
+    }
+
+    // Copy/update baseline correction script
+    let baseline_content = include_str!("../python/baseline_correction.py");
+    let baseline_path = runtime_dir.join("baseline_correction.py");
+    fs::write(&baseline_path, baseline_content)
+        .map_err(|e| format!("Failed to write baseline script: {}", e))?;
+
+    // Copy/update batch processor script
+    let batch_content = include_str!("../python/batch_processor.py");
+    let batch_path = runtime_dir.join("batch_processor.py");
+    fs::write(&batch_path, batch_content)
+        .map_err(|e| format!("Failed to write batch processor script: {}", e))?;
+
+    // Copy/update requirements.txt
+    let requirements_content = include_str!("../python/requirements.txt");
+    let requirements_path = runtime_dir.join("requirements.txt");
+    fs::write(&requirements_path, requirements_content)
+        .map_err(|e| format!("Failed to write requirements: {}", e))?;
+
+    Ok(())
+}
+
 /// Check if Python environment is set up
 #[tauri::command]
 pub fn check_python_status(app: AppHandle) -> PythonStatus {
@@ -181,11 +226,8 @@ pub async fn setup_python_env(app: AppHandle) -> Result<(), String> {
         ));
     }
 
-    // Write requirements.txt to runtime directory
-    let requirements_content = include_str!("../python/requirements.txt");
+    // Requirements.txt is already synced via sync_python_files()
     let requirements_path = runtime_dir.join("requirements.txt");
-    fs::write(&requirements_path, requirements_content)
-        .map_err(|e| format!("Failed to write requirements.txt: {}", e))?;
 
     // Emit progress: Installing packages
     app.emit(
@@ -225,11 +267,8 @@ pub async fn setup_python_env(app: AppHandle) -> Result<(), String> {
     )
     .map_err(|e| format!("Failed to emit progress: {}", e))?;
 
-    // Copy baseline correction script
-    let script_content = include_str!("../python/baseline_correction.py");
-    let script_path = runtime_dir.join("baseline_correction.py");
-    fs::write(&script_path, script_content)
-        .map_err(|e| format!("Failed to write script: {}", e))?;
+    // Python files are now synced on app start via sync_python_files()
+    // No need to copy them here during initial setup
 
     // Emit progress: Testing
     app.emit(

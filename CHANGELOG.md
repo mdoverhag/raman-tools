@@ -5,6 +5,43 @@ All notable changes to Raman Tools will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2025-09-10
+
+### Added
+
+- Batch processing for baseline correction - single Python subprocess handles all spectra
+- New `batch_processor.py` script that streams JSON results as each spectrum completes
+- `batch_baseline.rs` module providing iterator-based interface for batch processing
+- `spectrum_importer.rs` module to handle file imports and emit progress events
+- `samples.rs` module with CRUD operations for sample management
+- Three-stage progress reporting (parsing files, setting up Python, applying baseline correction)
+- Sample-spectrum linking - `parse_spectrum_files` command now accepts `sample_id` parameter
+- `add_spectra_to_sample` method in `SampleStorage` to track spectrum ownership
+- Frontend sample management UI with sidebar navigation and header editing
+- Molecule dropdown selectors for Raman (DTNB, MBA, TFMBA) and Target (IgG, BSA, HER2, EpCAM, TROP2) molecules
+- In-memory spectrum storage backend (`SpectrumStore`) for persisting parsed spectra
+- Real-time event emission during spectrum parsing for incremental UI updates
+- Event listeners in frontend store for handling spectrum parsing events
+- Automatic spectrum cleanup when samples are deleted
+- Enhanced file parsing validation and error handling
+
+### Changed
+
+- Moved file parsing code from `spectrum.rs` to `spectrum_importer.rs`
+- Updated Rust structs to use `#[serde(rename_all = "camelCase")]` for JavaScript compatibility
+- Baseline correction now uses streaming results via Rust channels and iterators
+- Backend initiates baseline correction instead of frontend
+- Updated spectrum struct and related data handling
+- Split Python baseline correction into two files: core algorithm (`baseline_correction.py`) and batch processing (`batch_processor.py`)
+- Spectrum import now streams results incrementally instead of returning all at once
+- Moved spectrum loading logic from page component to samples store
+- File drag-and-drop disabled until a sample is selected
+
+### Fixed
+
+- Spectrum clearing behavior for empty samples
+- Spectrum-sample relationship to ensure correct merging during import
+
 ## [0.2.0] - 2025-09-01
 
 ### Added

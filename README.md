@@ -15,28 +15,35 @@ This tool supports PhD research focused on:
 - Analyzing interactions between Raman molecules (DTNB, MBA, TFMBA) and target proteins (IgG, BSA)
 - Processing large datasets with typically 150 replicate measurements per sample
 
-## Key Features (Planned)
+## Key Features
 
-### Data Management
+### Implemented Features
 
-- **Bulk File Upload**: Handle 150+ spectrum files per sample efficiently
-- **Sample Organization**: Support both single and multiplex samples
+- **Sample Management**: Organize spectra into samples with molecular configurations
+  - Create and manage samples with custom names
+  - Assign Raman molecules (DTNB, MBA, TFMBA) and target molecules (IgG, BSA, HER2, EpCAM, TROP2)
+  - Track spectrum count per sample
+- **Bulk File Upload**: Drag-and-drop support for 150+ spectrum files with real-time progress
+  - Automatic linking to selected sample
+  - Progress tracking for parsing and baseline correction
+- **Spectrum Parser**: Imports .txt format files with wavenumber/intensity data
+- **Baseline Correction**: ALS (Asymmetric Least Squares) algorithm via integrated Python runtime
+  - Single Python process for all spectra (optimized performance)
+  - Streaming results with real-time UI updates
+  - Automatic Python environment setup on first launch
+- **Interactive Visualization**: Real-time spectrum plotting with Chart.js
+  - Display raw intensities, baseline, and corrected spectra
+  - Zoom and pan functionality
+
+### In Development
+
+- **Sample Organization**: Enhanced support for single and multiplex samples
   - Single: One Raman molecule + one target (e.g., DTNB + IgG)
   - Multiplex: Multiple molecules for detecting multiple biomarkers simultaneously
 - **Experiment Tracking**: Organize samples into experiments with metadata
-
-### Data Processing
-
-- **Spectrum Parser**: Import .txt format spectrum files with wavenumber/intensity data
-- **Baseline Correction**: Apply ALS (Asymmetric Least Squares) or similar algorithms
 - **Peak Detection**: Identify and quantify characteristic peaks
 - **Statistical Analysis**: Process replicate measurements
-
-### Visualization
-
-- **Spectrum Plotting**: Interactive graphs of intensity vs wavenumber
 - **Batch Visualization**: Compare multiple spectra overlaid
-- **Peak Analysis**: Highlight and annotate important peaks
 
 ## Technology Stack
 
@@ -116,8 +123,8 @@ The project uses GitHub Actions for continuous integration and deployment:
 To create a new release:
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.3.0
+git push origin v0.3.0
 ```
 
 ## Data Format
@@ -131,21 +138,23 @@ The application expects spectrum files in .txt format with:
 
 ## Roadmap
 
-### Phase 1: Core Infrastructure
+### Phase 1: Core Infrastructure ✅
 
-- [ ] Basic Tauri application setup
-- [ ] File system integration for bulk uploads
-- [ ] Local data storage (SQLite or similar)
+- [x] Basic Tauri application setup
+- [x] File system integration for bulk uploads
+- [x] Local data storage (in-memory with planned SQLite migration)
 
-### Phase 2: Data Import & Visualization
+### Phase 2: Data Import & Visualization ✅
 
-- [ ] Spectrum file parser
-- [ ] Basic plotting with Chart.js or similar
-- [ ] Sample and experiment management UI
+- [x] Spectrum file parser
+- [x] Interactive plotting with Chart.js
+- [x] Basic sample management UI
+- [x] Real-time progress tracking for imports
 
-### Phase 3: Analysis Features
+### Phase 3: Analysis Features (In Progress)
 
-- [ ] Baseline correction algorithms
+- [x] Baseline correction with ALS algorithm
+- [x] Python integration with automatic environment setup
 - [ ] Peak detection and quantification
 - [ ] Export processed data for Python/R analysis
 

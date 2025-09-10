@@ -2,6 +2,16 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Changelog Style
+
+When updating CHANGELOG.md:
+
+- Use technical, straightforward language - describe what actually changed in the code
+- Avoid marketing-style language or embellishments
+- List each change only once in the most appropriate section
+- Focus on concrete changes: new files, moved code, refactored modules, etc.
+- Don't duplicate items across multiple sections
+
 ## Project Overview
 
 Raman Tools is a cross-platform desktop application for analyzing Raman spectroscopy data, built with Tauri and SvelteKit. The application supports scientific research on detecting circulating tumor cells (CTCs) in blood for breast cancer diagnosis.
@@ -56,6 +66,7 @@ These commands ensure consistent code style across the project.
 - Frontend uses `@tauri-apps/api/core` to invoke Rust commands
 - Example: `await invoke("greet", { name })` calls the `greet` function in Rust
 - Commands must be registered in `tauri::generate_handler![]` in `lib.rs`
+- **Important**: Rust structs use snake_case but must serialize to camelCase for JavaScript using `#[serde(rename_all = "camelCase")]`
 
 ### Python Integration for Baseline Correction
 
@@ -65,13 +76,60 @@ These commands ensure consistent code style across the project.
 - **Installation**: Automatic on first launch - downloads uv, installs Python 3.13, and sets up virtual environment
 - **Platform Support**: Full support for Windows, macOS, and Linux
 - **Location**: Python runtime stored in app data directory (`~/Library/Application Support/com.mikaeldoverhag.raman-tools/runtime/` on macOS)
-- **Source Files**: `src-tauri/python/` contains `baseline_correction.py` and `requirements.txt` embedded at compile time
+- **Source Files**:
+  - `baseline_correction.py`: Pure algorithm implementation (ALS and denoising)
+  - `batch_processor.py`: Handles batch processing with streaming JSON output
+  - `requirements.txt`: Python dependencies (numpy, scipy)
+- **File Syncing**: Python files are automatically synced to runtime directory on app startup via `sync_python_files()`
+
+### Batch Processing Architecture
+
+- **Performance Optimization**: Single Python process handles all spectra (avoids ~150 process starts)
+- **Streaming Results**: Uses Rust channels and iterators to stream results as they complete
+- **Real-time Updates**: UI updates immediately as each spectrum is processed
+- **Incremental Processing**: Spectra are added to backend storage as they're parsed, not in batch
+- **Progress Tracking**: Three-stage progress reporting:
+  1. Parsing files (shows filename, validates data)
+  2. Preparing baseline correction (Python bytecode compilation on first run)
+  3. Applying baseline correction (shows filename)
+- **Module Separation**:
+  - `batch_baseline.rs`: Manages Python process, provides iterator interface with `BatchUpdate` enum
+  - `spectrum_importer.rs`: Orchestrates import flow, validates data, and emits UI events
+  - `spectrum.rs`: Manages spectrum storage with add/get/delete operations
+  - Clean separation between data processing and UI event emission
+- **Data Validation**: Enhanced error handling and validation during file parsing
 
 ## Key Configuration Files
 
 - **Frontend Build**: Outputs to `/build/` directory (configured in tauri.conf.json)
 - **Tauri Config**: Uses Bun commands for development and build processes
 - **Package Manager**: Uses Bun (not npm/yarn/pnpm)
+
+## Sample Management System
+
+- **Storage**: In-memory HashMap in Rust backend (`src-tauri/src/samples.rs`)
+- **Spectrum Storage**: In-memory HashMap in Rust backend (`src-tauri/src/spectrum.rs`)
+  - `SpectrumStore` manages spectrum persistence
+  - Automatic cleanup when samples are deleted
+- **Sample Model**: Each sample has:
+  - ID (UUID)
+  - Name
+  - Raman molecules (DTNB, MBA, TFMBA)
+  - Target molecules (IgG, BSA, HER2, EpCAM, TROP2)
+  - Spectrum IDs (links to uploaded spectra)
+- **UI Patterns**:
+  - Left sidebar shows sample list (read-only)
+  - Double-click sample name in header to edit
+  - Click molecule pills to open dropdown selector
+  - Spectra automatically link to selected sample on upload
+  - File drag-and-drop disabled until sample is selected
+- **Frontend State**: Svelte store (`samples.svelte.ts`) caches data and manages UI state
+  - Handles spectrum loading and merging
+  - Listens to real-time parsing events via Tauri event system
+- **Key Flow**: Select sample → Drop files → Files linked to sample → Spectrum count updates incrementally
+- **Event System**:
+  - `spectrum-parsed` events emitted during import for real-time UI updates
+  - Frontend store subscribes to events and updates state incrementally
 
 ## Domain Context
 
@@ -84,40 +142,43 @@ These commands ensure consistent code style across the project.
 - **Data Structure**: Samples typically contain 150 replicate spectrum measurements
 - **File Format**: .txt files with wavenumber (200-2000 cm⁻¹) and intensity columns
 
-### Data Model Concepts
+### Data Model (Implemented)
 
-- **Experiments**: Research projects containing multiple samples
-- **Samples**: Collections of spectra, can be:
-  - Single: One Raman molecule + one target
-  - Multiplex: Multiple molecules for simultaneous detection
-- **Spectra**: Individual measurements with wavenumber/intensity arrays (~1801 data points each)
+- **Samples**: Container for organizing spectra
+  - Has name and molecule configuration
+  - Tracks which spectra belong to it
+  - Can have multiple Raman and Target molecules
+- **Spectra**: Individual measurements (~1801 data points each)
+  - Linked to a sample via sample_id
+  - Contains wavenumber/intensity arrays
+  - Has baseline correction applied automatically
+- **Future**: Experiments (collections of samples) not yet implemented
 
-## Implementation Roadmap
+## Implementation Status
 
-### Phase 1: Core Infrastructure (Current)
+### Completed Features
 
-- Set up basic Tauri application structure
-- Implement file system access for bulk file uploads
-- Design local data storage (consider SQLite for portability)
+- ✅ Basic Tauri application with dark theme UI
+- ✅ Drag-and-drop bulk file upload (150+ files)
+- ✅ Spectrum file parser for .txt format
+- ✅ Real-time plotting with Chart.js
+- ✅ Sample management system (CRUD operations)
+- ✅ Baseline correction via Python integration (ALS algorithm)
+- ✅ Batch processing with progress updates
+- ✅ Linking spectra to samples
 
-### Phase 2: Data Import & Visualization
+### In Progress
 
-- Build spectrum file parser for .txt format
-- Create UI for drag-and-drop bulk file upload (150+ files)
-- Implement basic plotting using a JavaScript charting library
-- Design sample and experiment management interface
+- 🔄 Data persistence (currently in-memory only)
+- 🔄 Export functionality
 
-### Phase 3: Analysis Features
-
-- Implement baseline correction algorithms (ALS)
-- Add peak detection and quantification
-- Create data export functionality for Python/R workflows
-
-### Phase 4: Advanced Features
+### Future Features
 
 - Statistical analysis of replicate measurements
-- Integration with scientific Python libraries (via Tauri commands)
-- Report generation and data export
+- Peak detection and quantification
+- Experiment management (grouping samples)
+- Report generation
+- SQLite or file-based persistence
 
 ## CI/CD and Releases
 
@@ -151,8 +212,8 @@ To create a new release:
 2. Commit changes
 3. Create and push a version tag:
    ```bash
-   git tag v0.1.0
-   git push origin v0.1.0
+   git tag v0.3.0
+   git push origin v0.3.0
    ```
 4. GitHub Actions will automatically build and create a release
 
