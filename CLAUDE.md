@@ -87,14 +87,17 @@ These commands ensure consistent code style across the project.
 - **Performance Optimization**: Single Python process handles all spectra (avoids ~150 process starts)
 - **Streaming Results**: Uses Rust channels and iterators to stream results as they complete
 - **Real-time Updates**: UI updates immediately as each spectrum is processed
+- **Incremental Processing**: Spectra are added to backend storage as they're parsed, not in batch
 - **Progress Tracking**: Three-stage progress reporting:
-  1. Parsing files (shows filename)
+  1. Parsing files (shows filename, validates data)
   2. Preparing baseline correction (Python bytecode compilation on first run)
   3. Applying baseline correction (shows filename)
 - **Module Separation**:
   - `batch_baseline.rs`: Manages Python process, provides iterator interface with `BatchUpdate` enum
-  - `spectrum_importer.rs`: Orchestrates import flow and emits UI events
+  - `spectrum_importer.rs`: Orchestrates import flow, validates data, and emits UI events
+  - `spectrum.rs`: Manages spectrum storage with add/get/delete operations
   - Clean separation between data processing and UI event emission
+- **Data Validation**: Enhanced error handling and validation during file parsing
 
 ## Key Configuration Files
 
@@ -105,6 +108,9 @@ These commands ensure consistent code style across the project.
 ## Sample Management System
 
 - **Storage**: In-memory HashMap in Rust backend (`src-tauri/src/samples.rs`)
+- **Spectrum Storage**: In-memory HashMap in Rust backend (`src-tauri/src/spectrum.rs`)
+  - `SpectrumStore` manages spectrum persistence
+  - Automatic cleanup when samples are deleted
 - **Sample Model**: Each sample has:
   - ID (UUID)
   - Name
@@ -116,8 +122,14 @@ These commands ensure consistent code style across the project.
   - Double-click sample name in header to edit
   - Click molecule pills to open dropdown selector
   - Spectra automatically link to selected sample on upload
+  - File drag-and-drop disabled until sample is selected
 - **Frontend State**: Svelte store (`samples.svelte.ts`) caches data and manages UI state
-- **Key Flow**: Select sample → Drop files → Files linked to sample → Spectrum count updates
+  - Handles spectrum loading and merging
+  - Listens to real-time parsing events via Tauri event system
+- **Key Flow**: Select sample → Drop files → Files linked to sample → Spectrum count updates incrementally
+- **Event System**:
+  - `spectrum-parsed` events emitted during import for real-time UI updates
+  - Frontend store subscribes to events and updates state incrementally
 
 ## Domain Context
 
