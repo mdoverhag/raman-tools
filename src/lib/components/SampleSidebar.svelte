@@ -1,7 +1,6 @@
 <script lang="ts">
   import { sampleStore } from "$lib/stores/samples.svelte";
   import { BeakerIcon, PlusIcon, TrashIcon } from "@babeard/svelte-heroicons/mini";
-  import { getMoleculeClasses } from "$lib/utils/molecule-colors";
 
   async function handleCreateSample() {
     const sample = await sampleStore.createSample("New Sample");
@@ -32,42 +31,23 @@
             <BeakerIcon class="mr-2 mt-0.5 h-4 w-4 flex-shrink-0" />
             <div class="min-w-0 flex-1">
               <div class="font-medium">{sample.name}</div>
-              <div class="mt-1 space-y-1">
+              <div class="mt-1">
                 <div class="flex flex-wrap gap-1">
-                  {#if sample.ramanMolecules.length > 0}
-                    {#each sample.ramanMolecules as molecule}
+                  {#if sample.moleculePairs.length > 0}
+                    {#each sample.moleculePairs as pair}
                       <span
-                        class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium {getMoleculeClasses(
-                          molecule
-                        )}"
+                        class="inline-flex items-center rounded-md bg-pink-400/10 px-1.5 py-0.5 text-[10px] font-medium text-pink-400"
                       >
-                        {molecule}
+                        <span class="font-light opacity-75">{pair.raman}</span>
+                        <span class="mx-0.5 opacity-50">|</span>
+                        <span class="font-bold">{pair.target}</span>
                       </span>
                     {/each}
                   {:else}
                     <span
                       class="inline-flex items-center rounded-md border border-dashed border-gray-700 px-1.5 py-0.5 text-[10px] text-gray-600"
                     >
-                      No Raman
-                    </span>
-                  {/if}
-                </div>
-                <div class="flex flex-wrap gap-1">
-                  {#if sample.targetMolecules.length > 0}
-                    {#each sample.targetMolecules as molecule}
-                      <span
-                        class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium {getMoleculeClasses(
-                          molecule
-                        )}"
-                      >
-                        {molecule}
-                      </span>
-                    {/each}
-                  {:else}
-                    <span
-                      class="inline-flex items-center rounded-md border border-dashed border-gray-700 px-1.5 py-0.5 text-[10px] text-gray-600"
-                    >
-                      No Target
+                      No pairs
                     </span>
                   {/if}
                 </div>

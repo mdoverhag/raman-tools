@@ -1,3 +1,4 @@
+use crate::molecules::MoleculePair;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Mutex;
@@ -8,8 +9,7 @@ use uuid::Uuid;
 pub struct Sample {
     pub id: Uuid,
     pub name: String,
-    pub raman_molecules: Vec<String>,
-    pub target_molecules: Vec<String>,
+    pub molecule_pairs: Vec<MoleculePair>,
     pub spectrum_ids: Vec<Uuid>,
 }
 
@@ -17,8 +17,7 @@ pub struct Sample {
 #[serde(rename_all = "camelCase")]
 pub struct UpdateSampleData {
     pub name: Option<String>,
-    pub raman_molecules: Option<Vec<String>>,
-    pub target_molecules: Option<Vec<String>>,
+    pub molecule_pairs: Option<Vec<MoleculePair>>,
 }
 
 impl Sample {
@@ -26,8 +25,7 @@ impl Sample {
         Self {
             id: Uuid::new_v4(),
             name,
-            raman_molecules: Vec::new(),
-            target_molecules: Vec::new(),
+            molecule_pairs: Vec::new(),
             spectrum_ids: Vec::new(),
         }
     }
@@ -75,11 +73,8 @@ impl SampleStorage {
         if let Some(name) = updates.name {
             sample.name = name;
         }
-        if let Some(raman_molecules) = updates.raman_molecules {
-            sample.raman_molecules = raman_molecules;
-        }
-        if let Some(target_molecules) = updates.target_molecules {
-            sample.target_molecules = target_molecules;
+        if let Some(molecule_pairs) = updates.molecule_pairs {
+            sample.molecule_pairs = molecule_pairs;
         }
 
         Ok(sample.clone())
@@ -109,6 +104,7 @@ impl SampleStorage {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::molecules::{RamanMolecule, TargetMolecule};
 
     #[test]
     fn test_create_sample() {
@@ -118,8 +114,7 @@ mod tests {
         assert!(result.is_ok());
         let sample = result.unwrap();
         assert_eq!(sample.name, "Test Sample");
-        assert!(sample.raman_molecules.is_empty());
-        assert!(sample.target_molecules.is_empty());
+        assert!(sample.molecule_pairs.is_empty());
         assert!(sample.spectrum_ids.is_empty());
     }
 
@@ -166,8 +161,7 @@ mod tests {
         // Update name only
         let updates = UpdateSampleData {
             name: Some("Updated Name".to_string()),
-            raman_molecules: None,
-            target_molecules: None,
+            molecule_pairs: None,
         };
 
         let result = storage.update_sample(created.id, updates);
@@ -175,18 +169,20 @@ mod tests {
         let updated = result.unwrap();
         assert_eq!(updated.name, "Updated Name");
 
-        // Update molecules
+        // Update molecule pairs
+        let pairs = vec![
+            MoleculePair::new(RamanMolecule::DTNB, TargetMolecule::HER2),
+            MoleculePair::new(RamanMolecule::MBA, TargetMolecule::IgG),
+        ];
         let updates = UpdateSampleData {
             name: None,
-            raman_molecules: Some(vec!["DTNB".to_string(), "MBA".to_string()]),
-            target_molecules: Some(vec!["IgG".to_string()]),
+            molecule_pairs: Some(pairs.clone()),
         };
 
         let result = storage.update_sample(created.id, updates);
         assert!(result.is_ok());
         let updated = result.unwrap();
-        assert_eq!(updated.raman_molecules, vec!["DTNB", "MBA"]);
-        assert_eq!(updated.target_molecules, vec!["IgG"]);
+        assert_eq!(updated.molecule_pairs, pairs);
         assert_eq!(updated.name, "Updated Name"); // Name unchanged
     }
 
@@ -195,8 +191,7 @@ mod tests {
         let storage = SampleStorage::new();
         let updates = UpdateSampleData {
             name: Some("Test".to_string()),
-            raman_molecules: None,
-            target_molecules: None,
+            molecule_pairs: None,
         };
 
         let result = storage.update_sample(Uuid::new_v4(), updates);
