@@ -4,41 +4,12 @@
   import { onMount } from "svelte";
   import SpectrumChart from "$lib/SpectrumChart.svelte";
   import SampleSidebar from "$lib/components/SampleSidebar.svelte";
+  import MoleculePairEditor from "$lib/components/MoleculePairEditor.svelte";
   import { sampleStore } from "$lib/stores/samples.svelte";
-  import { getMoleculeClasses } from "$lib/utils/molecule-colors";
 
-  let editingRaman = $state(false);
-  let editingTarget = $state(false);
   let editingHeaderName = $state(false);
   let editingName = $state("");
   let headerNameInput = $state<HTMLInputElement | null>(null);
-
-  const availableRamanMolecules = ["DTNB", "MBA", "TFMBA"];
-  const availableTargetMolecules = ["IgG", "BSA", "HER2", "EpCAM", "TROP2"];
-
-  async function toggleRamanMolecule(molecule: string) {
-    if (!sampleStore.selectedSample) return;
-    const currentMolecules = sampleStore.selectedSample.ramanMolecules || [];
-    const newMolecules = currentMolecules.includes(molecule)
-      ? currentMolecules.filter((m: string) => m !== molecule)
-      : [...currentMolecules, molecule];
-
-    await sampleStore.updateSample(sampleStore.selectedSample.id, { ramanMolecules: newMolecules });
-    editingRaman = false;
-  }
-
-  async function toggleTargetMolecule(molecule: string) {
-    if (!sampleStore.selectedSample) return;
-    const currentMolecules = sampleStore.selectedSample.targetMolecules || [];
-    const newMolecules = currentMolecules.includes(molecule)
-      ? currentMolecules.filter((m: string) => m !== molecule)
-      : [...currentMolecules, molecule];
-
-    await sampleStore.updateSample(sampleStore.selectedSample.id, {
-      targetMolecules: newMolecules,
-    });
-    editingTarget = false;
-  }
 
   function startEditingName() {
     if (!sampleStore.selectedSample) return;
@@ -65,20 +36,6 @@
       cancelNameEdit();
     }
   }
-
-  // Close dropdowns when clicking outside
-  onMount(() => {
-    function handleClickOutside(event: MouseEvent) {
-      const target = event.target as HTMLElement;
-      if (!target.closest(".header-molecule-dropdown")) {
-        editingRaman = false;
-        editingTarget = false;
-      }
-    }
-
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  });
 
   let isDragging = $state(false);
   let isLoading = $state(false);
@@ -267,126 +224,8 @@
                 {sampleStore.selectedSample.name}
               </h2>
             {/if}
-            <div class="mt-3 space-y-2">
-              <div class="relative header-molecule-dropdown">
-                <div class="flex flex-wrap gap-2">
-                  {#if sampleStore.selectedSample.ramanMolecules.length > 0}
-                    {#each sampleStore.selectedSample.ramanMolecules as molecule}
-                      <button
-                        onclick={() => (editingRaman = !editingRaman)}
-                        class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium hover:opacity-80 {getMoleculeClasses(
-                          molecule
-                        )}"
-                      >
-                        <span class="mr-1 text-[10px] uppercase tracking-wider opacity-60"
-                          >Raman</span
-                        >
-                        {molecule}
-                      </button>
-                    {/each}
-                  {:else}
-                    <button
-                      onclick={() => (editingRaman = !editingRaman)}
-                      class="inline-flex items-center rounded-md border border-dashed border-gray-600 px-2 py-1 text-xs font-medium text-gray-500 hover:border-gray-500 hover:text-gray-400"
-                    >
-                      <span class="mr-1 text-[10px] uppercase tracking-wider opacity-60">Raman</span
-                      >
-                      None set
-                    </button>
-                  {/if}
-                </div>
-                {#if editingRaman}
-                  <div
-                    class="absolute left-0 top-8 z-20 mt-1 w-40 rounded-md bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5"
-                  >
-                    <div class="py-1">
-                      {#each availableRamanMolecules as molecule}
-                        <button
-                          onclick={() => toggleRamanMolecule(molecule)}
-                          class="flex w-full items-center px-3 py-2 text-sm text-gray-300 hover:bg-gray-700"
-                        >
-                          {#if sampleStore.selectedSample.ramanMolecules.includes(molecule)}
-                            <svg
-                              class="mr-2 h-4 w-4 text-blue-400"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path
-                                fill-rule="evenodd"
-                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                clip-rule="evenodd"
-                              />
-                            </svg>
-                          {:else}
-                            <div class="mr-2 h-4 w-4"></div>
-                          {/if}
-                          {molecule}
-                        </button>
-                      {/each}
-                    </div>
-                  </div>
-                {/if}
-              </div>
-              <div class="relative header-molecule-dropdown">
-                <div class="flex flex-wrap gap-2">
-                  {#if sampleStore.selectedSample.targetMolecules.length > 0}
-                    {#each sampleStore.selectedSample.targetMolecules as molecule}
-                      <button
-                        onclick={() => (editingTarget = !editingTarget)}
-                        class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium hover:opacity-80 {getMoleculeClasses(
-                          molecule
-                        )}"
-                      >
-                        <span class="mr-1 text-[10px] uppercase tracking-wider opacity-60"
-                          >Target</span
-                        >
-                        {molecule}
-                      </button>
-                    {/each}
-                  {:else}
-                    <button
-                      onclick={() => (editingTarget = !editingTarget)}
-                      class="inline-flex items-center rounded-md border border-dashed border-gray-600 px-2 py-1 text-xs font-medium text-gray-500 hover:border-gray-500 hover:text-gray-400"
-                    >
-                      <span class="mr-1 text-[10px] uppercase tracking-wider opacity-60"
-                        >Target</span
-                      >
-                      None set
-                    </button>
-                  {/if}
-                </div>
-                {#if editingTarget}
-                  <div
-                    class="absolute left-0 top-8 z-20 mt-1 w-40 rounded-md bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5"
-                  >
-                    <div class="py-1">
-                      {#each availableTargetMolecules as molecule}
-                        <button
-                          onclick={() => toggleTargetMolecule(molecule)}
-                          class="flex w-full items-center px-3 py-2 text-sm text-gray-300 hover:bg-gray-700"
-                        >
-                          {#if sampleStore.selectedSample.targetMolecules.includes(molecule)}
-                            <svg
-                              class="mr-2 h-4 w-4 text-pink-400"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path
-                                fill-rule="evenodd"
-                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                clip-rule="evenodd"
-                              />
-                            </svg>
-                          {:else}
-                            <div class="mr-2 h-4 w-4"></div>
-                          {/if}
-                          {molecule}
-                        </button>
-                      {/each}
-                    </div>
-                  </div>
-                {/if}
-              </div>
+            <div class="mt-3">
+              <MoleculePairEditor />
             </div>
           </div>
         </div>

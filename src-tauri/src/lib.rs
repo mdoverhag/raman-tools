@@ -1,4 +1,5 @@
 mod batch_baseline;
+mod molecules;
 mod python_bridge;
 mod python_setup;
 mod samples;

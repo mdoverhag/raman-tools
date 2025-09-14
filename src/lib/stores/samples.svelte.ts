@@ -2,18 +2,21 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import type { UnlistenFn } from "@tauri-apps/api/event";
 
+export interface MoleculePair {
+  raman: string;
+  target: string;
+}
+
 export interface Sample {
   id: string;
   name: string;
-  ramanMolecules: string[];
-  targetMolecules: string[];
+  moleculePairs: MoleculePair[];
   spectrumIds: string[];
 }
 
 export interface UpdateSampleData {
   name?: string;
-  ramanMolecules?: string[];
-  targetMolecules?: string[];
+  moleculePairs?: MoleculePair[];
 }
 
 // This interface matches what we get from the backend
