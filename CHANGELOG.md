@@ -5,6 +5,25 @@ All notable changes to Raman Tools will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2025-09-14
+
+### Added
+
+- New `molecules.rs` module with `MoleculePair` struct for Raman-Target molecule pairs
+- `MoleculePairEditor.svelte` component for editing molecule pairs in UI
+
+### Changed
+
+- Raman and Target molecules now stored as paired relationships instead of separate arrays
+- Updated `Sample` struct to use `Vec<MoleculePair>` instead of separate `raman_molecules` and `target_molecules` fields
+- Moved molecule pair editing UI from `+page.svelte` to dedicated `MoleculePairEditor.svelte` component
+- Simplified `SampleSidebar.svelte` by removing inline molecule editing
+
+### Removed
+
+- `molecule-colors.ts` utility file (color logic moved to component)
+- Separate `raman_molecules` and `target_molecules` fields from Sample struct
+
 ## [0.3.0] - 2025-09-10
 
 ### Added
