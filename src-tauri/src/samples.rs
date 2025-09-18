@@ -11,6 +11,7 @@ pub struct Sample {
     pub name: String,
     pub molecule_pairs: Vec<MoleculePair>,
     pub spectrum_ids: Vec<Uuid>,
+    pub average_spectrum: Option<Vec<f64>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -27,6 +28,7 @@ impl Sample {
             name,
             molecule_pairs: Vec::new(),
             spectrum_ids: Vec::new(),
+            average_spectrum: None,
         }
     }
 }
@@ -99,6 +101,17 @@ impl SampleStorage {
 
         Ok(())
     }
+
+    pub fn update_average_spectrum(&self, id: Uuid, average: Vec<f64>) -> Result<(), String> {
+        let mut samples = self.samples.lock().map_err(|e| e.to_string())?;
+        let sample = samples
+            .get_mut(&id)
+            .ok_or_else(|| format!("Sample with id {} not found", id))?;
+
+        sample.average_spectrum = Some(average);
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -116,6 +129,7 @@ mod tests {
         assert_eq!(sample.name, "Test Sample");
         assert!(sample.molecule_pairs.is_empty());
         assert!(sample.spectrum_ids.is_empty());
+        assert!(sample.average_spectrum.is_none());
     }
 
     #[test]
@@ -280,5 +294,33 @@ mod tests {
 
         let updated_sample = storage.get_sample(sample.id).unwrap();
         assert_eq!(updated_sample.spectrum_ids.len(), 0);
+    }
+
+    #[test]
+    fn test_update_average_spectrum() {
+        let storage = SampleStorage::new();
+        let sample = storage.create_sample("Test Sample".to_string()).unwrap();
+
+        // Initially no average spectrum
+        assert!(sample.average_spectrum.is_none());
+
+        // Update with average spectrum
+        let average = vec![100.5, 101.5, 102.5, 103.5];
+        let result = storage.update_average_spectrum(sample.id, average.clone());
+        assert!(result.is_ok());
+
+        // Verify it was updated
+        let updated_sample = storage.get_sample(sample.id).unwrap();
+        assert_eq!(updated_sample.average_spectrum, Some(average));
+    }
+
+    #[test]
+    fn test_update_average_spectrum_nonexistent_sample() {
+        let storage = SampleStorage::new();
+        let average = vec![100.5, 101.5];
+
+        let result = storage.update_average_spectrum(Uuid::new_v4(), average);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("not found"));
     }
 }
