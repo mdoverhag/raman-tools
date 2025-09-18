@@ -259,7 +259,11 @@
                     ? `Parsing files... ${importProgress.current}/${importProgress.total}`
                     : importProgress.stage === "preparing"
                       ? "Initializing baseline correction..."
-                      : `Applying baseline correction... ${importProgress.current}/${importProgress.total}`}
+                      : importProgress.stage === "baseline"
+                        ? `Applying baseline correction... ${importProgress.current}/${importProgress.total}`
+                        : importProgress.stage === "averaging"
+                          ? "Calculating average spectrum..."
+                          : `Processing... ${importProgress.current}/${importProgress.total}`}
                 </p>
                 <p class="text-sm text-gray-500 h-5">
                   {importProgress.filename || "\u00A0"}
