@@ -317,6 +317,53 @@ pub async fn import_spectra(
         }
     }
 
+    // Stage 3: Calculate and store average spectrum
+    if !spectra.is_empty() {
+        // Emit progress for average calculation
+        app.emit(
+            "import:progress",
+            ImportEvent::Progress {
+                stage: "averaging".to_string(),
+                current: 1,
+                total: 1,
+                filename: format!("Calculating average of {} spectra", spectra.len()),
+            },
+        )
+        .map_err(|e| format!("Failed to emit progress event: {}", e))?;
+
+        // Extract corrected intensities for averaging
+        let intensities: Vec<Vec<f64>> = spectra
+            .iter()
+            .map(|s| {
+                if let Some(corrected) = &s.corrected {
+                    corrected.clone()
+                } else {
+                    s.intensities.iter().map(|&i| i as f64).collect()
+                }
+            })
+            .collect();
+
+        // Calculate average using Python
+        match crate::python_bridge::calculate_average(app.clone(), intensities).await {
+            Ok(result) => {
+                // Store the average in the sample
+                sample_storage.update_average_spectrum(sample_id, result.average)?;
+            }
+            Err(e) => {
+                // Log error but don't fail the import
+                eprintln!("Failed to calculate average spectrum: {}", e);
+                app.emit(
+                    "import:error",
+                    ImportEvent::Error {
+                        filename: "average_calculation".to_string(),
+                        error: format!("Failed to calculate average: {}", e),
+                    },
+                )
+                .map_err(|e| format!("Failed to emit error event: {}", e))?;
+            }
+        }
+    }
+
     // Emit complete event
     app.emit(
         "import:complete",

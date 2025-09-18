@@ -197,7 +197,6 @@ pub async fn apply_baseline_correction(
     }
 }
 
-
 /// Calculate average and standard deviation of multiple spectra
 ///
 /// This function uses Python to efficiently calculate the mean and standard deviation
