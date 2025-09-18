@@ -63,9 +63,7 @@ def main():
 
     except Exception as e:
         # Return error as JSON
-        error_result = {
-            "error": str(e)
-        }
+        error_result = {"error": str(e)}
         print(json.dumps(error_result), file=sys.stderr)
         sys.exit(1)
 
