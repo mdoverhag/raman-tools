@@ -331,23 +331,33 @@ pub async fn import_spectra(
         )
         .map_err(|e| format!("Failed to emit progress event: {}", e))?;
 
-        // Extract corrected intensities for averaging
-        let intensities: Vec<Vec<f64>> = spectra
+        // Extract raw and corrected intensities for averaging
+        let raw_intensities: Vec<Vec<f64>> = spectra
             .iter()
-            .map(|s| {
-                if let Some(corrected) = &s.corrected {
-                    corrected.clone()
-                } else {
-                    s.intensities.iter().map(|&i| i as f64).collect()
-                }
-            })
+            .map(|s| s.intensities.iter().map(|&i| i as f64).collect())
             .collect();
 
+        let corrected_intensities: Vec<Vec<f64>> =
+            spectra.iter().filter_map(|s| s.corrected.clone()).collect();
+
         // Calculate average using Python
-        match crate::python_bridge::calculate_average(app.clone(), intensities).await {
+        match crate::python_bridge::calculate_average(
+            app.clone(),
+            raw_intensities,
+            corrected_intensities,
+        )
+        .await
+        {
             Ok(result) => {
-                // Store the average in the sample
-                sample_storage.update_average_spectrum(sample_id, result.average)?;
+                // Store the averages in the sample
+                let avg_corrected = result
+                    .average_corrected
+                    .unwrap_or_else(|| result.average_intensities.clone());
+                sample_storage.update_average_spectra(
+                    sample_id,
+                    result.average_intensities,
+                    avg_corrected,
+                )?;
             }
             Err(e) => {
                 // Log error but don't fail the import

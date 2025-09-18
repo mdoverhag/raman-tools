@@ -8,33 +8,39 @@ import json
 import numpy as np
 
 
-def calculate_average(spectra):
+def calculate_averages(raw_spectra, corrected_spectra):
     """
-    Calculate the average and standard deviation of multiple spectra.
+    Calculate the average and standard deviation of raw and corrected spectra.
 
     Args:
-        spectra: List of spectra, where each spectrum is a list of intensities
+        raw_spectra: List of raw intensity spectra
+        corrected_spectra: List of baseline-corrected spectra
 
     Returns:
-        Dictionary with average, standard deviation, and count
+        Dictionary with averages, standard deviations, and count for both raw and corrected
     """
-    if not spectra:
+    if not raw_spectra:
         raise ValueError("No spectra provided for averaging")
 
-    # Convert to numpy array for efficient computation
-    spectra_array = np.array(spectra)
+    result = {}
 
-    # Calculate average across spectra (axis 0)
-    average = np.mean(spectra_array, axis=0)
+    # Calculate raw intensities average
+    raw_array = np.array(raw_spectra)
+    result["averageIntensities"] = np.mean(raw_array, axis=0).tolist()
+    result["stdDevIntensities"] = np.std(raw_array, axis=0).tolist()
 
-    # Calculate standard deviation
-    std_dev = np.std(spectra_array, axis=0)
+    # Calculate corrected average if provided
+    if corrected_spectra:
+        corrected_array = np.array(corrected_spectra)
+        result["averageCorrected"] = np.mean(corrected_array, axis=0).tolist()
+        result["stdDevCorrected"] = np.std(corrected_array, axis=0).tolist()
+    else:
+        result["averageCorrected"] = None
+        result["stdDevCorrected"] = None
 
-    return {
-        "average": average.tolist(),
-        "stdDev": std_dev.tolist(),
-        "count": len(spectra)
-    }
+    result["count"] = len(raw_spectra)
+
+    return result
 
 
 def main():
@@ -45,11 +51,12 @@ def main():
         # Parse JSON input
         data = json.loads(input_data)
 
-        # Extract spectra
-        spectra = data.get("spectra", [])
+        # Extract raw and corrected spectra
+        raw_spectra = data.get("rawSpectra", [])
+        corrected_spectra = data.get("correctedSpectra", [])
 
-        # Calculate average
-        result = calculate_average(spectra)
+        # Calculate averages
+        result = calculate_averages(raw_spectra, corrected_spectra)
 
         # Output JSON result
         print(json.dumps(result))

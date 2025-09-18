@@ -12,7 +12,8 @@ export interface Sample {
   name: string;
   moleculePairs: MoleculePair[];
   spectrumIds: string[];
-  averageSpectrum?: number[] | null;
+  averageIntensities?: number[] | null;
+  averageCorrected?: number[] | null;
 }
 
 export interface UpdateSampleData {

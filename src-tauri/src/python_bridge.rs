@@ -57,15 +57,18 @@ pub enum PythonResult {
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AverageRequest {
-    pub spectra: Vec<Vec<f64>>,
+    pub raw_spectra: Vec<Vec<f64>>,
+    pub corrected_spectra: Vec<Vec<f64>>,
 }
 
-/// Response from Python containing the averaged spectrum and statistics
+/// Response from Python containing the averaged spectra and statistics
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AverageResponse {
-    pub average: Vec<f64>,
-    pub std_dev: Vec<f64>,
+    pub average_intensities: Vec<f64>,
+    pub std_dev_intensities: Vec<f64>,
+    pub average_corrected: Option<Vec<f64>>,
+    pub std_dev_corrected: Option<Vec<f64>>,
     pub count: usize,
 }
 
@@ -197,35 +200,51 @@ pub async fn apply_baseline_correction(
     }
 }
 
-/// Calculate average and standard deviation of multiple spectra
+/// Calculate average and standard deviation of raw and corrected spectra
 ///
 /// This function uses Python to efficiently calculate the mean and standard deviation
 /// across multiple spectra using numpy's optimized operations.
 ///
 /// ## Parameters:
-/// - `spectra`: Vector of spectra, where each spectrum is a vector of intensity values
+/// - `raw_spectra`: Vector of raw intensity spectra
+/// - `corrected_spectra`: Vector of baseline-corrected spectra
 ///
 /// ## Returns:
-/// - `AverageResponse` containing the averaged spectrum, standard deviation, and count
+/// - `AverageResponse` containing the averaged spectra, standard deviations, and count
 /// - Error string if Python execution fails or spectra are invalid
 pub async fn calculate_average(
     app: AppHandle,
-    spectra: Vec<Vec<f64>>,
+    raw_spectra: Vec<Vec<f64>>,
+    corrected_spectra: Vec<Vec<f64>>,
 ) -> Result<AverageResponse, String> {
-    if spectra.is_empty() {
+    if raw_spectra.is_empty() {
         return Err("No spectra provided for averaging".to_string());
     }
 
-    // Verify all spectra have the same length
-    let expected_len = spectra[0].len();
-    for (i, spectrum) in spectra.iter().enumerate() {
+    // Verify all raw spectra have the same length
+    let expected_len = raw_spectra[0].len();
+    for (i, spectrum) in raw_spectra.iter().enumerate() {
         if spectrum.len() != expected_len {
             return Err(format!(
-                "Spectrum {} has different length ({} vs {})",
+                "Raw spectrum {} has different length ({} vs {})",
                 i,
                 spectrum.len(),
                 expected_len
             ));
+        }
+    }
+
+    // Verify corrected spectra if provided
+    if !corrected_spectra.is_empty() {
+        for (i, spectrum) in corrected_spectra.iter().enumerate() {
+            if spectrum.len() != expected_len {
+                return Err(format!(
+                    "Corrected spectrum {} has different length ({} vs {})",
+                    i,
+                    spectrum.len(),
+                    expected_len
+                ));
+            }
         }
     }
 
@@ -234,7 +253,10 @@ pub async fn calculate_average(
     let script_path = python_setup::get_calc_averages_path(&app)?;
 
     // Prepare the request
-    let request = AverageRequest { spectra };
+    let request = AverageRequest {
+        raw_spectra,
+        corrected_spectra,
+    };
     let request_json = serde_json::to_string(&request)
         .map_err(|e| format!("Failed to serialize request: {}", e))?;
 
