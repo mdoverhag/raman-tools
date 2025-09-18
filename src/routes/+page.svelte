@@ -140,6 +140,17 @@
       }
     });
 
+    // Listen for import complete to reload sample with averages
+    const unlistenComplete = listen<any>("import:complete", async () => {
+      // Reload samples to get the updated average data
+      await sampleStore.loadSamples();
+
+      // Auto-select the average spectrum if it exists
+      if (sampleStore.selectedSample?.averageCorrected) {
+        sampleStore.selectAverageSpectrum();
+      }
+    });
+
     // Cleanup listeners
     return () => {
       unlisten.then((fn) => fn());
@@ -147,6 +158,7 @@
       unlistenCancelled.then((fn) => fn());
       unlistenProgress.then((fn) => fn());
       unlistenError.then((fn) => fn());
+      unlistenComplete.then((fn) => fn());
     };
   });
 </script>
@@ -304,6 +316,39 @@
               </div>
               <div class="max-h-[600px] overflow-y-auto">
                 <ul class="divide-y divide-gray-700">
+                  {#if sampleStore.selectedSample?.averageCorrected}
+                    <li
+                      class="bg-gradient-to-r from-blue-900/20 to-purple-900/20 border-b-2 border-blue-600/50"
+                    >
+                      <button
+                        class="w-full text-left px-4 py-3 hover:bg-gray-700/30 transition-colors {sampleStore.selectedSpectrumId ===
+                        'average'
+                          ? 'bg-blue-900/40 border-l-2 border-blue-500'
+                          : ''}"
+                        onclick={() => sampleStore.selectAverageSpectrum()}
+                      >
+                        <div class="font-medium text-blue-300 flex items-center gap-2">
+                          <svg
+                            class="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                            />
+                          </svg>
+                          Average Spectrum
+                        </div>
+                        <div class="text-sm text-blue-400/70">
+                          Average of {sampleStore.spectra.length} spectra
+                        </div>
+                      </button>
+                    </li>
+                  {/if}
                   {#each sampleStore.spectra as spectrum}
                     <li>
                       <button

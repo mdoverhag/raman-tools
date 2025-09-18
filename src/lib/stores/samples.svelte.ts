@@ -52,7 +52,29 @@ class SampleStore {
     return this.samples.find((s) => s.id === this.selectedSampleId) || null;
   }
 
-  get selectedSpectrum() {
+  get selectedSpectrum(): Spectrum | null {
+    if (this.selectedSpectrumId === "average" && this.selectedSample) {
+      // Create a synthetic spectrum object for the average
+      if (this.selectedSample.averageCorrected && this.selectedSample.averageIntensities) {
+        // Get wavenumber info from first spectrum
+        const firstSpectrum = this.spectra[0];
+        if (!firstSpectrum) return null;
+
+        return {
+          id: "average",
+          filename: "Average Spectrum",
+          wavenumber_start: firstSpectrum.wavenumber_start,
+          wavenumber_end: firstSpectrum.wavenumber_end,
+          wavenumber_step: firstSpectrum.wavenumber_step,
+          // Convert to integers for compatibility
+          intensities: this.selectedSample.averageIntensities.map((v) => Math.round(v)),
+          baseline: null,
+          corrected: this.selectedSample.averageCorrected,
+        };
+      }
+      return null;
+    }
+
     return this.spectra.find((s) => s.id === this.selectedSpectrumId) || null;
   }
 
@@ -222,8 +244,10 @@ class SampleStore {
 
       this.spectra = loadedSpectra;
 
-      // Auto-select first spectrum if we have any
-      if (loadedSpectra.length > 0) {
+      // Auto-select average if it exists, otherwise first spectrum
+      if (sample.averageCorrected && sample.averageIntensities) {
+        this.selectedSpectrumId = "average";
+      } else if (loadedSpectra.length > 0) {
         this.selectedSpectrumId = loadedSpectra[0].id;
       }
     } catch (err) {
@@ -236,6 +260,10 @@ class SampleStore {
 
   selectSpectrum(id: string | null) {
     this.selectedSpectrumId = id;
+  }
+
+  selectAverageSpectrum() {
+    this.selectedSpectrumId = "average";
   }
 
   // Call this after importing new spectra files
