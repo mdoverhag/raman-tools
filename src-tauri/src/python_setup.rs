@@ -97,6 +97,18 @@ pub fn get_batch_processor_path(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(script_path)
 }
 
+/// Get the path to the calc averages script
+pub fn get_calc_averages_path(app: &AppHandle) -> Result<PathBuf, String> {
+    let runtime_dir = get_runtime_dir(app)?;
+    let script_path = runtime_dir.join("calc_averages.py");
+
+    if !script_path.exists() {
+        return Err("Calculate averages script not found".to_string());
+    }
+
+    Ok(script_path)
+}
+
 /// Sync Python files to runtime directory
 /// This ensures all embedded Python scripts are copied to the runtime directory
 /// Called on every app start to handle updates
@@ -120,6 +132,12 @@ pub fn sync_python_files(app: AppHandle) -> Result<(), String> {
     let batch_path = runtime_dir.join("batch_processor.py");
     fs::write(&batch_path, batch_content)
         .map_err(|e| format!("Failed to write batch processor script: {}", e))?;
+
+    // Copy/update calc averages script
+    let calc_averages_content = include_str!("../python/calc_averages.py");
+    let calc_averages_path = runtime_dir.join("calc_averages.py");
+    fs::write(&calc_averages_path, calc_averages_content)
+        .map_err(|e| format!("Failed to write calc averages script: {}", e))?;
 
     // Copy/update requirements.txt
     let requirements_content = include_str!("../python/requirements.txt");
