@@ -69,20 +69,6 @@ impl SpectrumStorage {
             .ok_or_else(|| format!("Spectrum with id {} not found", id))
     }
 
-    // Get multiple spectra by IDs
-    pub fn get_spectra_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Spectrum>, String> {
-        let spectra = self.spectra.lock().map_err(|e| e.to_string())?;
-        let mut result = Vec::new();
-
-        for id in ids {
-            if let Some(spectrum) = spectra.get(id) {
-                result.push(spectrum.clone());
-            }
-        }
-
-        Ok(result)
-    }
-
     // Update a spectrum (e.g., after baseline correction)
     pub fn update_spectrum(
         &self,
@@ -164,75 +150,6 @@ mod tests {
         let result = storage.get_spectrum(id);
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("not found"));
-    }
-
-    #[test]
-    fn test_get_spectra_by_ids() {
-        let storage = SpectrumStorage::new();
-
-        // Create three test spectra
-        let spectrum1 = create_test_spectrum();
-        let spectrum2 = Spectrum::new(
-            "test2.txt".to_string(),
-            300,
-            305,
-            1,
-            vec![200, 201, 202, 203, 204, 205],
-        );
-        let spectrum3 = Spectrum::new(
-            "test3.txt".to_string(),
-            400,
-            405,
-            1,
-            vec![300, 301, 302, 303, 304, 305],
-        );
-
-        let id1 = spectrum1.id;
-        let _id2 = spectrum2.id;
-        let id3 = spectrum3.id;
-
-        storage.create_spectrum(spectrum1).unwrap();
-        storage.create_spectrum(spectrum2).unwrap();
-        storage.create_spectrum(spectrum3).unwrap();
-
-        // Get multiple spectra
-        let result = storage.get_spectra_by_ids(&[id1, id3]);
-        assert!(result.is_ok());
-
-        let spectra = result.unwrap();
-        assert_eq!(spectra.len(), 2);
-        assert_eq!(spectra[0].filename, "test.txt");
-        assert_eq!(spectra[1].filename, "test3.txt");
-    }
-
-    #[test]
-    fn test_get_spectra_by_ids_with_missing() {
-        let storage = SpectrumStorage::new();
-
-        let spectrum = create_test_spectrum();
-        let existing_id = spectrum.id;
-        let missing_id = Uuid::new_v4();
-
-        storage.create_spectrum(spectrum).unwrap();
-
-        // Request both existing and non-existing IDs
-        let result = storage.get_spectra_by_ids(&[existing_id, missing_id]);
-        assert!(result.is_ok());
-
-        let spectra = result.unwrap();
-        assert_eq!(spectra.len(), 1); // Only returns found spectra
-        assert_eq!(spectra[0].filename, "test.txt");
-    }
-
-    #[test]
-    fn test_get_spectra_by_empty_ids() {
-        let storage = SpectrumStorage::new();
-
-        let result = storage.get_spectra_by_ids(&[]);
-        assert!(result.is_ok());
-
-        let spectra = result.unwrap();
-        assert_eq!(spectra.len(), 0);
     }
 
     #[test]
