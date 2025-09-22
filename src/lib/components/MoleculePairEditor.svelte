@@ -112,7 +112,9 @@
     >
       <div class="space-y-3">
         <div>
-          <label for="raman-select" class="block text-xs font-medium text-gray-400 mb-1">Raman Molecule</label>
+          <label for="raman-select" class="block text-xs font-medium text-gray-400 mb-1"
+            >Raman Molecule</label
+          >
           <select
             id="raman-select"
             bind:value={selectedRaman}
@@ -126,7 +128,9 @@
         </div>
 
         <div>
-          <label for="target-select" class="block text-xs font-medium text-gray-400 mb-1">Target Molecule</label>
+          <label for="target-select" class="block text-xs font-medium text-gray-400 mb-1"
+            >Target Molecule</label
+          >
           <select
             id="target-select"
             bind:value={selectedTarget}

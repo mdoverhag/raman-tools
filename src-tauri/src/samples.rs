@@ -11,6 +11,8 @@ pub struct Sample {
     pub name: String,
     pub molecule_pairs: Vec<MoleculePair>,
     pub spectrum_ids: Vec<Uuid>,
+    pub average_intensities: Option<Vec<f64>>,
+    pub average_corrected: Option<Vec<f64>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -27,6 +29,8 @@ impl Sample {
             name,
             molecule_pairs: Vec::new(),
             spectrum_ids: Vec::new(),
+            average_intensities: None,
+            average_corrected: None,
         }
     }
 }
@@ -99,6 +103,23 @@ impl SampleStorage {
 
         Ok(())
     }
+
+    pub fn update_average_spectra(
+        &self,
+        id: Uuid,
+        average_intensities: Vec<f64>,
+        average_corrected: Vec<f64>,
+    ) -> Result<(), String> {
+        let mut samples = self.samples.lock().map_err(|e| e.to_string())?;
+        let sample = samples
+            .get_mut(&id)
+            .ok_or_else(|| format!("Sample with id {} not found", id))?;
+
+        sample.average_intensities = Some(average_intensities);
+        sample.average_corrected = Some(average_corrected);
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -116,6 +137,8 @@ mod tests {
         assert_eq!(sample.name, "Test Sample");
         assert!(sample.molecule_pairs.is_empty());
         assert!(sample.spectrum_ids.is_empty());
+        assert!(sample.average_intensities.is_none());
+        assert!(sample.average_corrected.is_none());
     }
 
     #[test]
@@ -280,5 +303,41 @@ mod tests {
 
         let updated_sample = storage.get_sample(sample.id).unwrap();
         assert_eq!(updated_sample.spectrum_ids.len(), 0);
+    }
+
+    #[test]
+    fn test_update_average_spectra() {
+        let storage = SampleStorage::new();
+        let sample = storage.create_sample("Test Sample".to_string()).unwrap();
+
+        // Initially no average spectra
+        assert!(sample.average_intensities.is_none());
+        assert!(sample.average_corrected.is_none());
+
+        // Update with average spectra
+        let avg_intensities = vec![100.5, 101.5, 102.5, 103.5];
+        let avg_corrected = vec![95.5, 96.5, 97.5, 98.5];
+        let result = storage.update_average_spectra(
+            sample.id,
+            avg_intensities.clone(),
+            avg_corrected.clone(),
+        );
+        assert!(result.is_ok());
+
+        // Verify they were updated
+        let updated_sample = storage.get_sample(sample.id).unwrap();
+        assert_eq!(updated_sample.average_intensities, Some(avg_intensities));
+        assert_eq!(updated_sample.average_corrected, Some(avg_corrected));
+    }
+
+    #[test]
+    fn test_update_average_spectra_nonexistent_sample() {
+        let storage = SampleStorage::new();
+        let avg_intensities = vec![100.5, 101.5];
+        let avg_corrected = vec![95.5, 96.5];
+
+        let result = storage.update_average_spectra(Uuid::new_v4(), avg_intensities, avg_corrected);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("not found"));
     }
 }

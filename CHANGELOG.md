@@ -5,6 +5,15 @@ All notable changes to Raman Tools will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2025-09-22
+
+### Added
+
+- Automatic average spectrum calculation after importing files
+- Average spectrum displayed at top of spectra list with special styling
+- Auto-selection of average spectrum for cleaner initial view
+- Separate storage of raw and baseline-corrected averages
+
 ## [0.4.0] - 2025-09-14
 
 ### Added
