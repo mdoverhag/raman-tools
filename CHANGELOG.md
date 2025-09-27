@@ -5,6 +5,20 @@ All notable changes to Raman Tools will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2025-09-28
+
+### Added
+
+- NNLS deconvolution for multiplex SERS samples using scipy's optimize.nnls
+- L2 normalization of spectra in 1000-1500 cm⁻¹ wavenumber range
+- DeconvolutionView component with component contributions and residual plots
+- Python scripts: normalize_spectra.py and deconvolute_nnls.py
+- DeconvolutionStorage in Rust backend for managing deconvolution runs
+- Fixed color scheme for Raman molecules (DTNB: blue, MBA: green, TFMBA: orange)
+- Alphabetical sorting of samples in sidebar
+- Validation check for required singleplex reference samples before deconvolution
+- L2 norm values table showing scale factors before normalization
+
 ## [0.5.0] - 2025-09-22
 
 ### Added
