@@ -198,6 +198,31 @@ async fn calculate_normalization(
     deconvolution_storage.get_run(&uuid)
 }
 
+#[tauri::command]
+async fn perform_deconvolution(
+    app: tauri::AppHandle,
+    deconvolution_id: String,
+    deconvolution_storage: State<'_, DeconvolutionStorage>,
+) -> Result<python_bridge::DeconvolutionResponse, String> {
+    let uuid = Uuid::parse_str(&deconvolution_id).map_err(|e| e.to_string())?;
+    let run = deconvolution_storage.get_run(&uuid)?;
+
+    // Check that we have normalized data
+    let multiplex = run
+        .normalized_multiplex
+        .ok_or("No normalized multiplex data available")?;
+    let references = run
+        .normalized_references
+        .ok_or("No normalized reference data available")?;
+
+    // Perform NNLS deconvolution
+    let result =
+        python_bridge::perform_nnls_deconvolution(app, multiplex, references, run.wavenumber_range)
+            .await?;
+
+    Ok(result)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -217,6 +242,7 @@ pub fn run() {
             create_deconvolution_run,
             get_deconvolution_run,
             calculate_normalization,
+            perform_deconvolution,
             uv_installer::check_uv_status,
             uv_installer::download_uv,
             python_setup::check_python_status,

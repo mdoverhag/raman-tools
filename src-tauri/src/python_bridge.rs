@@ -395,3 +395,106 @@ pub async fn normalize_spectra(
         response.normalized_references,
     ))
 }
+
+// NNLS Deconvolution structures and functions
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct DeconvolutionRequest {
+    multiplex_spectrum: Vec<f64>,
+    reference_spectra: std::collections::HashMap<String, Vec<f64>>,
+    wavenumber_range: (f64, f64),
+    total_points: usize,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeconvolutionResponse {
+    pub contributions: std::collections::HashMap<String, f64>,
+    pub coefficients: std::collections::HashMap<String, f64>,
+    pub reconstructed_spectrum: Vec<f64>,
+    pub residual: Vec<f64>,
+    pub metrics: DeconvolutionMetrics,
+    pub analysis_range: AnalysisRange,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeconvolutionMetrics {
+    pub rmse: f64,
+    pub r_squared: f64,
+    pub residual_norm: f64,
+    pub total_contribution: f64,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AnalysisRange {
+    pub start_index: usize,
+    pub end_index: usize,
+    pub wavenumber_range: (f64, f64),
+}
+
+pub async fn perform_nnls_deconvolution(
+    app: tauri::AppHandle,
+    multiplex_spectrum: Vec<f64>,
+    reference_spectra: std::collections::HashMap<String, Vec<f64>>,
+    wavenumber_range: (f64, f64),
+) -> Result<DeconvolutionResponse, String> {
+    // Get Python executable path
+    let python_exec = crate::python_setup::get_python_path(&app)?;
+
+    // Get runtime directory for the script
+    let runtime_dir = crate::python_setup::get_runtime_dir(&app)?;
+    let script_path = runtime_dir.join("deconvolute_nnls.py");
+    if !script_path.exists() {
+        return Err(format!("Python script not found: {:?}", script_path));
+    }
+
+    // Create request
+    let request = DeconvolutionRequest {
+        multiplex_spectrum,
+        reference_spectra,
+        wavenumber_range,
+        total_points: 1801, // Default for our spectra
+    };
+
+    let request_json = serde_json::to_string(&request)
+        .map_err(|e| format!("Failed to serialize request: {}", e))?;
+
+    // Run the Python script
+    let mut child = Command::new(&python_exec)
+        .arg(&script_path)
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .map_err(|e| format!("Failed to spawn Python process: {}", e))?;
+
+    // Write input
+    if let Some(mut stdin) = child.stdin.take() {
+        stdin
+            .write_all(request_json.as_bytes())
+            .map_err(|e| format!("Failed to write to Python process: {}", e))?;
+    }
+
+    // Wait for output
+    let output = child
+        .wait_with_output()
+        .map_err(|e| format!("Failed to wait for Python process: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("Python deconvolution failed: {}", stderr));
+    }
+
+    // Parse the response
+    let response: DeconvolutionResponse = serde_json::from_slice(&output.stdout).map_err(|e| {
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        format!(
+            "Failed to parse deconvolution output: {}. Output: {}",
+            e, stdout
+        )
+    })?;
+
+    Ok(response)
+}

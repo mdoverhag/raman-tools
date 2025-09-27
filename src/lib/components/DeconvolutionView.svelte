@@ -15,6 +15,10 @@
   let normalizedData = $state<any>(null);
   let error = $state<string | null>(null);
 
+  // State for deconvolution
+  let isDeconvoluting = $state(false);
+  let deconvolutionResults = $state<any>(null);
+
   // Check which singleplex reference samples are available
   let requiredReferences = $derived(() => {
     if (!sample?.moleculePairs) return [];
@@ -86,12 +90,113 @@
       isNormalizing = false;
     }
   }
+
+  async function runDeconvolution() {
+    if (!currentRunId || !normalizedData) return;
+
+    isDeconvoluting = true;
+    error = null;
+
+    try {
+      // Perform NNLS deconvolution
+      const result = await invoke("perform_deconvolution", {
+        deconvolutionId: currentRunId,
+      });
+
+      deconvolutionResults = result;
+    } catch (e) {
+      error = String(e);
+      console.error("Deconvolution failed:", e);
+    } finally {
+      isDeconvoluting = false;
+    }
+  }
 </script>
 
 <div class="bg-gray-800 rounded-lg border border-gray-700 p-6">
   {#if normalizedData}
     <!-- Show visualization when we have normalized data -->
-    <NormalizationChart {normalizedData} {sample} {sampleStore} />
+    <div class="space-y-4">
+      <NormalizationChart {normalizedData} {sample} {sampleStore} {deconvolutionResults} />
+
+      <!-- Deconvolution section -->
+      <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+        <h3 class="text-lg font-semibold text-gray-200 mb-4">NNLS Deconvolution</h3>
+
+        {#if deconvolutionResults}
+          <!-- Show deconvolution results -->
+          <div class="space-y-4">
+            <!-- Contributions -->
+            <div class="bg-gray-800/50 rounded-lg p-4">
+              <h4 class="text-sm font-semibold text-gray-300 mb-3">Component Contributions</h4>
+              <div class="space-y-2">
+                {#each Object.entries(deconvolutionResults.contributions || {}) as [name, percentage]}
+                  <div class="flex items-center justify-between p-2 bg-gray-900/50 rounded">
+                    <span class="text-sm text-gray-300">{name}</span>
+                    <span class="text-sm font-mono text-gray-200">
+                      {(percentage as number).toFixed(2)}%
+                    </span>
+                  </div>
+                {/each}
+              </div>
+            </div>
+
+            <!-- Metrics -->
+            <div class="bg-gray-800/50 rounded-lg p-4">
+              <h4 class="text-sm font-semibold text-gray-300 mb-3">Quality Metrics</h4>
+              <div class="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span class="text-gray-400">R²:</span>
+                  <span class="text-gray-200 ml-2">
+                    {deconvolutionResults.metrics?.rSquared.toFixed(4)}
+                  </span>
+                </div>
+                <div>
+                  <span class="text-gray-400">RMSE:</span>
+                  <span class="text-gray-200 ml-2">
+                    {deconvolutionResults.metrics?.rmse.toFixed(4)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        {:else}
+          <!-- Show deconvolution button -->
+          <div class="flex flex-col items-center">
+            <p class="text-gray-400 mb-4">
+              Ready to perform NNLS deconvolution on normalized spectra
+            </p>
+            <button
+              onclick={runDeconvolution}
+              disabled={isDeconvoluting}
+              class="px-6 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600
+                     text-white rounded-lg transition-colors flex items-center justify-center gap-2"
+            >
+              {#if isDeconvoluting}
+                <svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                  ></circle>
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Deconvoluting...
+              {:else}
+                Run Deconvolution
+              {/if}
+            </button>
+          </div>
+        {/if}
+      </div>
+    </div>
   {:else}
     <!-- Show status and controls when no data -->
     <div class="flex flex-col items-center justify-center min-h-[24rem]">

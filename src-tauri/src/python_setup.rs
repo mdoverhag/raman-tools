@@ -145,6 +145,12 @@ pub fn sync_python_files(app: AppHandle) -> Result<(), String> {
     fs::write(&normalize_path, normalize_content)
         .map_err(|e| format!("Failed to write normalize spectra script: {}", e))?;
 
+    // Copy/update deconvolute NNLS script
+    let deconvolute_content = include_str!("../python/deconvolute_nnls.py");
+    let deconvolute_path = runtime_dir.join("deconvolute_nnls.py");
+    fs::write(&deconvolute_path, deconvolute_content)
+        .map_err(|e| format!("Failed to write deconvolute NNLS script: {}", e))?;
+
     // Copy/update requirements.txt
     let requirements_content = include_str!("../python/requirements.txt");
     let requirements_path = runtime_dir.join("requirements.txt");

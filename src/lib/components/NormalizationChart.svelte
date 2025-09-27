@@ -6,12 +6,15 @@
     normalizedData: any;
     sample: any;
     sampleStore: any;
+    deconvolutionResults?: any;
   }
 
-  let { normalizedData, sample, sampleStore }: Props = $props();
+  let { normalizedData, sample, sampleStore, deconvolutionResults }: Props = $props();
 
   let originalContainer = $state<HTMLDivElement>();
   let normalizedContainer = $state<HTMLDivElement>();
+  let deconvolutionContainer = $state<HTMLDivElement>();
+  let residualContainer = $state<HTMLDivElement>();
 
   // Calculate L2 norms for display
   function calculateL2Norm(spectrum: number[], startIdx: number, endIdx: number): number {
@@ -24,8 +27,8 @@
     if (!normalizedData || !sample) return [];
 
     const wavenumbers = generateWavenumbers();
-    const startIdx = wavenumbers.findIndex(w => w >= 1000);
-    const endIdx = wavenumbers.findIndex(w => w > 1500) - 1;
+    const startIdx = wavenumbers.findIndex((w) => w >= 1000);
+    const endIdx = wavenumbers.findIndex((w) => w > 1500) - 1;
 
     const results = [];
 
@@ -35,7 +38,7 @@
       results.push({
         name: `${sample.name} (Multiplex)`,
         norm: norm,
-        color: colors.multiplex
+        color: colors.multiplex,
       });
     }
 
@@ -48,7 +51,7 @@
         results.push({
           name: refSample.name,
           norm: norm,
-          color: colors.references[index % colors.references.length]
+          color: colors.references[index % colors.references.length],
         });
       }
     });
@@ -90,9 +93,7 @@
       .attr("width", width + margin.left + margin.right)
       .attr("height", height + margin.top + margin.bottom);
 
-    const g = svg
-      .append("g")
-      .attr("transform", `translate(${margin.left},${margin.top})`);
+    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
     const wavenumbers = generateWavenumbers();
 
@@ -105,10 +106,10 @@
         name: `${sample.name} (Multiplex)`,
         values: sample.averageCorrected.map((y: number, i: number) => ({
           x: wavenumbers[i],
-          y
+          y,
         })),
         color: colors.multiplex,
-        strokeWidth: 2
+        strokeWidth: 2,
       });
     }
 
@@ -121,19 +122,16 @@
           name: refSample.name,
           values: refSample.averageCorrected.map((y: number, i: number) => ({
             x: wavenumbers[i],
-            y
+            y,
           })),
           color: colors.references[index % colors.references.length],
-          strokeWidth: 1.5
+          strokeWidth: 1.5,
         });
       }
     });
 
     // Set up scales
-    const xScale = d3
-      .scaleLinear()
-      .domain([200, 2000])
-      .range([0, width]);
+    const xScale = d3.scaleLinear().domain([200, 2000]).range([0, width]);
 
     const maxY = Number(d3.max(spectraData, (d: any) => d3.max(d.values, (v: any) => v.y))) || 100;
     const yScale = d3
@@ -184,7 +182,7 @@
 
     // Draw lines
     const line = d3
-      .line<{x: number, y: number}>()
+      .line<{ x: number; y: number }>()
       .x((d) => xScale(d.x))
       .y((d) => yScale(d.y))
       .curve(d3.curveMonotoneX);
@@ -214,9 +212,7 @@
       .attr("transform", `translate(${width + margin.left + 10}, ${margin.top})`);
 
     spectraData.forEach((spectrum, i) => {
-      const legendItem = legend
-        .append("g")
-        .attr("transform", `translate(0, ${i * 20})`);
+      const legendItem = legend.append("g").attr("transform", `translate(0, ${i * 20})`);
 
       legendItem
         .append("line")
@@ -253,16 +249,14 @@
       .attr("width", width + margin.left + margin.right)
       .attr("height", height + margin.top + margin.bottom);
 
-    const g = svg
-      .append("g")
-      .attr("transform", `translate(${margin.left},${margin.top})`);
+    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
     const wavenumbers = generateWavenumbers();
     const displayRange = [1000, 1500];
 
     // Filter wavenumbers and data to display range
-    const startIdx = wavenumbers.findIndex(w => w >= displayRange[0]);
-    const endIdx = wavenumbers.findIndex(w => w > displayRange[1]);
+    const startIdx = wavenumbers.findIndex((w) => w >= displayRange[0]);
+    const endIdx = wavenumbers.findIndex((w) => w > displayRange[1]);
     const endIndex = endIdx === -1 ? wavenumbers.length - 1 : endIdx - 1;
 
     // Collect normalized spectra data
@@ -276,10 +270,10 @@
           .slice(startIdx, endIndex + 1)
           .map((y: number, i: number) => ({
             x: wavenumbers[startIdx + i],
-            y
+            y,
           })),
         color: colors.multiplex,
-        strokeWidth: 2
+        strokeWidth: 2,
       });
     }
 
@@ -289,24 +283,19 @@
         ([ramanName, spectrum]: [string, any], index) => {
           spectraData.push({
             name: `${ramanName} - Normalized`,
-            values: spectrum
-              .slice(startIdx, endIndex + 1)
-              .map((y: number, i: number) => ({
-                x: wavenumbers[startIdx + i],
-                y
-              })),
+            values: spectrum.slice(startIdx, endIndex + 1).map((y: number, i: number) => ({
+              x: wavenumbers[startIdx + i],
+              y,
+            })),
             color: colors.references[index % colors.references.length],
-            strokeWidth: 1.5
+            strokeWidth: 1.5,
           });
         }
       );
     }
 
     // Set up scales
-    const xScale = d3
-      .scaleLinear()
-      .domain(displayRange)
-      .range([0, width]);
+    const xScale = d3.scaleLinear().domain(displayRange).range([0, width]);
 
     const maxY = Number(d3.max(spectraData, (d: any) => d3.max(d.values, (v: any) => v.y))) || 0.2;
     const yScale = d3
@@ -337,7 +326,7 @@
 
     // Draw lines
     const line = d3
-      .line<{x: number, y: number}>()
+      .line<{ x: number; y: number }>()
       .x((d) => xScale(d.x))
       .y((d) => yScale(d.y))
       .curve(d3.curveMonotoneX);
@@ -367,9 +356,7 @@
       .attr("transform", `translate(${width + margin.left + 10}, ${margin.top})`);
 
     spectraData.forEach((spectrum, i) => {
-      const legendItem = legend
-        .append("g")
-        .attr("transform", `translate(0, ${i * 20})`);
+      const legendItem = legend.append("g").attr("transform", `translate(0, ${i * 20})`);
 
       legendItem
         .append("line")
@@ -390,14 +377,358 @@
     });
   }
 
+  function drawDeconvolutionChart() {
+    if (!deconvolutionContainer || !deconvolutionResults || !normalizedData) return;
+
+    // Clear previous chart
+    d3.select(deconvolutionContainer).selectAll("*").remove();
+
+    const margin = { top: 40, right: 150, bottom: 50, left: 70 };
+    const width = deconvolutionContainer.clientWidth - margin.left - margin.right;
+    const height = 280 - margin.top - margin.bottom;
+
+    const svg = d3
+      .select(deconvolutionContainer)
+      .append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom);
+
+    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const wavenumbers = generateWavenumbers();
+    const displayRange = [1000, 1500];
+
+    // Filter to display range
+    const startIdx = wavenumbers.findIndex((w) => w >= displayRange[0]);
+    const endIdx = wavenumbers.findIndex((w) => w > displayRange[1]);
+    const endIndex = endIdx === -1 ? wavenumbers.length - 1 : endIdx - 1;
+
+    // Prepare data
+    const spectraData = [];
+
+    // Original multiplex (normalized)
+    if (normalizedData.normalizedMultiplex) {
+      spectraData.push({
+        name: "Multiplex (measured)",
+        values: normalizedData.normalizedMultiplex
+          .slice(startIdx, endIndex + 1)
+          .map((y: number, i: number) => ({
+            x: wavenumbers[startIdx + i],
+            y,
+          })),
+        color: colors.multiplex,
+        strokeWidth: 2.5,
+        strokeDasharray: "5,5",
+      });
+    }
+
+    // Individual component contributions (scaled by coefficients)
+    if (normalizedData.normalizedReferences && deconvolutionResults.coefficients) {
+      let colorIndex = 0;
+      Object.entries(deconvolutionResults.coefficients).forEach(
+        ([name, coefficient]: [string, any]) => {
+          const refSpectrum = (normalizedData.normalizedReferences as any)[name];
+          if (refSpectrum && coefficient > 0) {
+            spectraData.push({
+              name: `${name} (${deconvolutionResults.contributions[name].toFixed(1)}%)`,
+              values: refSpectrum
+                .slice(startIdx, endIndex + 1)
+                .map((y: number, i: number) => ({
+                  x: wavenumbers[startIdx + i],
+                  y: y * coefficient, // Scale by NNLS coefficient
+                })),
+              color: colors.references[colorIndex % colors.references.length],
+              strokeWidth: 2,
+              strokeDasharray: null,
+            });
+            colorIndex++;
+          }
+        }
+      );
+    }
+
+    // Reconstructed spectrum (sum of components)
+    if (deconvolutionResults.reconstructedSpectrum) {
+      spectraData.push({
+        name: "Reconstruction (fit)",
+        values: deconvolutionResults.reconstructedSpectrum
+          .slice(startIdx, endIndex + 1)
+          .map((y: number, i: number) => ({
+            x: wavenumbers[startIdx + i],
+            y,
+          })),
+        color: "rgb(239, 68, 68)", // Red
+        strokeWidth: 2,
+        strokeDasharray: "5,5",
+      });
+    }
+
+    // Set up scales
+    const xScale = d3.scaleLinear().domain(displayRange).range([0, width]);
+
+    const maxY = Number(d3.max(spectraData, (d: any) => d3.max(d.values, (v: any) => v.y))) || 0.2;
+    const yScale = d3
+      .scaleLinear()
+      .domain([0, maxY * 1.1])
+      .range([height, 0]);
+
+    // Add axes
+    g.append("g")
+      .attr("transform", `translate(0,${height})`)
+      .call(d3.axisBottom(xScale))
+      .append("text")
+      .attr("x", width / 2)
+      .attr("y", 40)
+      .attr("fill", "#9ca3af")
+      .style("text-anchor", "middle")
+      .text("Wavenumber (cm⁻¹)");
+
+    g.append("g")
+      .call(d3.axisLeft(yScale).tickFormat(d3.format(".3f")))
+      .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", -50)
+      .attr("x", -height / 2)
+      .attr("fill", "#9ca3af")
+      .style("text-anchor", "middle")
+      .text("Normalized Intensity");
+
+    // Draw lines
+    const line = d3
+      .line<{ x: number; y: number }>()
+      .x((d) => xScale(d.x))
+      .y((d) => yScale(d.y))
+      .curve(d3.curveMonotoneX);
+
+    spectraData.forEach((spectrum) => {
+      const path = g
+        .append("path")
+        .datum(spectrum.values)
+        .attr("fill", "none")
+        .attr("stroke", spectrum.color)
+        .attr("stroke-width", spectrum.strokeWidth)
+        .attr("d", line);
+
+      if (spectrum.strokeDasharray) {
+        path.attr("stroke-dasharray", spectrum.strokeDasharray);
+      }
+    });
+
+    // Add title
+    svg
+      .append("text")
+      .attr("x", (width + margin.left + margin.right) / 2)
+      .attr("y", 20)
+      .attr("text-anchor", "middle")
+      .style("font-size", "14px")
+      .style("fill", "#e5e7eb")
+      .text("NNLS Deconvolution Components");
+
+    // Add legend
+    const legend = svg
+      .append("g")
+      .attr("transform", `translate(${width + margin.left + 10}, ${margin.top})`);
+
+    spectraData.forEach((spectrum, i) => {
+      const legendItem = legend.append("g").attr("transform", `translate(0, ${i * 20})`);
+
+      const line = legendItem
+        .append("line")
+        .attr("x1", 0)
+        .attr("x2", 15)
+        .attr("y1", 0)
+        .attr("y2", 0)
+        .attr("stroke", spectrum.color)
+        .attr("stroke-width", spectrum.strokeWidth);
+
+      if (spectrum.strokeDasharray) {
+        line.attr("stroke-dasharray", spectrum.strokeDasharray);
+      }
+
+      legendItem
+        .append("text")
+        .attr("x", 20)
+        .attr("y", 4)
+        .style("font-size", "11px")
+        .style("fill", "#e5e7eb")
+        .text(spectrum.name);
+    });
+
+    // Add R² annotation
+    if (deconvolutionResults.metrics?.rSquared) {
+      g.append("text")
+        .attr("x", width - 10)
+        .attr("y", 20)
+        .attr("text-anchor", "end")
+        .style("font-size", "12px")
+        .style("fill", "#9ca3af")
+        .text(`R² = ${deconvolutionResults.metrics.rSquared.toFixed(4)}`);
+    }
+  }
+
+  function drawResidualChart() {
+    if (!residualContainer || !deconvolutionResults || !deconvolutionResults.residual) return;
+
+    // Clear previous chart
+    d3.select(residualContainer).selectAll("*").remove();
+
+    const margin = { top: 40, right: 150, bottom: 50, left: 70 };
+    const width = residualContainer.clientWidth - margin.left - margin.right;
+    const height = 200 - margin.top - margin.bottom;
+
+    const svg = d3
+      .select(residualContainer)
+      .append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom);
+
+    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const wavenumbers = generateWavenumbers();
+    const displayRange = [1000, 1500];
+
+    // Filter to display range
+    const startIdx = wavenumbers.findIndex((w) => w >= displayRange[0]);
+    const endIdx = wavenumbers.findIndex((w) => w > displayRange[1]);
+    const endIndex = endIdx === -1 ? wavenumbers.length - 1 : endIdx - 1;
+
+    // Check if residual array exists and has data
+    if (!Array.isArray(deconvolutionResults.residual) || deconvolutionResults.residual.length === 0) {
+      console.error("Residual data is missing or empty");
+      return;
+    }
+
+    // Prepare residual data - the residual is already for the analysis range only
+    // So we need to map it correctly
+    const residualLength = deconvolutionResults.residual.length;
+    const expectedLength = endIndex - startIdx + 1;
+
+    let residualData;
+    if (residualLength === expectedLength) {
+      // Residual is already trimmed to analysis range
+      residualData = deconvolutionResults.residual.map((y: number, i: number) => ({
+        x: wavenumbers[startIdx + i],
+        y,
+      }));
+    } else if (residualLength === wavenumbers.length) {
+      // Residual is full spectrum
+      residualData = deconvolutionResults.residual
+        .slice(startIdx, endIndex + 1)
+        .map((y: number, i: number) => ({
+          x: wavenumbers[startIdx + i],
+          y,
+        }));
+    } else {
+      console.error(`Unexpected residual length: ${residualLength}, expected ${expectedLength} or ${wavenumbers.length}`);
+      return;
+    }
+
+    // Set up scales
+    const xScale = d3.scaleLinear().domain(displayRange).range([0, width]);
+
+    // Calculate max absolute value for symmetric scale
+    const maxY = Number(d3.max(residualData, (d: any) => Math.abs(d.y))) || 0.01;
+    console.log("Residual max value:", maxY, "Residual data points:", residualData.length);
+
+    // Ensure minimum scale for visibility
+    const scaleMax = Math.max(maxY * 1.2, 0.01);
+    const yScale = d3
+      .scaleLinear()
+      .domain([-scaleMax, scaleMax])
+      .range([height, 0]);
+
+    // Add axes
+    g.append("g")
+      .attr("transform", `translate(0,${height})`)
+      .call(d3.axisBottom(xScale))
+      .append("text")
+      .attr("x", width / 2)
+      .attr("y", 40)
+      .attr("fill", "#9ca3af")
+      .style("text-anchor", "middle")
+      .text("Wavenumber (cm⁻¹)");
+
+    g.append("g")
+      .call(d3.axisLeft(yScale).tickFormat(d3.format(".4f")))
+      .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", -50)
+      .attr("x", -height / 2)
+      .attr("fill", "#9ca3af")
+      .style("text-anchor", "middle")
+      .text("Residual");
+
+    // Add zero line
+    g.append("line")
+      .attr("x1", 0)
+      .attr("x2", width)
+      .attr("y1", yScale(0))
+      .attr("y2", yScale(0))
+      .attr("stroke", "#6b7280")
+      .attr("stroke-width", 1)
+      .attr("stroke-dasharray", "2,2");
+
+    // Draw residual as area chart for better visibility
+    const area = d3
+      .area<{ x: number; y: number }>()
+      .x((d) => xScale(d.x))
+      .y0(yScale(0))
+      .y1((d) => yScale(d.y))
+      .curve(d3.curveMonotoneX);
+
+    // Add filled area
+    g.append("path")
+      .datum(residualData)
+      .attr("fill", "rgba(251, 146, 60, 0.3)") // Orange with transparency
+      .attr("d", area);
+
+    // Draw residual line
+    const line = d3
+      .line<{ x: number; y: number }>()
+      .x((d) => xScale(d.x))
+      .y((d) => yScale(d.y))
+      .curve(d3.curveMonotoneX);
+
+    g.append("path")
+      .datum(residualData)
+      .attr("fill", "none")
+      .attr("stroke", "rgb(251, 146, 60)") // Orange
+      .attr("stroke-width", 2)
+      .attr("d", line);
+
+    // Add title
+    svg
+      .append("text")
+      .attr("x", (width + margin.left + margin.right) / 2)
+      .attr("y", 20)
+      .attr("text-anchor", "middle")
+      .style("font-size", "14px")
+      .style("fill", "#e5e7eb")
+      .text("Fit Residuals (Measured - Reconstructed)");
+
+    // Add RMSE annotation
+    if (deconvolutionResults.metrics?.rmse) {
+      g.append("text")
+        .attr("x", width - 10)
+        .attr("y", 20)
+        .attr("text-anchor", "end")
+        .style("font-size", "12px")
+        .style("fill", "#9ca3af")
+        .text(`RMSE = ${deconvolutionResults.metrics.rmse.toFixed(5)}`);
+    }
+  }
+
   // Redraw charts when data changes
   $effect(() => {
     if (normalizedData && sample && sampleStore) {
       drawOriginalChart();
       drawNormalizedChart();
     }
+    if (deconvolutionResults && normalizedData) {
+      drawDeconvolutionChart();
+      drawResidualChart();
+    }
   });
-
 
   // Handle window resize
   onMount(() => {
@@ -405,6 +736,10 @@
       if (normalizedData && sample && sampleStore) {
         drawOriginalChart();
         drawNormalizedChart();
+      }
+      if (deconvolutionResults && normalizedData) {
+        drawDeconvolutionChart();
+        drawResidualChart();
       }
     };
 
@@ -439,10 +774,7 @@
       {#each normValues as item}
         <div class="flex items-center justify-between p-2 bg-gray-900/50 rounded">
           <div class="flex items-center gap-2">
-            <div
-              class="w-3 h-3 rounded-full"
-              style="background-color: {item.color}"
-            ></div>
+            <div class="w-3 h-3 rounded-full" style="background-color: {item.color}"></div>
             <span class="text-sm text-gray-300">{item.name}</span>
           </div>
           <span class="text-sm font-mono text-gray-200">
@@ -463,4 +795,17 @@
       </div>
     </div>
   </div>
+
+  <!-- Deconvolution Results Charts -->
+  {#if deconvolutionResults}
+    <!-- Component Contributions Chart -->
+    <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+      <div bind:this={deconvolutionContainer} class="w-full h-[280px]"></div>
+    </div>
+
+    <!-- Residual Chart -->
+    <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+      <div bind:this={residualContainer} class="w-full h-[200px]"></div>
+    </div>
+  {/if}
 </div>
