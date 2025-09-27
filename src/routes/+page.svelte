@@ -379,7 +379,9 @@
                           Deconvolution
                         </div>
                         <div class="text-sm text-purple-400/70">
-                          Multiplex: {sampleStore.selectedSample.moleculePairs.map(p => p.raman).join(', ')}
+                          Multiplex: {sampleStore.selectedSample.moleculePairs
+                            .map((p) => p.raman)
+                            .join(", ")}
                         </div>
                       </button>
                     </li>
@@ -407,7 +409,7 @@
             </div>
 
             <!-- Chart Section -->
-            {#if sampleStore.selectedSpectrumId === 'deconvolution'}
+            {#if sampleStore.selectedSpectrumId === "deconvolution"}
               <DeconvolutionView sample={sampleStore.selectedSample} />
             {:else if sampleStore.selectedSpectrum}
               <div class="bg-gray-800 rounded-lg border border-gray-700 p-6">
