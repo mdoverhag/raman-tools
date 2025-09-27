@@ -9,8 +9,12 @@ import numpy as np
 from scipy.optimize import nnls
 
 
-def perform_nnls_deconvolution(multiplex_spectrum, reference_spectra,
-                               wavenumber_range=(1000, 1500), total_points=1801):
+def perform_nnls_deconvolution(
+    multiplex_spectrum,
+    reference_spectra,
+    wavenumber_range=(1000, 1500),
+    total_points=1801,
+):
     """
     Perform NNLS deconvolution to find the contribution of each reference spectrum
     to the multiplex spectrum.
@@ -38,14 +42,16 @@ def perform_nnls_deconvolution(multiplex_spectrum, reference_spectra,
     end_idx = max(0, min(end_idx, total_points - 1))
 
     # Extract the region for NNLS
-    multiplex_region = np.array(multiplex_spectrum[start_idx:end_idx + 1])
+    multiplex_region = np.array(multiplex_spectrum[start_idx : end_idx + 1])
 
     # Build the reference matrix (each column is a reference spectrum)
     reference_names = list(reference_spectra.keys())
-    reference_matrix = np.column_stack([
-        np.array(reference_spectra[name][start_idx:end_idx + 1])
-        for name in reference_names
-    ])
+    reference_matrix = np.column_stack(
+        [
+            np.array(reference_spectra[name][start_idx : end_idx + 1])
+            for name in reference_names
+        ]
+    )
 
     # Perform NNLS: find x such that ||Ax - b||^2 is minimized, x >= 0
     # where A is reference_matrix, b is multiplex_region
@@ -69,22 +75,20 @@ def perform_nnls_deconvolution(multiplex_spectrum, reference_spectra,
 
     # Calculate R-squared (coefficient of determination)
     ss_res = np.sum(residual**2)
-    ss_tot = np.sum((multiplex_region - np.mean(multiplex_region))**2)
+    ss_tot = np.sum((multiplex_region - np.mean(multiplex_region)) ** 2)
     r_squared = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0
 
     # Create full-length reconstructed spectrum (for visualization)
     full_reconstructed = np.zeros(total_points)
-    full_reconstructed[start_idx:end_idx + 1] = reconstructed
+    full_reconstructed[start_idx : end_idx + 1] = reconstructed
 
     # Create result dictionary
     result = {
         "contributions": {
-            name: float(percentages[i])
-            for i, name in enumerate(reference_names)
+            name: float(percentages[i]) for i, name in enumerate(reference_names)
         },
         "coefficients": {
-            name: float(coefficients[i])
-            for i, name in enumerate(reference_names)
+            name: float(coefficients[i]) for i, name in enumerate(reference_names)
         },
         "reconstructedSpectrum": full_reconstructed.tolist(),
         "residual": residual.tolist(),
@@ -92,13 +96,13 @@ def perform_nnls_deconvolution(multiplex_spectrum, reference_spectra,
             "rmse": float(rmse),
             "rSquared": float(r_squared),
             "residualNorm": float(residual_norm),
-            "totalContribution": float(np.sum(percentages))
+            "totalContribution": float(np.sum(percentages)),
         },
         "analysisRange": {
             "startIndex": start_idx,
             "endIndex": end_idx,
-            "wavenumberRange": wavenumber_range
-        }
+            "wavenumberRange": wavenumber_range,
+        },
     }
 
     return result
@@ -116,19 +120,14 @@ def main():
     try:
         # Perform deconvolution
         result = perform_nnls_deconvolution(
-            multiplex_spectrum,
-            reference_spectra,
-            wavenumber_range,
-            total_points
+            multiplex_spectrum, reference_spectra, wavenumber_range, total_points
         )
 
         # Output result
         print(json.dumps(result))
     except Exception as e:
         # Output error
-        error_result = {
-            "error": str(e)
-        }
+        error_result = {"error": str(e)}
         print(json.dumps(error_result))
         sys.exit(1)
 

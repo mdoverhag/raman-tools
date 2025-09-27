@@ -71,9 +71,9 @@
 
   // Fixed color palette for Raman molecules
   const moleculeColors: Record<string, string> = {
-    "MBA": "rgb(34, 197, 94)", // Green
-    "DTNB": "rgb(59, 130, 246)", // Blue
-    "TFMBA": "rgb(251, 146, 60)", // Orange
+    MBA: "rgb(34, 197, 94)", // Green
+    DTNB: "rgb(59, 130, 246)", // Blue
+    TFMBA: "rgb(251, 146, 60)", // Orange
   };
 
   // Color palette for different spectra
@@ -328,22 +328,20 @@
         }
       );
 
-      sortedEntries.forEach(
-        ([ramanName, spectrum]: [string, any]) => {
-          // Use fixed color based on molecule name
-          const moleculeColor = moleculeColors[ramanName] || colors.references[0];
+      sortedEntries.forEach(([ramanName, spectrum]: [string, any]) => {
+        // Use fixed color based on molecule name
+        const moleculeColor = moleculeColors[ramanName] || colors.references[0];
 
-          spectraData.push({
-            name: `${ramanName} - Normalized`,
-            values: spectrum.slice(startIdx, endIndex + 1).map((y: number, i: number) => ({
-              x: wavenumbers[startIdx + i],
-              y,
-            })),
-            color: moleculeColor,
-            strokeWidth: 1.5,
-          });
-        }
-      );
+        spectraData.push({
+          name: `${ramanName} - Normalized`,
+          values: spectrum.slice(startIdx, endIndex + 1).map((y: number, i: number) => ({
+            x: wavenumbers[startIdx + i],
+            y,
+          })),
+          color: moleculeColor,
+          strokeWidth: 1.5,
+        });
+      });
     }
 
     // Set up scales
@@ -491,28 +489,24 @@
         }
       );
 
-      sortedEntries.forEach(
-        ([name, coefficient]: [string, any]) => {
-          const refSpectrum = (normalizedData.normalizedReferences as any)[name];
-          if (refSpectrum && coefficient > 0) {
-            // Use fixed color based on molecule name
-            const moleculeColor = moleculeColors[name] || colors.references[0];
+      sortedEntries.forEach(([name, coefficient]: [string, any]) => {
+        const refSpectrum = (normalizedData.normalizedReferences as any)[name];
+        if (refSpectrum && coefficient > 0) {
+          // Use fixed color based on molecule name
+          const moleculeColor = moleculeColors[name] || colors.references[0];
 
-            spectraData.push({
-              name: `${name} (${deconvolutionResults.contributions[name].toFixed(1)}%)`,
-              values: refSpectrum
-                .slice(startIdx, endIndex + 1)
-                .map((y: number, i: number) => ({
-                  x: wavenumbers[startIdx + i],
-                  y: y * coefficient, // Scale by NNLS coefficient
-                })),
-              color: moleculeColor,
-              strokeWidth: 2,
-              strokeDasharray: null,
-            });
-          }
+          spectraData.push({
+            name: `${name} (${deconvolutionResults.contributions[name].toFixed(1)}%)`,
+            values: refSpectrum.slice(startIdx, endIndex + 1).map((y: number, i: number) => ({
+              x: wavenumbers[startIdx + i],
+              y: y * coefficient, // Scale by NNLS coefficient
+            })),
+            color: moleculeColor,
+            strokeWidth: 2,
+            strokeDasharray: null,
+          });
         }
-      );
+      });
     }
 
     // Reconstructed spectrum (sum of components)
@@ -661,7 +655,10 @@
     const endIndex = endIdx === -1 ? wavenumbers.length - 1 : endIdx - 1;
 
     // Check if residual array exists and has data
-    if (!Array.isArray(deconvolutionResults.residual) || deconvolutionResults.residual.length === 0) {
+    if (
+      !Array.isArray(deconvolutionResults.residual) ||
+      deconvolutionResults.residual.length === 0
+    ) {
       console.error("Residual data is missing or empty");
       return;
     }
@@ -687,7 +684,9 @@
           y,
         }));
     } else {
-      console.error(`Unexpected residual length: ${residualLength}, expected ${expectedLength} or ${wavenumbers.length}`);
+      console.error(
+        `Unexpected residual length: ${residualLength}, expected ${expectedLength} or ${wavenumbers.length}`
+      );
       return;
     }
 
@@ -700,10 +699,7 @@
 
     // Ensure minimum scale for visibility
     const scaleMax = Math.max(maxY * 1.2, 0.01);
-    const yScale = d3
-      .scaleLinear()
-      .domain([-scaleMax, scaleMax])
-      .range([height, 0]);
+    const yScale = d3.scaleLinear().domain([-scaleMax, scaleMax]).range([height, 0]);
 
     // Add axes
     g.append("g")
