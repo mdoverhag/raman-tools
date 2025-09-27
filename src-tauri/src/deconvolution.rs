@@ -99,16 +99,4 @@ impl DeconvolutionStorage {
 
         Ok(())
     }
-
-    pub fn list_runs(&self) -> Result<Vec<DeconvolutionRun>, String> {
-        let runs = self.runs.lock().map_err(|e| e.to_string())?;
-        Ok(runs.values().cloned().collect())
-    }
-
-    pub fn delete_run(&self, id: &Uuid) -> Result<(), String> {
-        let mut runs = self.runs.lock().map_err(|e| e.to_string())?;
-        runs.remove(id)
-            .ok_or_else(|| "Deconvolution run not found".to_string())?;
-        Ok(())
-    }
 }

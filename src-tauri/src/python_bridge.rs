@@ -318,15 +318,7 @@ struct NormalizeRequest {
 struct NormalizeResponse {
     normalized_multiplex: Vec<f64>,
     normalized_references: std::collections::HashMap<String, Vec<f64>>,
-    normalization_range: NormalizationRange,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct NormalizationRange {
-    start_index: usize,
-    end_index: usize,
-    wavenumber_range: (f64, f64),
+    // normalization_range field is sent by Python but not used in Rust
 }
 
 pub async fn normalize_spectra(
