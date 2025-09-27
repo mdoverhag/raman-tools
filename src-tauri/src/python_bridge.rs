@@ -303,3 +303,95 @@ pub async fn calculate_average(
         AverageResult::Error { error } => Err(format!("Python error: {}", error)),
     }
 }
+
+// Normalization structures and functions
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct NormalizeRequest {
+    multiplex_spectrum: Vec<f64>,
+    reference_spectra: std::collections::HashMap<String, Vec<f64>>,
+    wavenumber_range: (f64, f64),
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct NormalizeResponse {
+    normalized_multiplex: Vec<f64>,
+    normalized_references: std::collections::HashMap<String, Vec<f64>>,
+    normalization_range: NormalizationRange,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct NormalizationRange {
+    start_index: usize,
+    end_index: usize,
+    wavenumber_range: (f64, f64),
+}
+
+pub async fn normalize_spectra(
+    app: tauri::AppHandle,
+    multiplex_spectrum: Vec<f64>,
+    reference_spectra: std::collections::HashMap<String, Vec<f64>>,
+    wavenumber_range: (f64, f64),
+) -> Result<(Vec<f64>, std::collections::HashMap<String, Vec<f64>>), String> {
+    // Get Python executable path
+    let python_exec = crate::python_setup::get_python_path(&app)?;
+
+    // Get runtime directory for the script
+    let runtime_dir = crate::python_setup::get_runtime_dir(&app)?;
+    let script_path = runtime_dir.join("normalize_spectra.py");
+    if !script_path.exists() {
+        return Err(format!("Python script not found: {:?}", script_path));
+    }
+
+    // Create request
+    let request = NormalizeRequest {
+        multiplex_spectrum,
+        reference_spectra,
+        wavenumber_range,
+    };
+
+    let request_json = serde_json::to_string(&request)
+        .map_err(|e| format!("Failed to serialize request: {}", e))?;
+
+    // Run the Python script
+    let mut child = Command::new(&python_exec)
+        .arg(&script_path)
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .map_err(|e| format!("Failed to spawn Python process: {}", e))?;
+
+    // Write input
+    if let Some(mut stdin) = child.stdin.take() {
+        stdin
+            .write_all(request_json.as_bytes())
+            .map_err(|e| format!("Failed to write to Python process: {}", e))?;
+    }
+
+    // Wait for output
+    let output = child
+        .wait_with_output()
+        .map_err(|e| format!("Failed to wait for Python process: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("Python normalization failed: {}", stderr));
+    }
+
+    // Parse the response
+    let response: NormalizeResponse = serde_json::from_slice(&output.stdout).map_err(|e| {
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        format!(
+            "Failed to parse normalization output: {}. Output: {}",
+            e, stdout
+        )
+    })?;
+
+    Ok((
+        response.normalized_multiplex,
+        response.normalized_references,
+    ))
+}
