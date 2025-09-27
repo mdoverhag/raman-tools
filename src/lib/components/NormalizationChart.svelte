@@ -44,14 +44,22 @@
 
     // Add reference norms
     const referenceIds = normalizedData.referenceSampleIds || [];
-    referenceIds.forEach((refId: string, index: number) => {
+    referenceIds.forEach((refId: string) => {
       const refSample = sampleStore.samples.find((s: any) => s.id === refId);
       if (refSample?.averageCorrected) {
         const norm = calculateL2Norm(refSample.averageCorrected, startIdx, endIdx);
+
+        // Get fixed color based on molecule
+        let moleculeColor = colors.references[0]; // default
+        if (refSample.moleculePairs && refSample.moleculePairs.length > 0) {
+          const ramanMolecule = refSample.moleculePairs[0].raman;
+          moleculeColor = moleculeColors[ramanMolecule] || colors.references[0];
+        }
+
         results.push({
           name: refSample.name,
           norm: norm,
-          color: colors.references[index % colors.references.length],
+          color: moleculeColor,
         });
       }
     });
@@ -60,6 +68,13 @@
   }
 
   let normValues = $derived(getNormValues());
+
+  // Fixed color palette for Raman molecules
+  const moleculeColors: Record<string, string> = {
+    "MBA": "rgb(34, 197, 94)", // Green
+    "DTNB": "rgb(59, 130, 246)", // Blue
+    "TFMBA": "rgb(251, 146, 60)", // Orange
+  };
 
   // Color palette for different spectra
   const colors = {
@@ -71,6 +86,18 @@
       "rgb(244, 63, 94)", // Red
     ],
   };
+
+  // Helper function to get color for a molecule
+  function getMoleculeColor(name: string): string {
+    // Extract molecule name from the string (e.g., "MBA" from "MBA (45.2%)")
+    for (const molecule in moleculeColors) {
+      if (name.includes(molecule)) {
+        return moleculeColors[molecule];
+      }
+    }
+    // Fallback to default colors if not found
+    return colors.references[0];
+  }
 
   function generateWavenumbers(start = 200, end = 2000, points = 1801) {
     const step = (end - start) / (points - 1);
@@ -115,16 +142,23 @@
 
     // Add reference spectra
     const referenceIds = normalizedData.referenceSampleIds || [];
-    referenceIds.forEach((refId: string, index: number) => {
+    referenceIds.forEach((refId: string) => {
       const refSample = sampleStore.samples.find((s: any) => s.id === refId);
       if (refSample?.averageCorrected) {
+        // Get the Raman molecule name for color
+        let moleculeColor = colors.references[0]; // default
+        if (refSample.moleculePairs && refSample.moleculePairs.length > 0) {
+          const ramanMolecule = refSample.moleculePairs[0].raman;
+          moleculeColor = moleculeColors[ramanMolecule] || colors.references[0];
+        }
+
         spectraData.push({
           name: refSample.name,
           values: refSample.averageCorrected.map((y: number, i: number) => ({
             x: wavenumbers[i],
             y,
           })),
-          color: colors.references[index % colors.references.length],
+          color: moleculeColor,
           strokeWidth: 1.5,
         });
       }
@@ -279,15 +313,33 @@
 
     // Add normalized references
     if (normalizedData.normalizedReferences) {
-      Object.entries(normalizedData.normalizedReferences).forEach(
-        ([ramanName, spectrum]: [string, any], index) => {
+      // Define the desired order
+      const moleculeOrder = ["DTNB", "MBA", "TFMBA"];
+
+      // Sort entries by the defined order
+      const sortedEntries = Object.entries(normalizedData.normalizedReferences).sort(
+        ([nameA], [nameB]) => {
+          const indexA = moleculeOrder.indexOf(nameA);
+          const indexB = moleculeOrder.indexOf(nameB);
+          // If not in list, put at end
+          const orderA = indexA === -1 ? 999 : indexA;
+          const orderB = indexB === -1 ? 999 : indexB;
+          return orderA - orderB;
+        }
+      );
+
+      sortedEntries.forEach(
+        ([ramanName, spectrum]: [string, any]) => {
+          // Use fixed color based on molecule name
+          const moleculeColor = moleculeColors[ramanName] || colors.references[0];
+
           spectraData.push({
             name: `${ramanName} - Normalized`,
             values: spectrum.slice(startIdx, endIndex + 1).map((y: number, i: number) => ({
               x: wavenumbers[startIdx + i],
               y,
             })),
-            color: colors.references[index % colors.references.length],
+            color: moleculeColor,
             strokeWidth: 1.5,
           });
         }
@@ -424,11 +476,28 @@
 
     // Individual component contributions (scaled by coefficients)
     if (normalizedData.normalizedReferences && deconvolutionResults.coefficients) {
-      let colorIndex = 0;
-      Object.entries(deconvolutionResults.coefficients).forEach(
+      // Define the desired order
+      const moleculeOrder = ["DTNB", "MBA", "TFMBA"];
+
+      // Sort entries by the defined order
+      const sortedEntries = Object.entries(deconvolutionResults.coefficients).sort(
+        ([nameA], [nameB]) => {
+          const indexA = moleculeOrder.indexOf(nameA);
+          const indexB = moleculeOrder.indexOf(nameB);
+          // If not in list, put at end
+          const orderA = indexA === -1 ? 999 : indexA;
+          const orderB = indexB === -1 ? 999 : indexB;
+          return orderA - orderB;
+        }
+      );
+
+      sortedEntries.forEach(
         ([name, coefficient]: [string, any]) => {
           const refSpectrum = (normalizedData.normalizedReferences as any)[name];
           if (refSpectrum && coefficient > 0) {
+            // Use fixed color based on molecule name
+            const moleculeColor = moleculeColors[name] || colors.references[0];
+
             spectraData.push({
               name: `${name} (${deconvolutionResults.contributions[name].toFixed(1)}%)`,
               values: refSpectrum
@@ -437,11 +506,10 @@
                   x: wavenumbers[startIdx + i],
                   y: y * coefficient, // Scale by NNLS coefficient
                 })),
-              color: colors.references[colorIndex % colors.references.length],
+              color: moleculeColor,
               strokeWidth: 2,
               strokeDasharray: null,
             });
-            colorIndex++;
           }
         }
       );
