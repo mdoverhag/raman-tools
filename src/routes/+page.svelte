@@ -5,6 +5,7 @@
   import SpectrumChart from "$lib/SpectrumChart.svelte";
   import SampleSidebar from "$lib/components/SampleSidebar.svelte";
   import MoleculePairEditor from "$lib/components/MoleculePairEditor.svelte";
+  import DeconvolutionView from "$lib/components/DeconvolutionView.svelte";
   import { sampleStore } from "$lib/stores/samples.svelte";
 
   let editingHeaderName = $state(false);
@@ -349,6 +350,42 @@
                       </button>
                     </li>
                   {/if}
+                  <!-- Show deconvolution row for multiplex samples (multiple Raman pairs) -->
+                  {#if sampleStore.selectedSample?.moleculePairs && sampleStore.selectedSample.moleculePairs.length > 1}
+                    <li
+                      class="bg-gradient-to-r from-purple-900/20 to-pink-900/20 border-b-2 border-purple-600/50"
+                    >
+                      <button
+                        class="w-full text-left px-4 py-3 hover:bg-gray-700/30 transition-colors {sampleStore.selectedSpectrumId ===
+                        'deconvolution'
+                          ? 'bg-purple-900/40 border-l-2 border-purple-500'
+                          : ''}"
+                        onclick={() => sampleStore.selectDeconvolution()}
+                      >
+                        <div class="font-medium text-purple-300 flex items-center gap-2">
+                          <svg
+                            class="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                            />
+                          </svg>
+                          Deconvolution
+                        </div>
+                        <div class="text-sm text-purple-400/70">
+                          Multiplex: {sampleStore.selectedSample.moleculePairs
+                            .map((p) => p.raman)
+                            .join(", ")}
+                        </div>
+                      </button>
+                    </li>
+                  {/if}
                   {#each sampleStore.spectra as spectrum}
                     <li>
                       <button
@@ -372,7 +409,9 @@
             </div>
 
             <!-- Chart Section -->
-            {#if sampleStore.selectedSpectrum}
+            {#if sampleStore.selectedSpectrumId === "deconvolution"}
+              <DeconvolutionView sample={sampleStore.selectedSample} />
+            {:else if sampleStore.selectedSpectrum}
               <div class="bg-gray-800 rounded-lg border border-gray-700 p-6">
                 <SpectrumChart
                   spectrum={sampleStore.selectedSpectrum}

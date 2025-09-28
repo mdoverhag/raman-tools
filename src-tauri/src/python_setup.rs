@@ -24,7 +24,7 @@ pub struct PythonStatus {
 }
 
 /// Get the runtime directory
-fn get_runtime_dir(app: &AppHandle) -> Result<PathBuf, String> {
+pub fn get_runtime_dir(app: &AppHandle) -> Result<PathBuf, String> {
     let data_dir = app
         .path()
         .app_data_dir()
@@ -138,6 +138,18 @@ pub fn sync_python_files(app: AppHandle) -> Result<(), String> {
     let calc_averages_path = runtime_dir.join("calc_averages.py");
     fs::write(&calc_averages_path, calc_averages_content)
         .map_err(|e| format!("Failed to write calc averages script: {}", e))?;
+
+    // Copy/update normalize spectra script
+    let normalize_content = include_str!("../python/normalize_spectra.py");
+    let normalize_path = runtime_dir.join("normalize_spectra.py");
+    fs::write(&normalize_path, normalize_content)
+        .map_err(|e| format!("Failed to write normalize spectra script: {}", e))?;
+
+    // Copy/update deconvolute NNLS script
+    let deconvolute_content = include_str!("../python/deconvolute_nnls.py");
+    let deconvolute_path = runtime_dir.join("deconvolute_nnls.py");
+    fs::write(&deconvolute_path, deconvolute_content)
+        .map_err(|e| format!("Failed to write deconvolute NNLS script: {}", e))?;
 
     // Copy/update requirements.txt
     let requirements_content = include_str!("../python/requirements.txt");

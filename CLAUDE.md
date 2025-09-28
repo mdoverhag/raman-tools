@@ -212,8 +212,8 @@ To create a new release:
 2. Commit changes
 3. Create and push a version tag:
    ```bash
-   git tag v0.5.0
-   git push origin v0.5.0
+   git tag v0.6.0
+   git push origin v0.6.0
    ```
 4. GitHub Actions will automatically build and create a release
 

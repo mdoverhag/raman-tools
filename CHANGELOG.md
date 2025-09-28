@@ -5,6 +5,21 @@ All notable changes to Raman Tools will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2025-09-28
+
+Adds an end-to-end NNLS deconvolution workflow (with L2 normalization) spanning new Python scripts, Rust storage/commands, and Svelte UI for visualization; also alphabetically sorts samples.
+
+- **Backend**
+  - **Deconvolution pipeline**: Add `DeconvolutionRun`/`DeconvolutionStorage` and Tauri commands: `create_deconvolution_run`, `get_deconvolution_run`, `calculate_normalization`, `perform_deconvolution` in `src-tauri/src/lib.rs` and `deconvolution.rs`.
+  - **Python bridge**: Implement `normalize_spectra(...)` and `perform_nnls_deconvolution(...)` with request/response structs in `python_bridge.rs`.
+  - **Python scripts**: Add `src-tauri/python/normalize_spectra.py` (L2 normalization in `1000–1500 cm⁻¹`) and `src-tauri/python/deconvolute_nnls.py` (NNLS using `scipy.optimize.nnls`).
+  - **Python setup**: Expose `get_runtime_dir` and sync new scripts in `python_setup.rs`.
+
+- **Frontend**
+  - **UI components**: Add `DeconvolutionView.svelte` and `NormalizationChart.svelte` with normalized spectra, component contributions, reconstruction, and residual plots; validates required singleplex references; shows L2 norm table.
+  - **Navigation**: Add "Deconvolution" tab in `+page.svelte`; extend store with `selectDeconvolution()`.
+  - **Sorting**: Alphabetically sort samples in `SampleSidebar.svelte`.
+
 ## [0.5.0] - 2025-09-22
 
 ### Added

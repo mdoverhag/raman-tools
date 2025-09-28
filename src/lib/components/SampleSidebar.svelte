@@ -17,7 +17,7 @@
     </div>
 
     <div class="space-y-0.5 px-2 pb-2">
-      {#each sampleStore.samples as sample}
+      {#each sampleStore.samples.sort((a, b) => a.name.localeCompare(b.name)) as sample}
         <div
           class="group flex w-full items-start rounded px-2 py-2 text-left text-sm hover:bg-gray-800 {sampleStore.selectedSampleId ===
           sample.id

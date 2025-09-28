@@ -266,6 +266,10 @@ class SampleStore {
     this.selectedSpectrumId = "average";
   }
 
+  selectDeconvolution() {
+    this.selectedSpectrumId = "deconvolution";
+  }
+
   // Call this after importing new spectra files
   async reloadCurrentSampleSpectra() {
     if (!this.selectedSampleId) return;
