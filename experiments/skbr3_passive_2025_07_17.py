@@ -14,6 +14,8 @@ from raman_lib import (
     plot_sample,
     normalize_spectra_l2,
     plot_normalization,
+    deconvolve_nnls,
+    plot_deconvolution,
     create_output_dir,
     ensure_output_subdir
 )
@@ -192,6 +194,50 @@ print("✓ Plot saved\n")
 
 
 # ============================================================
+# Step 4: Deconvolute multiplex spectrum
+# ============================================================
+
+# Create subdirectory for deconvolution plots
+deconv_dir = ensure_output_subdir(output, "deconvolution")
+
+print("="*60)
+print("Deconvoluting: Multiplex Ab")
+print("="*60)
+
+print(f"Analysis range: {WAVENUMBER_RANGE[0]}-{WAVENUMBER_RANGE[1]} cm⁻¹")
+print("Performing NNLS deconvolution...")
+
+# Deconvolute the normalized sample against normalized references
+deconv_result = deconvolve_nnls(
+    sample_spectrum=normalized['sample'],
+    reference_spectra=normalized['references'],
+    wavenumber_range=WAVENUMBER_RANGE
+)
+
+print("✓ Deconvolution complete")
+
+# Display results
+print("\nContributions:")
+for molecule, percentage in sorted(deconv_result['contributions'].items()):
+    print(f"  {molecule}: {percentage:.1f}%")
+
+print(f"\nMetrics:")
+print(f"  RMSE: {deconv_result['metrics']['rmse']:.3f}")
+print(f"  R²: {deconv_result['metrics']['r_squared']:.3f}")
+
+# Create deconvolution plot
+print(f"\nCreating plot: {deconv_dir}/Multiplex_Ab.png")
+plot_deconvolution(
+    sample_name="Multiplex Ab",
+    sample_spectrum=normalized['sample'],
+    result=deconv_result,
+    wavenumber_range=WAVENUMBER_RANGE,
+    output_path=f"{deconv_dir}/Multiplex_Ab.png"
+)
+print("✓ Plot saved\n")
+
+
+# ============================================================
 # Summary
 # ============================================================
 
@@ -209,4 +255,5 @@ print(f"\nPlots saved:")
 print(f"  References: {refs_dir}/")
 print(f"  Samples: {samples_dir}/")
 print(f"  Normalization: {norm_dir}/")
+print(f"  Deconvolution: {deconv_dir}/")
 print("="*60)

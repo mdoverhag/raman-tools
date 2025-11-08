@@ -33,6 +33,10 @@ from .normalization import (
     normalize_spectra_l2
 )
 
+from .deconvolution import (
+    deconvolve_nnls
+)
+
 from .plotting import (
     plot_reference,
     plot_sample,
@@ -65,6 +69,9 @@ __all__ = [
     # Normalization
     "normalize_l2",
     "normalize_spectra_l2",
+
+    # Deconvolution
+    "deconvolve_nnls",
 
     # Plotting
     "plot_reference",
