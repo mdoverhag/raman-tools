@@ -9,5 +9,8 @@ wheels/
 # Virtual environments
 .venv
 
+# Experiment results
+results/
+
 # Misc
 .DS_Store
