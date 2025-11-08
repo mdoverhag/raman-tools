@@ -1,9 +1,16 @@
 [project]
 name = "raman-python"
 version = "0.1.0"
-description = "Add your description here"
+description = "Raman spectroscopy analysis library with SERS multiplex deconvolution"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "numpy>=2.0.0",
+    "scipy>=1.14.0",
+    "matplotlib>=3.9.0",
+]
+
+[project.optional-dependencies]
+dev = [
     "ruff>=0.14.4",
 ]
