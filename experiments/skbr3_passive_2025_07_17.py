@@ -12,12 +12,17 @@ from raman_lib import (
     calculate_average,
     plot_reference,
     plot_sample,
+    normalize_spectra_l2,
+    plot_normalization,
     create_output_dir,
     ensure_output_subdir
 )
 
 # Data directory
 DATA_DIR = os.path.expanduser("~/Documents/Spectroscopy Results/2025-07-17 SKBR3 passive")
+
+# Wavenumber range for normalization
+WAVENUMBER_RANGE = (1000, 1500)
 
 # Create output directory (auto-versioned) in results/
 output = create_output_dir("skbr3-passive-2025-07-17", base_dir="results")
@@ -151,6 +156,42 @@ samples["Multiplex_Ab"] = multiplex_ab_averaged
 
 
 # ============================================================
+# Step 3: Normalize sample against references
+# ============================================================
+
+# Create subdirectory for normalization plots
+norm_dir = ensure_output_subdir(output, "normalization")
+
+print("="*60)
+print("Normalizing: Multiplex Ab")
+print("="*60)
+
+print(f"Normalization range: {WAVENUMBER_RANGE[0]}-{WAVENUMBER_RANGE[1]} cm⁻¹")
+print("Applying L2 normalization...")
+
+# Normalize sample and references
+normalized = normalize_spectra_l2(
+    sample=multiplex_ab_averaged,
+    references=references,
+    wavenumber_range=WAVENUMBER_RANGE
+)
+
+print("✓ Normalization complete")
+
+# Create normalization plot
+print(f"Creating plot: {norm_dir}/Multiplex_Ab.png")
+plot_normalization(
+    sample_name="Multiplex Ab",
+    sample_spectrum=normalized['sample'],
+    reference_spectra=normalized['references'],
+    molecules=["MBA", "DTNB", "TFMBA"],
+    wavenumber_range=WAVENUMBER_RANGE,
+    output_path=f"{norm_dir}/Multiplex_Ab.png"
+)
+print("✓ Plot saved\n")
+
+
+# ============================================================
 # Summary
 # ============================================================
 
@@ -167,4 +208,5 @@ for sample_name, data in samples.items():
 print(f"\nPlots saved:")
 print(f"  References: {refs_dir}/")
 print(f"  Samples: {samples_dir}/")
+print(f"  Normalization: {norm_dir}/")
 print("="*60)

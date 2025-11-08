@@ -28,6 +28,11 @@ from .averaging import (
     calculate_average
 )
 
+from .normalization import (
+    normalize_l2,
+    normalize_spectra_l2
+)
+
 from .plotting import (
     plot_reference,
     plot_sample,
@@ -56,6 +61,10 @@ __all__ = [
 
     # Averaging
     "calculate_average",
+
+    # Normalization
+    "normalize_l2",
+    "normalize_spectra_l2",
 
     # Plotting
     "plot_reference",

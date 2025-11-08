@@ -120,6 +120,7 @@ def plot_sample(
 
 
 def plot_normalization(
+    sample_name: str,
     sample_spectrum: dict,
     reference_spectra: dict,
     molecules: list[str],
@@ -127,55 +128,85 @@ def plot_normalization(
     output_path: str
 ) -> None:
     """
-    Plot normalized sample and reference spectra.
+    Create two-panel plot showing normalization before and after.
 
-    Creates a plot showing:
-    - Normalized sample spectrum (black, thick)
-    - Normalized reference spectra (molecule colors, thin)
-    - Shaded region for normalization range
-    - Expected peaks marked
+    Top panel: Original spectra at full heights with normalization window highlighted
+    Bottom panel: All normalized spectra overlaid with expected peaks marked
 
     Args:
-        sample_spectrum: Dictionary with 'wavenumbers' and 'normalized'
-        reference_spectra: Dict of {molecule: spectrum_dict with 'normalized'}
+        sample_name: Name of the sample (for title)
+        sample_spectrum: Dictionary with 'wavenumbers', 'original', 'normalized'
+        reference_spectra: Dict of {molecule: spectrum_dict with 'original', 'normalized'}
         molecules: List of molecules to plot
         wavenumber_range: Tuple of (min_wn, max_wn) for normalization range
         output_path: Path where the plot will be saved
     """
-    fig, ax = plt.subplots(figsize=(12, 6))
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 10))
 
     wavenumbers = sample_spectrum['wavenumbers']
-    sample_normalized = sample_spectrum['normalized']
 
-    # Plot sample (black, prominent)
-    ax.plot(wavenumbers, sample_normalized, color='black', linewidth=2.5,
-            label='Sample (normalized)', zorder=10)
+    # ============================================================
+    # Top panel: Original spectra with normalization window
+    # ============================================================
 
-    # Plot references (molecule colors)
+    # Plot sample original (black)
+    ax1.plot(wavenumbers, sample_spectrum['original'],
+             color='black', linewidth=2, label=sample_name, alpha=0.8)
+
+    # Plot reference originals (molecule colors)
+    for molecule in molecules:
+        if molecule in reference_spectra:
+            ref_original = reference_spectra[molecule]['original']
+            color = get_color(molecule)
+            ax1.plot(wavenumbers, ref_original, color=color, linewidth=1.5,
+                    label=f'{molecule} reference', alpha=0.8)
+
+    # Highlight normalization range with a rectangle
+    y_min, y_max = ax1.get_ylim()
+    ax1.axvspan(wavenumber_range[0], wavenumber_range[1],
+               alpha=0.15, color='gray', zorder=0)
+
+    # Add a text box indicating normalization range
+    ax1.text(0.98, 0.95, f'Normalization range:\n{wavenumber_range[0]}-{wavenumber_range[1]} cm⁻¹',
+            transform=ax1.transAxes, fontsize=10,
+            verticalalignment='top', horizontalalignment='right',
+            bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
+
+    ax1.set_ylabel('Intensity (Original)', fontsize=12)
+    ax1.set_title('Before Normalization', fontsize=12, fontweight='bold')
+    ax1.legend(loc='upper left')
+    ax1.grid(True, alpha=0.3)
+
+    # ============================================================
+    # Bottom panel: Normalized spectra with peaks marked
+    # ============================================================
+
+    # Plot sample normalized (black, thicker)
+    ax2.plot(wavenumbers, sample_spectrum['normalized'],
+             color='black', linewidth=2.5, label=sample_name, alpha=0.8, zorder=10)
+
+    # Plot references normalized (molecule colors)
     for molecule in molecules:
         if molecule in reference_spectra:
             ref_normalized = reference_spectra[molecule]['normalized']
             color = get_color(molecule)
 
-            ax.plot(wavenumbers, ref_normalized, color=color, linewidth=1.5,
+            ax2.plot(wavenumbers, ref_normalized, color=color, linewidth=1.5,
                     label=f'{molecule} reference', alpha=0.8, zorder=5)
 
             # Mark expected peak
             expected_peak = get_peak(molecule)
-            ax.axvline(x=expected_peak, color=color, linestyle=':', linewidth=1,
+            ax2.axvline(x=expected_peak, color=color, linestyle='--', linewidth=1.5,
                        alpha=0.5, zorder=1)
 
-    # Highlight normalization range
-    ax.axvspan(wavenumber_range[0], wavenumber_range[1],
-               alpha=0.1, color='gray', zorder=0,
-               label=f'Normalization range ({wavenumber_range[0]}-{wavenumber_range[1]} cm⁻¹)')
+    ax2.set_xlabel('Wavenumber (cm⁻¹)', fontsize=12)
+    ax2.set_ylabel('Normalized Intensity', fontsize=12)
+    ax2.set_title('After L2 Normalization', fontsize=12, fontweight='bold')
+    ax2.legend(loc='upper left')
+    ax2.grid(True, alpha=0.3)
 
-    # Labels and formatting
-    ax.set_xlabel('Wavenumber (cm⁻¹)', fontsize=12)
-    ax.set_ylabel('Normalized Intensity', fontsize=12)
-    ax.set_title('Normalized Spectra', fontsize=14, fontweight='bold')
-    ax.legend(loc='upper right')
-    ax.grid(True, alpha=0.3)
+    # Main title
+    fig.suptitle(f'Normalization - {sample_name}', fontsize=14, fontweight='bold', y=0.995)
 
     # Save plot
     plt.tight_layout()
