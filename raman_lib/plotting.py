@@ -204,6 +204,7 @@ def plot_normalization(
     ax2.set_title('After L2 Normalization', fontsize=12, fontweight='bold')
     ax2.legend(loc='upper left')
     ax2.grid(True, alpha=0.3)
+    ax2.set_xlim(wavenumber_range[0], wavenumber_range[1])
 
     # Main title
     fig.suptitle(f'Normalization - {sample_name}', fontsize=14, fontweight='bold', y=0.995)
