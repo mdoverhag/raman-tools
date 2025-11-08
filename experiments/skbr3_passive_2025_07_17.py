@@ -11,6 +11,7 @@ from raman_lib import (
     apply_baseline_correction,
     calculate_average,
     plot_reference,
+    plot_sample,
     create_output_dir,
     ensure_output_subdir
 )
@@ -110,6 +111,46 @@ references["TFMBA"] = tfmba_averaged
 
 
 # ============================================================
+# Step 2: Load and process samples
+# ============================================================
+
+samples = {}
+
+# Create subdirectory for sample plots
+samples_dir = ensure_output_subdir(output, "samples")
+
+# Sample 1: Multiplex Ab
+print("="*60)
+print("Processing: Multiplex Ab")
+print("="*60)
+
+multiplex_ab_dir = f"{DATA_DIR}/Multiplex Ab"
+print(f"Loading from: {multiplex_ab_dir}")
+
+multiplex_ab_spectra = load_spectra(multiplex_ab_dir)
+print(f"✓ Loaded {len(multiplex_ab_spectra)} spectra")
+
+print("Applying baseline correction...")
+multiplex_ab_corrected = [apply_baseline_correction(s) for s in multiplex_ab_spectra]
+print("✓ Baseline correction applied")
+
+print("Calculating average...")
+multiplex_ab_averaged = calculate_average(multiplex_ab_corrected)
+print(f"✓ Average calculated from {multiplex_ab_averaged['count']} spectra")
+
+print(f"Creating plot: {samples_dir}/Multiplex_Ab.png")
+plot_sample(
+    multiplex_ab_averaged,
+    sample_name="Multiplex Ab",
+    molecules=["MBA", "DTNB", "TFMBA"],
+    output_path=f"{samples_dir}/Multiplex_Ab.png"
+)
+print("✓ Plot saved\n")
+
+samples["Multiplex_Ab"] = multiplex_ab_averaged
+
+
+# ============================================================
 # Summary
 # ============================================================
 
@@ -120,5 +161,10 @@ print(f"Output directory: {output}")
 print(f"\nProcessed references:")
 for molecule, data in references.items():
     print(f"  {molecule}: {data['count']} spectra averaged")
-print(f"\nPlots saved in: {refs_dir}/")
+print(f"\nProcessed samples:")
+for sample_name, data in samples.items():
+    print(f"  {sample_name}: {data['count']} spectra averaged")
+print(f"\nPlots saved:")
+print(f"  References: {refs_dir}/")
+print(f"  Samples: {samples_dir}/")
 print("="*60)
