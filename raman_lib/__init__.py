@@ -19,6 +19,22 @@ from .io import (
     ensure_output_subdir
 )
 
+from .baseline import (
+    als_baseline,
+    apply_baseline_correction
+)
+
+from .averaging import (
+    calculate_average
+)
+
+from .plotting import (
+    plot_reference,
+    plot_sample,
+    plot_normalization,
+    plot_deconvolution
+)
+
 __version__ = "0.1.0"
 
 __all__ = [
@@ -33,4 +49,17 @@ __all__ = [
     "load_spectra",
     "create_output_dir",
     "ensure_output_subdir",
+
+    # Baseline correction
+    "als_baseline",
+    "apply_baseline_correction",
+
+    # Averaging
+    "calculate_average",
+
+    # Plotting
+    "plot_reference",
+    "plot_sample",
+    "plot_normalization",
+    "plot_deconvolution",
 ]
