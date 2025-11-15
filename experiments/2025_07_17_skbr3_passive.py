@@ -7,17 +7,14 @@ Description: Process reference spectra for DTNB/HER2, MBA/EpCAM, and TFMBA/TROP2
 
 import os
 from raman_lib import (
-    load_spectra,
-    apply_baseline_correction,
-    calculate_average,
-    plot_sample,
     normalize_spectra_l2,
     plot_normalization,
     deconvolve_nnls,
     plot_deconvolution,
     create_output_dir,
     ensure_output_subdir,
-    load_and_process_reference
+    load_and_process_reference,
+    load_and_process_sample
 )
 
 # Data directory
@@ -63,40 +60,20 @@ print(f"✓ Processed {len(references)} references\n")
 # Step 2: Load and process samples
 # ============================================================
 
-samples = {}
-
-# Create subdirectory for sample plots
-samples_dir = ensure_output_subdir(output, "samples")
-
-# Sample 1: Multiplex Ab
 print("="*60)
-print("Processing: Multiplex Ab")
+print("LOADING SAMPLES")
 print("="*60)
 
-multiplex_ab_dir = f"{DATA_DIR}/Multiplex Ab"
-print(f"Loading from: {multiplex_ab_dir}")
+samples = {
+    "Multiplex_Ab": load_and_process_sample(
+        f"{DATA_DIR}/Multiplex Ab",
+        name="Multiplex Ab",
+        molecules=["MBA", "DTNB", "TFMBA"],
+        output_dir=output
+    ),
+}
 
-multiplex_ab_spectra = load_spectra(multiplex_ab_dir)
-print(f"✓ Loaded {len(multiplex_ab_spectra)} spectra")
-
-print("Applying baseline correction...")
-multiplex_ab_corrected = [apply_baseline_correction(s) for s in multiplex_ab_spectra]
-print("✓ Baseline correction applied")
-
-print("Calculating average...")
-multiplex_ab_averaged = calculate_average(multiplex_ab_corrected)
-print(f"✓ Average calculated from {multiplex_ab_averaged['count']} spectra")
-
-print(f"Creating plot: {samples_dir}/Multiplex_Ab.png")
-plot_sample(
-    multiplex_ab_averaged,
-    sample_name="Multiplex Ab",
-    molecules=["MBA", "DTNB", "TFMBA"],
-    output_path=f"{samples_dir}/Multiplex_Ab.png"
-)
-print("✓ Plot saved\n")
-
-samples["Multiplex_Ab"] = multiplex_ab_averaged
+print(f"✓ Processed {len(samples)} sample\n")
 
 
 # ============================================================
@@ -115,7 +92,7 @@ print("Applying L2 normalization...")
 
 # Normalize sample and references
 normalized = normalize_spectra_l2(
-    sample=multiplex_ab_averaged,
+    sample=samples["Multiplex_Ab"],
     references=references,
     wavenumber_range=WAVENUMBER_RANGE
 )

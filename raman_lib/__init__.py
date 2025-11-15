@@ -45,7 +45,8 @@ from .plotting import (
 )
 
 from .workflow import (
-    load_and_process_reference
+    load_and_process_reference,
+    load_and_process_sample
 )
 
 __version__ = "0.1.0"
@@ -85,4 +86,5 @@ __all__ = [
 
     # Workflow
     "load_and_process_reference",
+    "load_and_process_sample",
 ]

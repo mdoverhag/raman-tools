@@ -7,17 +7,14 @@ Description: Process three multiplex Ab samples using references from 2025-07-17
 
 import os
 from raman_lib import (
-    load_spectra,
-    apply_baseline_correction,
-    calculate_average,
-    plot_sample,
     normalize_spectra_l2,
     plot_normalization,
     deconvolve_nnls,
     plot_deconvolution,
     create_output_dir,
     ensure_output_subdir,
-    load_and_process_reference
+    load_and_process_reference,
+    load_and_process_sample
 )
 
 # Data directories
@@ -64,102 +61,32 @@ print(f"✓ Processed {len(references)} references\n")
 # Step 2: Load and process multiplex samples (from 2025-11-06)
 # ============================================================
 
-samples = {}
-
-# Create subdirectory for sample plots
-samples_dir = ensure_output_subdir(output, "samples")
-
-# Sample 1: Multiplex Ab 1
 print("="*60)
-print("Processing: Multiplex Ab 1")
+print("LOADING SAMPLES")
 print("="*60)
 
-multiplex_ab1_dir = f"{SAMPLE_DIR}/SKBR3 spiked PBMC_10E5_Multiplex Ab 1"
-print(f"Loading from: {multiplex_ab1_dir}")
+samples = {
+    "Multiplex_Ab_1": load_and_process_sample(
+        f"{SAMPLE_DIR}/SKBR3 spiked PBMC_10E5_Multiplex Ab 1",
+        name="Multiplex Ab 1",
+        molecules=["MBA", "DTNB", "TFMBA"],
+        output_dir=output
+    ),
+    "Multiplex_Ab_2": load_and_process_sample(
+        f"{SAMPLE_DIR}/SKBR3 spiked PBMC_10E5_Multiplex Ab 2",
+        name="Multiplex Ab 2",
+        molecules=["MBA", "DTNB", "TFMBA"],
+        output_dir=output
+    ),
+    "Multiplex_Ab_3": load_and_process_sample(
+        f"{SAMPLE_DIR}/SKBR3 spiked PBMC_10E5_Multiplex Ab 3",
+        name="Multiplex Ab 3",
+        molecules=["MBA", "DTNB", "TFMBA"],
+        output_dir=output
+    ),
+}
 
-multiplex_ab1_spectra = load_spectra(multiplex_ab1_dir)
-print(f"✓ Loaded {len(multiplex_ab1_spectra)} spectra")
-
-print("Applying baseline correction...")
-multiplex_ab1_corrected = [apply_baseline_correction(s) for s in multiplex_ab1_spectra]
-print("✓ Baseline correction applied")
-
-print("Calculating average...")
-multiplex_ab1_averaged = calculate_average(multiplex_ab1_corrected)
-print(f"✓ Average calculated from {multiplex_ab1_averaged['count']} spectra")
-
-print(f"Creating plot: {samples_dir}/Multiplex_Ab_1.png")
-plot_sample(
-    multiplex_ab1_averaged,
-    sample_name="Multiplex Ab 1",
-    molecules=["MBA", "DTNB", "TFMBA"],
-    output_path=f"{samples_dir}/Multiplex_Ab_1.png"
-)
-print("✓ Plot saved\n")
-
-samples["Multiplex_Ab_1"] = multiplex_ab1_averaged
-
-
-# Sample 2: Multiplex Ab 2
-print("="*60)
-print("Processing: Multiplex Ab 2")
-print("="*60)
-
-multiplex_ab2_dir = f"{SAMPLE_DIR}/SKBR3 spiked PBMC_10E5_Multiplex Ab 2"
-print(f"Loading from: {multiplex_ab2_dir}")
-
-multiplex_ab2_spectra = load_spectra(multiplex_ab2_dir)
-print(f"✓ Loaded {len(multiplex_ab2_spectra)} spectra")
-
-print("Applying baseline correction...")
-multiplex_ab2_corrected = [apply_baseline_correction(s) for s in multiplex_ab2_spectra]
-print("✓ Baseline correction applied")
-
-print("Calculating average...")
-multiplex_ab2_averaged = calculate_average(multiplex_ab2_corrected)
-print(f"✓ Average calculated from {multiplex_ab2_averaged['count']} spectra")
-
-print(f"Creating plot: {samples_dir}/Multiplex_Ab_2.png")
-plot_sample(
-    multiplex_ab2_averaged,
-    sample_name="Multiplex Ab 2",
-    molecules=["MBA", "DTNB", "TFMBA"],
-    output_path=f"{samples_dir}/Multiplex_Ab_2.png"
-)
-print("✓ Plot saved\n")
-
-samples["Multiplex_Ab_2"] = multiplex_ab2_averaged
-
-
-# Sample 3: Multiplex Ab 3
-print("="*60)
-print("Processing: Multiplex Ab 3")
-print("="*60)
-
-multiplex_ab3_dir = f"{SAMPLE_DIR}/SKBR3 spiked PBMC_10E5_Multiplex Ab 3"
-print(f"Loading from: {multiplex_ab3_dir}")
-
-multiplex_ab3_spectra = load_spectra(multiplex_ab3_dir)
-print(f"✓ Loaded {len(multiplex_ab3_spectra)} spectra")
-
-print("Applying baseline correction...")
-multiplex_ab3_corrected = [apply_baseline_correction(s) for s in multiplex_ab3_spectra]
-print("✓ Baseline correction applied")
-
-print("Calculating average...")
-multiplex_ab3_averaged = calculate_average(multiplex_ab3_corrected)
-print(f"✓ Average calculated from {multiplex_ab3_averaged['count']} spectra")
-
-print(f"Creating plot: {samples_dir}/Multiplex_Ab_3.png")
-plot_sample(
-    multiplex_ab3_averaged,
-    sample_name="Multiplex Ab 3",
-    molecules=["MBA", "DTNB", "TFMBA"],
-    output_path=f"{samples_dir}/Multiplex_Ab_3.png"
-)
-print("✓ Plot saved\n")
-
-samples["Multiplex_Ab_3"] = multiplex_ab3_averaged
+print(f"✓ Processed {len(samples)} samples\n")
 
 
 # ============================================================
