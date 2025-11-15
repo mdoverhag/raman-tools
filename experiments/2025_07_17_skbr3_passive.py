@@ -10,7 +10,8 @@ from raman_lib import (
     create_output_dir,
     load_and_process_reference,
     load_and_process_sample,
-    normalize_and_deconvolve_samples
+    normalize_and_deconvolve_samples,
+    print_experiment_summary
 )
 
 # Data directory
@@ -89,32 +90,9 @@ deconv_results = normalize_and_deconvolve_samples(
 # Summary
 # ============================================================
 
-print("\n" + "="*60)
-print("EXPERIMENT COMPLETE")
-print("="*60)
-print(f"\nOutput directory: {output}")
-
-print(f"\nReferences processed:")
-for molecule, data in references.items():
-    print(f"  {molecule}: {data['count']} spectra")
-
-print(f"\nSamples processed:")
-for sample_key, data in samples.items():
-    print(f"  {data['name']}: {data['count']} spectra")
-
-print(f"\nDeconvolution Results:")
-print(f"\n{'Sample':<25} {'MBA':>8} {'DTNB':>8} {'TFMBA':>8} {'R²':>8}")
-print("-" * 60)
-for sample_key, result in deconv_results.items():
-    display_name = samples[sample_key]['name']
-    print(f"{display_name:<25} {result['contributions']['MBA']:>7.1f}% " +
-          f"{result['contributions']['DTNB']:>7.1f}% " +
-          f"{result['contributions']['TFMBA']:>7.1f}% " +
-          f"{result['metrics']['r_squared']:>8.3f}")
-
-print(f"\nPlots saved in:")
-print(f"  {output}/references/")
-print(f"  {output}/samples/")
-print(f"  {output}/normalization/")
-print(f"  {output}/deconvolution/")
-print("="*60)
+print_experiment_summary(
+    output_dir=output,
+    references=references,
+    samples=samples,
+    deconv_results=deconv_results
+)

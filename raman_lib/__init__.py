@@ -47,7 +47,8 @@ from .plotting import (
 from .workflow import (
     load_and_process_reference,
     load_and_process_sample,
-    normalize_and_deconvolve_samples
+    normalize_and_deconvolve_samples,
+    print_experiment_summary
 )
 
 __version__ = "0.1.0"
@@ -89,4 +90,5 @@ __all__ = [
     "load_and_process_reference",
     "load_and_process_sample",
     "normalize_and_deconvolve_samples",
+    "print_experiment_summary",
 ]

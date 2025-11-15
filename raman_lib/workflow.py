@@ -247,3 +247,59 @@ def normalize_and_deconvolve_samples(
               f"(R²={deconv_result['metrics']['r_squared']:.3f})")
 
     return deconv_results
+
+
+def print_experiment_summary(
+    output_dir: str,
+    references: dict,
+    samples: dict,
+    deconv_results: dict,
+    molecules: list[str] = ["MBA", "DTNB", "TFMBA"]
+) -> None:
+    """
+    Print a summary of the experiment results.
+
+    This function prints a formatted summary including:
+    1. Experiment completion header
+    2. Output directory location
+    3. References processed (molecule names and spectrum counts)
+    4. Samples processed (sample names and spectrum counts)
+    5. Deconvolution results table (contributions and R² values)
+    6. Plots saved locations
+
+    Args:
+        output_dir: Path to the output directory
+        references: Dictionary of reference data (from load_and_process_reference)
+        samples: Dictionary of sample data (from load_and_process_sample)
+        deconv_results: Dictionary of deconvolution results (from normalize_and_deconvolve_samples)
+        molecules: List of molecule tags (default ["MBA", "DTNB", "TFMBA"])
+    """
+    print("\n" + "="*60)
+    print("EXPERIMENT COMPLETE")
+    print("="*60)
+    print(f"\nOutput directory: {output_dir}")
+
+    print(f"\nReferences processed:")
+    for molecule, data in references.items():
+        print(f"  {molecule}: {data['count']} spectra")
+
+    print(f"\nSamples processed:")
+    for sample_key, data in samples.items():
+        print(f"  {data['name']}: {data['count']} spectra")
+
+    print(f"\nDeconvolution Results:")
+    print(f"\n{'Sample':<25} {'MBA':>8} {'DTNB':>8} {'TFMBA':>8} {'R²':>8}")
+    print("-" * 60)
+    for sample_key, result in deconv_results.items():
+        display_name = samples[sample_key]['name']
+        print(f"{display_name:<25} {result['contributions']['MBA']:>7.1f}% " +
+              f"{result['contributions']['DTNB']:>7.1f}% " +
+              f"{result['contributions']['TFMBA']:>7.1f}% " +
+              f"{result['metrics']['r_squared']:>8.3f}")
+
+    print(f"\nPlots saved in:")
+    print(f"  {output_dir}/references/")
+    print(f"  {output_dir}/samples/")
+    print(f"  {output_dir}/normalization/")
+    print(f"  {output_dir}/deconvolution/")
+    print("="*60)
