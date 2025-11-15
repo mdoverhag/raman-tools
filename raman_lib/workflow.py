@@ -45,9 +45,6 @@ def load_and_process_reference(
                 'molecule': str
             }
     """
-    # Ensure output subdirectory exists
-    refs_dir = ensure_output_subdir(output_dir, "references")
-
     # Expand tilde in directory path
     directory = os.path.expanduser(directory)
 
@@ -71,8 +68,8 @@ def load_and_process_reference(
     # Add molecule tag
     averaged['molecule'] = molecule
 
-    # Generate plot
-    plot_path = f"{refs_dir}/{molecule}.png"
+    # Generate plot - flat structure with prefix
+    plot_path = f"{output_dir}/reference_{molecule}.png"
     print(f"Creating plot: {plot_path}")
     plot_reference(averaged, molecule=molecule, output_path=plot_path)
     print("✓ Plot saved")
@@ -116,9 +113,6 @@ def load_and_process_sample(
                 'replicates': list[dict]  # List of individual corrected spectra
             }
     """
-    # Ensure output subdirectory exists
-    samples_dir = ensure_output_subdir(output_dir, "samples")
-
     # Expand tilde in directory path
     directory = os.path.expanduser(directory)
 
@@ -146,9 +140,9 @@ def load_and_process_sample(
     # Add replicates to the result
     averaged['replicates'] = corrected_spectra
 
-    # Generate plot - create safe filename from name
+    # Generate plot - flat structure with prefix
     safe_name = name.replace(" ", "_").replace("/", "-")
-    plot_path = f"{samples_dir}/{safe_name}.png"
+    plot_path = f"{output_dir}/sample_{safe_name}.png"
     print(f"Creating plot: {plot_path}")
     plot_sample(averaged, sample_name=name, molecules=molecules, output_path=plot_path)
     print("✓ Plot saved")
@@ -202,10 +196,6 @@ def normalize_and_deconvolve_samples(
                     f"Available references: {list(references.keys())}"
                 )
 
-    # Ensure output subdirectories exist
-    norm_dir = ensure_output_subdir(output_dir, "normalization")
-    deconv_dir = ensure_output_subdir(output_dir, "deconvolution")
-
     # Store results for summary
     deconv_results = {}
 
@@ -255,7 +245,7 @@ def normalize_and_deconvolve_samples(
             reference_spectra=normalized_avg['references'],
             molecules=sample_molecules,
             wavenumber_range=wavenumber_range,
-            output_path=f"{norm_dir}/{sample_key}_averaged.png"
+            output_path=f"{output_dir}/normalization_{sample_key}_averaged.png"
         )
 
         # Deconvolve the averaged spectrum for plotting
@@ -270,7 +260,7 @@ def normalize_and_deconvolve_samples(
             sample_spectrum=normalized_avg['sample'],
             result=deconv_avg,
             wavenumber_range=wavenumber_range,
-            output_path=f"{deconv_dir}/{sample_key}_averaged.png"
+            output_path=f"{output_dir}/deconvolution_{sample_key}_averaged.png"
         )
 
         # Calculate and print summary statistics across replicates
@@ -298,7 +288,7 @@ def normalize_and_deconvolve_samples(
 
     # Create box plots showing distribution across all samples
     print(f"\nCreating box plots...")
-    boxplot_path = f"{deconv_dir}/boxplots.png"
+    boxplot_path = f"{output_dir}/deconvolution_boxplots.png"
     plot_deconvolution_boxplots(
         samples=samples,
         deconv_results=deconv_results,
@@ -392,7 +382,4 @@ def print_experiment_summary(
         print(row)
 
     print(f"\nPlots saved in:")
-    print(f"  {output_dir}/references/")
-    print(f"  {output_dir}/samples/")
-    print(f"  {output_dir}/normalization/")
-    print(f"  {output_dir}/deconvolution/")
+    print(f"  {output_dir}/")
