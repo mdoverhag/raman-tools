@@ -1,0 +1,230 @@
+# Raman Analysis Library - Context for Claude
+
+## Project Overview
+
+A Python library for analyzing Raman spectroscopy data with a focus on SERS (Surface Enhanced Raman Scattering) multiplex deconvolution. Used for cancer biomarker detection by analyzing multiplex antibody-conjugated nanoparticles.
+
+**Domain context**: SERS uses Raman-active molecules (reporter molecules) attached to gold nanoparticles. Each molecule has a unique spectral fingerprint (characteristic peak). Multiplex samples contain multiple different molecules, and deconvolution determines the contribution of each.
+
+## Core Design Principles
+
+1. **Library over framework** - Provide composable functions, not a rigid workflow
+2. **Python scripts over config files** - Experiment logic in Python, leveraging the library
+3. **Automatic output management** - Create versioned output directories automatically
+4. **Work with averages first** - Process averaged spectra, not individual replicates
+5. **Minimal serialization** - Pure Python data structures (lists, dicts), no custom classes
+
+## Raman Molecules
+
+Three Raman-active molecules are currently supported:
+
+```python
+RAMAN_MOLECULES = {
+    "MBA": {"peak": 1078, "color": "blue"},      # Mercaptobenzoic acid
+    "DTNB": {"peak": 1335, "color": "green"},    # 5,5'-Dithiobis(2-nitrobenzoic acid)
+    "TFMBA": {"peak": 1377, "color": "orange"}   # 4-(Trifluoromethyl)benzenethiol
+}
+```
+
+Each has:
+- **peak**: Characteristic Raman peak wavenumber (cm⁻¹)
+- **color**: Standard color for plotting
+
+## Analysis Workflow
+
+### 1. Reference Samples (Pure single-molecule samples)
+- Input: Directory with spectrum files, molecule tag (e.g., "MBA")
+- Process: Load → ALS baseline correction → Average → Plot
+- Output: `references/{molecule}.png` showing raw and corrected spectra with expected peak
+
+### 2. Experiment Samples (Multiplexed samples)
+- Input: Directory with spectrum files, sample name, molecule tags list
+- Process: Load → ALS baseline correction → Average → Plot
+- Output: `samples/{sample_name}.png` showing spectra with all expected peaks
+
+### 3. Normalization
+- Input: Averaged sample + references, wavenumber range (typically 1000-1500 cm⁻¹)
+- Process: Apply L2 normalization to make spectra comparable
+- Output: `normalization/{sample}.png` showing before/after normalization
+
+### 4. Deconvolution (NNLS)
+- Input: Normalized sample + references, analysis range
+- Process: Non-Negative Least Squares fitting to determine contributions
+- Output: `deconvolution/{sample}.png` with 3 panels:
+  - Multiplex vs fitted reconstruction
+  - Individual contributions with percentages
+  - Residuals with RMSE
+
+## Data Structures
+
+All functions use simple Python dicts:
+
+```python
+# Single spectrum (after baseline correction)
+spectrum = {
+    "wavenumbers": [200.0, 201.0, ..., 2000.0],
+    "intensities": [...],  # original
+    "corrected": [...],    # baseline-corrected
+    "baseline": [...]      # extracted baseline
+}
+
+# Averaged spectrum
+averaged_spectrum = {
+    "wavenumbers": [...],
+    "raw_avg": [...],
+    "raw_std": [...],
+    "corrected_avg": [...],
+    "corrected_std": [...],
+    "baseline_avg": [...],
+    "count": 150,  # number of spectra
+    "molecule": "MBA",  # for references
+    # OR
+    "molecules": ["MBA", "DTNB", "TFMBA"],  # for samples
+    "name": "Sample 1"  # for samples
+}
+
+# Deconvolution result
+deconv_result = {
+    "contributions": {"MBA": 38.9, "DTNB": 53.5, "TFMBA": 7.6},  # percentages
+    "coefficients": {...},  # raw NNLS coefficients
+    "reconstructed": [...],  # fitted spectrum
+    "residual": [...],
+    "metrics": {"rmse": 3.09, "r_squared": 0.95},
+    "individual_contributions": {"MBA": [...], "DTNB": [...], ...}
+}
+```
+
+## Library Structure
+
+```
+raman_lib/
+├── molecules.py       # RAMAN_MOLECULES config, get_peak(), get_color()
+├── io.py              # load_spectra(), create_output_dir(), ensure_output_subdir()
+├── baseline.py        # als_baseline(), apply_baseline_correction()
+├── averaging.py       # calculate_average()
+├── normalization.py   # normalize_l2(), normalize_spectra_l2()
+├── deconvolution.py   # deconvolve_nnls()
+├── plotting.py        # plot_reference(), plot_sample(), plot_normalization(), plot_deconvolution()
+└── workflow.py        # High-level workflow functions (see below)
+```
+
+## Key API - Workflow Functions
+
+These high-level functions encapsulate complete workflows:
+
+```python
+# Load and process a reference (pure single-molecule sample)
+references = {
+    "MBA": load_and_process_reference(
+        directory="path/to/MBA_EpCAM",
+        molecule="MBA",
+        output_dir=output
+    )
+}
+
+# Load and process a sample (multiplex)
+samples = {
+    "Sample_1": load_and_process_sample(
+        directory="path/to/sample",
+        name="Sample 1",
+        molecules=["MBA", "DTNB", "TFMBA"],
+        output_dir=output
+    )
+}
+
+# Normalize and deconvolve all samples
+deconv_results = normalize_and_deconvolve_samples(
+    samples=samples,
+    references=references,
+    wavenumber_range=(1000, 1500),
+    output_dir=output,
+    molecules=["MBA", "DTNB", "TFMBA"]
+)
+
+# Print summary table
+print_experiment_summary(
+    output_dir=output,
+    references=references,
+    samples=samples,
+    deconv_results=deconv_results
+)
+```
+
+## Experiment Script Pattern
+
+All experiment scripts follow this structure:
+
+```python
+#!/usr/bin/env python3
+"""
+Experiment: [Description]
+Date: YYYY-MM-DD
+"""
+
+import os
+from raman_lib import (
+    create_output_dir,
+    load_and_process_reference,
+    load_and_process_sample,
+    normalize_and_deconvolve_samples,
+    print_experiment_summary
+)
+
+# Data directories
+REFERENCE_DIR = os.path.expanduser("~/Documents/...")
+SAMPLE_DIR = os.path.expanduser("~/Documents/...")
+WAVENUMBER_RANGE = (1000, 1500)
+
+# Create output (auto-versioned)
+output = create_output_dir("experiment-name", base_dir="results")
+
+# Load references (with explicit header in script)
+print("="*60)
+print("LOADING REFERENCES")
+print("="*60)
+references = {...}
+
+# Load samples (with explicit header in script)
+print("="*60)
+print("LOADING SAMPLES")
+print("="*60)
+samples = {...}
+
+# Normalize & deconvolve (with explicit header in script)
+print("\n" + "="*60)
+print("NORMALIZATION & DECONVOLUTION")
+print("="*60)
+deconv_results = normalize_and_deconvolve_samples(...)
+
+# Summary
+print_experiment_summary(...)
+```
+
+## Key Algorithms
+
+- **ALS baseline**: Asymmetric Least Squares (Eilers & Boelens 2005). Iteratively fits smooth baseline by penalizing roughness and asymmetrically weighting points above/below curve.
+  - lambda_param (1e7): controls smoothness
+  - p (0.01): asymmetry (lower = more weight below baseline)
+  - d (2): order of differences (second-order)
+
+- **L2 normalization**: Divides spectrum by its Euclidean norm within specified wavenumber range. Makes spectra comparable regardless of intensity.
+
+- **NNLS deconvolution**: Non-Negative Least Squares finds coefficients x ≥ 0 minimizing ||Ax - b||² where:
+  - A = reference matrix (each column is a reference spectrum)
+  - b = sample spectrum
+  - x = contribution coefficients (converted to percentages)
+
+## File Formats
+
+- **Input spectra**: Tab-delimited `.txt` files with two columns (wavenumber, intensity)
+- **Output plots**: PNG images at 300 DPI
+- **Output directories**: Auto-versioned (name, name-2, name-3, etc.)
+
+## Common Patterns
+
+- Experiment files use date-prefixed naming: `YYYY_MM_DD_description.py`
+- Output directories use date-prefixed naming: `YYYY-MM-DD-description`
+- All directories created in `results/` (gitignored)
+- References reused across experiments (no caching, point to raw data)
+- Headers (like "LOADING REFERENCES") belong in experiment scripts, not library functions
+- Workflow functions print detailed progress but not section summaries
