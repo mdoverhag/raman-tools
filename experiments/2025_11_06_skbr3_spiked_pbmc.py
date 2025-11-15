@@ -28,7 +28,7 @@ SAMPLE_DIR = os.path.expanduser("~/Documents/Spectroscopy Results/2025-11-06 SKB
 WAVENUMBER_RANGE = (1000, 1500)
 
 # Create output directory (auto-versioned) in results/
-output = create_output_dir("skbr3-spiked-pbmc-2025-11-06", base_dir="results")
+output = create_output_dir("2025-11-06-skbr3-spiked-pbmc", base_dir="results")
 print(f"Output directory: {output}\n")
 
 # ============================================================

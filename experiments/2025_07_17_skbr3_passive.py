@@ -27,7 +27,7 @@ DATA_DIR = os.path.expanduser("~/Documents/Spectroscopy Results/2025-07-17 SKBR3
 WAVENUMBER_RANGE = (1000, 1500)
 
 # Create output directory (auto-versioned) in results/
-output = create_output_dir("skbr3-passive-2025-07-17", base_dir="results")
+output = create_output_dir("2025-07-17-skbr3-passive", base_dir="results")
 print(f"Output directory: {output}\n")
 
 # ============================================================

@@ -28,7 +28,7 @@ SAMPLE_DIR = os.path.expanduser("~/Documents/Spectroscopy Results/2025-11-04 MCF
 WAVENUMBER_RANGE = (1000, 1500)
 
 # Create output directory (auto-versioned) in results/
-output = create_output_dir("mcf7-vs-skbr3-2025-11-04", base_dir="results")
+output = create_output_dir("2025-11-04-mcf7-vs-skbr3", base_dir="results")
 print(f"Output directory: {output}\n")
 
 # ============================================================
