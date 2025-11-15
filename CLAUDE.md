@@ -11,7 +11,7 @@ A Python library for analyzing Raman spectroscopy data with a focus on SERS (Sur
 1. **Library over framework** - Provide composable functions, not a rigid workflow
 2. **Python scripts over config files** - Experiment logic in Python, leveraging the library
 3. **Automatic output management** - Create versioned output directories automatically
-4. **Work with averages first** - Process averaged spectra, not individual replicates
+4. **Process all replicates** - Deconvolve each replicate individually for statistical analysis; use averaged spectra for visualization
 5. **Minimal serialization** - Pure Python data structures (lists, dicts), no custom classes
 
 ## Raman Molecules
@@ -35,25 +35,23 @@ Each has:
 ### 1. Reference Samples (Pure single-molecule samples)
 - Input: Directory with spectrum files, molecule tag (e.g., "MBA")
 - Process: Load → ALS baseline correction → Average → Plot
-- Output: `references/{molecule}.png` showing raw and corrected spectra with expected peak
+- Output: `reference_{molecule}.png` showing raw and corrected spectra with expected peak
 
 ### 2. Experiment Samples (Multiplexed samples)
 - Input: Directory with spectrum files, sample name, molecule tags list
-- Process: Load → ALS baseline correction → Average → Plot
-- Output: `samples/{sample_name}.png` showing spectra with all expected peaks
+- Process: Load → ALS baseline correction → Average → Store replicates → Plot
+- Output: `sample_{sample_name}.png` showing averaged spectra with all expected peaks
 
-### 3. Normalization
-- Input: Averaged sample + references, wavenumber range (typically 1000-1500 cm⁻¹)
-- Process: Apply L2 normalization to make spectra comparable
-- Output: `normalization/{sample}.png` showing before/after normalization
-
-### 4. Deconvolution (NNLS)
-- Input: Normalized sample + references, analysis range
-- Process: Non-Negative Least Squares fitting to determine contributions
-- Output: `deconvolution/{sample}.png` with 3 panels:
-  - Multiplex vs fitted reconstruction
-  - Individual contributions with percentages
-  - Residuals with RMSE
+### 3. Normalization & Deconvolution (Per Replicate)
+- Input: All sample replicates + references, wavenumber range (typically 1000-1500 cm⁻¹)
+- Process:
+  - Normalize each replicate using L2 normalization
+  - Deconvolve each replicate using NNLS to determine molecular contributions
+  - Calculate mean ± std across all replicates
+- Output:
+  - `normalization_{sample}_averaged.png` - visualization using averaged spectrum
+  - `deconvolution_{sample}_averaged.png` - 3-panel plot (multiplex vs fitted, individual contributions, residuals)
+  - `deconvolution_boxplots.png` - box plots showing distribution of contributions across all replicates for all samples
 
 ## Data Structures
 
@@ -68,8 +66,8 @@ spectrum = {
     "baseline": [...]      # extracted baseline
 }
 
-# Averaged spectrum
-averaged_spectrum = {
+# Averaged spectrum (for references)
+averaged_reference = {
     "wavenumbers": [...],
     "raw_avg": [...],
     "raw_std": [...],
@@ -77,21 +75,43 @@ averaged_spectrum = {
     "corrected_std": [...],
     "baseline_avg": [...],
     "count": 150,  # number of spectra
-    "molecule": "MBA",  # for references
-    # OR
-    "molecules": ["MBA", "DTNB", "TFMBA"],  # for samples
-    "name": "Sample 1"  # for samples
+    "molecule": "MBA"
 }
 
-# Deconvolution result
-deconv_result = {
-    "contributions": {"MBA": 38.9, "DTNB": 53.5, "TFMBA": 7.6},  # percentages
-    "coefficients": {...},  # raw NNLS coefficients
-    "reconstructed": [...],  # fitted spectrum
-    "residual": [...],
-    "metrics": {"rmse": 3.09, "r_squared": 0.95},
-    "individual_contributions": {"MBA": [...], "DTNB": [...], ...}
+# Averaged spectrum (for samples) - includes replicates
+averaged_sample = {
+    "wavenumbers": [...],
+    "raw_avg": [...],
+    "raw_std": [...],
+    "corrected_avg": [...],
+    "corrected_std": [...],
+    "baseline_avg": [...],
+    "count": 150,  # number of spectra
+    "molecules": ["MBA", "DTNB", "TFMBA"],
+    "name": "Sample 1",
+    "replicates": [  # List of individual corrected spectra
+        {
+            "wavenumbers": [...],
+            "intensities": [...],
+            "corrected": [...],
+            "baseline": [...]
+        },
+        # ... 149 more replicates
+    ]
 }
+
+# Deconvolution results (list of results, one per replicate)
+deconv_results_for_sample = [
+    {
+        "contributions": {"MBA": 38.9, "DTNB": 53.5, "TFMBA": 7.6},  # percentages
+        "coefficients": {...},  # raw NNLS coefficients
+        "reconstructed": [...],  # fitted spectrum
+        "residual": [...],
+        "metrics": {"rmse": 3.09, "r_squared": 0.95},
+        "individual_contributions": {"MBA": [...], "DTNB": [...], ...}
+    },
+    # ... one result per replicate (150 total)
+]
 ```
 
 ## Library Structure
@@ -104,7 +124,7 @@ raman_lib/
 ├── averaging.py       # calculate_average()
 ├── normalization.py   # normalize_l2(), normalize_spectra_l2()
 ├── deconvolution.py   # deconvolve_nnls()
-├── plotting.py        # plot_reference(), plot_sample(), plot_normalization(), plot_deconvolution()
+├── plotting.py        # plot_reference(), plot_sample(), plot_normalization(), plot_deconvolution(), plot_deconvolution_boxplots()
 └── workflow.py        # High-level workflow functions (see below)
 ```
 
@@ -132,13 +152,12 @@ samples = {
     )
 }
 
-# Normalize and deconvolve all samples
+# Normalize and deconvolve all samples (processes each replicate individually)
 deconv_results = normalize_and_deconvolve_samples(
     samples=samples,
     references=references,
     wavenumber_range=(1000, 1500),
-    output_dir=output,
-    molecules=["MBA", "DTNB", "TFMBA"]
+    output_dir=output
 )
 
 # Print summary table
@@ -219,6 +238,12 @@ print_experiment_summary(...)
 - **Input spectra**: Tab-delimited `.txt` files with two columns (wavenumber, intensity)
 - **Output plots**: PNG images at 300 DPI
 - **Output directories**: Auto-versioned (name, name-2, name-3, etc.)
+- **Output structure**: Flat directory with prefixed filenames:
+  - `reference_{molecule}.png` - Reference spectrum plots
+  - `sample_{name}.png` - Sample spectrum plots (averaged)
+  - `normalization_{name}_averaged.png` - Normalization comparison (averaged spectrum)
+  - `deconvolution_{name}_averaged.png` - Deconvolution 3-panel plot (averaged spectrum)
+  - `deconvolution_boxplots.png` - Box plots showing distribution across all replicates
 
 ## Common Patterns
 
@@ -228,3 +253,6 @@ print_experiment_summary(...)
 - References reused across experiments (no caching, point to raw data)
 - Headers (like "LOADING REFERENCES") belong in experiment scripts, not library functions
 - Workflow functions print detailed progress but not section summaries
+- Individual replicates are processed for statistical analysis (mean ± std)
+- Averaged spectra are used for visualization plots to verify algorithm performance
+- Box plots show distribution of molecular contributions across all replicates
