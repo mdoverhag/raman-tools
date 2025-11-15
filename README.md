@@ -150,8 +150,11 @@ results/2025-11-06-skbr3-spiked-pbmc/
 ├── normalization_Multiplex_Ab_2_averaged.png
 ├── normalization_Multiplex_Ab_3_averaged.png
 ├── deconvolution_Multiplex_Ab_1_averaged.png
+├── deconvolution_Multiplex_Ab_1_averaged_original_scale.png
 ├── deconvolution_Multiplex_Ab_2_averaged.png
+├── deconvolution_Multiplex_Ab_2_averaged_original_scale.png
 ├── deconvolution_Multiplex_Ab_3_averaged.png
+├── deconvolution_Multiplex_Ab_3_averaged_original_scale.png
 └── deconvolution_boxplots.png
 ```
 
