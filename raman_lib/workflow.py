@@ -8,7 +8,7 @@ import os
 from .io import load_spectra, ensure_output_subdir
 from .baseline import apply_baseline_correction
 from .averaging import calculate_average
-from .plotting import plot_reference, plot_sample, plot_normalization, plot_deconvolution
+from .plotting import plot_reference, plot_sample, plot_normalization, plot_deconvolution, plot_deconvolution_boxplots
 from .normalization import normalize_spectra_l2
 from .deconvolution import deconvolve_nnls
 
@@ -112,7 +112,8 @@ def load_and_process_sample(
                 'baseline_avg': list[float],
                 'count': int,
                 'molecules': list[str],
-                'name': str
+                'name': str,
+                'replicates': list[dict]  # List of individual corrected spectra
             }
     """
     # Ensure output subdirectory exists
@@ -138,9 +139,12 @@ def load_and_process_sample(
     averaged = calculate_average(corrected_spectra)
     print(f"✓ Average calculated from {averaged['count']} spectra")
 
-    # Add metadata tags
+    # Add metadata tags to averaged data
     averaged['molecules'] = molecules
     averaged['name'] = name
+
+    # Add replicates to the result
+    averaged['replicates'] = corrected_spectra
 
     # Generate plot - create safe filename from name
     safe_name = name.replace(" ", "_").replace("/", "-")
@@ -175,14 +179,17 @@ def normalize_and_deconvolve_samples(
         output_dir: Base output directory (will create subdirectories)
 
     Returns:
-        dict: Deconvolution results for each sample:
+        dict: Deconvolution results for each sample (list of results for all replicates):
             {
-                sample_key: {
-                    'contributions': {molecule: percentage},
-                    'reconstructed': [...],
-                    'residual': [...],
-                    'metrics': {'rmse': float, 'r_squared': float}
-                }
+                sample_key: [
+                    {
+                        'contributions': {molecule: percentage},
+                        'reconstructed': [...],
+                        'residual': [...],
+                        'metrics': {'rmse': float, 'r_squared': float}
+                    },
+                    # ... one result per replicate
+                ]
             }
     """
     # Validate all required references exist before processing
@@ -205,53 +212,99 @@ def normalize_and_deconvolve_samples(
     for sample_key, sample_data in samples.items():
         display_name = sample_data['name']
         sample_molecules = sample_data['molecules']
+        replicates = sample_data['replicates']
 
         print(f"\n{display_name}:")
-        print(f"  Normalizing (range: {wavenumber_range[0]}-{wavenumber_range[1]} cm⁻¹)...")
+        print(f"  Processing {len(replicates)} replicates...")
+        print(f"  Normalizing and deconvolving (range: {wavenumber_range[0]}-{wavenumber_range[1]} cm⁻¹)...")
 
-        # Normalize
-        normalized = normalize_spectra_l2(
+        # Process each replicate
+        replicate_results = []
+
+        for i, replicate in enumerate(replicates):
+            # Normalize this replicate
+            normalized = normalize_spectra_l2(
+                sample=replicate,
+                references=references,
+                wavenumber_range=wavenumber_range
+            )
+
+            # Deconvolve this replicate
+            deconv_result = deconvolve_nnls(
+                sample_spectrum=normalized['sample'],
+                reference_spectra=normalized['references'],
+                wavenumber_range=wavenumber_range
+            )
+
+            replicate_results.append(deconv_result)
+
+        # Store all replicate results
+        deconv_results[sample_key] = replicate_results
+
+        # Create plots using the averaged spectrum (for backward compatibility)
+        # Normalize the averaged spectrum for plotting
+        normalized_avg = normalize_spectra_l2(
             sample=sample_data,
             references=references,
             wavenumber_range=wavenumber_range
         )
 
         plot_normalization(
-            sample_name=display_name,
-            sample_spectrum=normalized['sample'],
-            reference_spectra=normalized['references'],
+            sample_name=f"{display_name} (averaged)",
+            sample_spectrum=normalized_avg['sample'],
+            reference_spectra=normalized_avg['references'],
             molecules=sample_molecules,
             wavenumber_range=wavenumber_range,
-            output_path=f"{norm_dir}/{sample_key}.png"
+            output_path=f"{norm_dir}/{sample_key}_averaged.png"
         )
-        print(f"  ✓ Normalized and saved")
 
-        # Deconvolve
-        print(f"  Deconvolving...")
-        deconv_result = deconvolve_nnls(
-            sample_spectrum=normalized['sample'],
-            reference_spectra=normalized['references'],
+        # Deconvolve the averaged spectrum for plotting
+        deconv_avg = deconvolve_nnls(
+            sample_spectrum=normalized_avg['sample'],
+            reference_spectra=normalized_avg['references'],
             wavenumber_range=wavenumber_range
         )
 
         plot_deconvolution(
-            sample_name=display_name,
-            sample_spectrum=normalized['sample'],
-            result=deconv_result,
+            sample_name=f"{display_name} (averaged)",
+            sample_spectrum=normalized_avg['sample'],
+            result=deconv_avg,
             wavenumber_range=wavenumber_range,
-            output_path=f"{deconv_dir}/{sample_key}.png"
+            output_path=f"{deconv_dir}/{sample_key}_averaged.png"
         )
 
-        # Store results
-        deconv_results[sample_key] = deconv_result
+        # Calculate and print summary statistics across replicates
+        import numpy as np
 
-        # Print contributions dynamically
+        contributions_by_mol = {mol: [] for mol in sample_molecules}
+        r_squared_values = []
+
+        for result in replicate_results:
+            for mol in sample_molecules:
+                contributions_by_mol[mol].append(result['contributions'][mol])
+            r_squared_values.append(result['metrics']['r_squared'])
+
+        # Print mean ± std for each molecule
         contributions_str = ", ".join([
-            f"{mol}={deconv_result['contributions'][mol]:.1f}%"
+            f"{mol}={np.mean(contributions_by_mol[mol]):.1f}±{np.std(contributions_by_mol[mol]):.1f}%"
             for mol in sample_molecules
         ])
-        print(f"  ✓ Deconvolved: {contributions_str} " +
-              f"(R²={deconv_result['metrics']['r_squared']:.3f})")
+        r2_mean = np.mean(r_squared_values)
+        r2_std = np.std(r_squared_values)
+
+        print(f"  ✓ Processed {len(replicates)} replicates")
+        print(f"  ✓ Contributions: {contributions_str}")
+        print(f"  ✓ R²: {r2_mean:.3f}±{r2_std:.3f}")
+
+    # Create box plots showing distribution across all samples
+    print(f"\nCreating box plots...")
+    boxplot_path = f"{deconv_dir}/boxplots.png"
+    plot_deconvolution_boxplots(
+        samples=samples,
+        deconv_results=deconv_results,
+        output_path=boxplot_path
+    )
+    print(f"✓ Box plots saved: {boxplot_path}")
 
     return deconv_results
 
@@ -295,28 +348,47 @@ def print_experiment_summary(
         all_molecules.update(sample_data['molecules'])
     all_molecules = sorted(all_molecules)
 
-    print(f"\nDeconvolution Results:")
+    print(f"\nDeconvolution Results (mean ± std across replicates):")
 
-    # Build header dynamically
+    # Build header dynamically - need more space for "mean±std" format
     header = f"{'Sample':<25}"
     for mol in all_molecules:
-        header += f" {mol:>8}"
-    header += f" {'R²':>8}"
+        header += f" {mol:>16}"
+    header += f" {'R²':>14}"
     print(f"\n{header}")
-    print("-" * (25 + len(all_molecules) * 9 + 9))
+    print("-" * (25 + len(all_molecules) * 17 + 15))
 
-    # Print each sample's results
-    for sample_key, result in deconv_results.items():
+    # Print each sample's results (now with mean ± std)
+    import numpy as np
+
+    for sample_key, replicate_results in deconv_results.items():
         display_name = samples[sample_key]['name']
         sample_molecules = samples[sample_key]['molecules']
 
+        # Calculate mean ± std for each molecule
+        contributions_by_mol = {mol: [] for mol in sample_molecules}
+        r_squared_values = []
+
+        for result in replicate_results:
+            for mol in sample_molecules:
+                contributions_by_mol[mol].append(result['contributions'][mol])
+            r_squared_values.append(result['metrics']['r_squared'])
+
+        # Build row with mean±std - fixed width format
         row = f"{display_name:<25}"
         for mol in all_molecules:
             if mol in sample_molecules:
-                row += f" {result['contributions'][mol]:>7.1f}%"
+                mean = np.mean(contributions_by_mol[mol])
+                std = np.std(contributions_by_mol[mol])
+                # Fixed width: "XX.X±XX.X%" = 11 chars, right-aligned in 16 char field
+                row += f" {f'{mean:.1f}±{std:.1f}%':>16}"
             else:
-                row += f" {'-':>8}"
-        row += f" {result['metrics']['r_squared']:>8.3f}"
+                row += f" {'-':>16}"
+
+        r2_mean = np.mean(r_squared_values)
+        r2_std = np.std(r_squared_values)
+        # Fixed width for R²
+        row += f" {f'{r2_mean:.3f}±{r2_std:.3f}':>14}"
         print(row)
 
     print(f"\nPlots saved in:")

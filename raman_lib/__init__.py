@@ -41,7 +41,8 @@ from .plotting import (
     plot_reference,
     plot_sample,
     plot_normalization,
-    plot_deconvolution
+    plot_deconvolution,
+    plot_deconvolution_boxplots
 )
 
 from .workflow import (
@@ -85,6 +86,7 @@ __all__ = [
     "plot_sample",
     "plot_normalization",
     "plot_deconvolution",
+    "plot_deconvolution_boxplots",
 
     # Workflow
     "load_and_process_reference",

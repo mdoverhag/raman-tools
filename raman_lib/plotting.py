@@ -320,3 +320,77 @@ def plot_deconvolution(
     plt.tight_layout()
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()
+
+
+def plot_deconvolution_boxplots(
+    samples: dict,
+    deconv_results: dict,
+    output_path: str
+) -> None:
+    """
+    Create box plots showing distribution of molecular contributions across replicates.
+
+    Creates a figure with box plots for each sample, showing the distribution
+    of contributions for each molecule across all replicates.
+
+    Args:
+        samples: Dictionary of sample data (from load_and_process_sample)
+        deconv_results: Dictionary of replicate deconvolution results
+        output_path: Path where the plot will be saved
+    """
+    import numpy as np
+
+    # Determine how many samples we have
+    n_samples = len(samples)
+
+    # Create subplots - one per sample
+    fig, axes = plt.subplots(1, n_samples, figsize=(6 * n_samples, 6), squeeze=False)
+    axes = axes.flatten()
+
+    for idx, (sample_key, replicate_results) in enumerate(deconv_results.items()):
+        ax = axes[idx]
+        sample_data = samples[sample_key]
+        display_name = sample_data['name']
+        sample_molecules = sample_data['molecules']
+
+        # Collect contributions for each molecule
+        contributions_by_mol = {mol: [] for mol in sample_molecules}
+
+        for result in replicate_results:
+            for mol in sample_molecules:
+                contributions_by_mol[mol].append(result['contributions'][mol])
+
+        # Prepare data for box plot
+        box_data = []
+        labels = []
+        colors = []
+
+        for mol in sample_molecules:
+            box_data.append(contributions_by_mol[mol])
+            labels.append(mol)
+            colors.append(get_color(mol))
+
+        # Create box plot
+        bp = ax.boxplot(box_data, labels=labels, patch_artist=True,
+                        showmeans=True, meanline=True)
+
+        # Color the boxes
+        for patch, color in zip(bp['boxes'], colors):
+            patch.set_facecolor(color)
+            patch.set_alpha(0.6)
+
+        # Style the plot
+        ax.set_ylabel('Contribution (%)', fontsize=12)
+        ax.set_title(f'{display_name}\n(n={len(replicate_results)} replicates)',
+                     fontsize=12, fontweight='bold')
+        ax.grid(True, alpha=0.3, axis='y')
+        ax.set_ylim(0, 100)
+
+    # Main title
+    fig.suptitle('Molecular Contributions Distribution Across Replicates',
+                 fontsize=14, fontweight='bold', y=0.98)
+
+    # Save plot
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    plt.close()
