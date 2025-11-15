@@ -216,8 +216,8 @@ def normalize_and_deconvolve_samples(
         )
         print(f"  ✓ Normalized and saved")
 
-        # Deconvolute
-        print(f"  Deconvoluting...")
+        # Deconvolve
+        print(f"  Deconvolving...")
         deconv_result = deconvolve_nnls(
             sample_spectrum=normalized['sample'],
             reference_spectra=normalized['references'],
@@ -240,7 +240,7 @@ def normalize_and_deconvolve_samples(
             f"{mol}={deconv_result['contributions'][mol]:.1f}%"
             for mol in sample_molecules
         ])
-        print(f"  ✓ Deconvoluted: {contributions_str} " +
+        print(f"  ✓ Deconvolved: {contributions_str} " +
               f"(R²={deconv_result['metrics']['r_squared']:.3f})")
 
     return deconv_results
