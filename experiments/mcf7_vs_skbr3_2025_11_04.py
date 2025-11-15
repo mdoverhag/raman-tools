@@ -10,14 +10,14 @@ from raman_lib import (
     load_spectra,
     apply_baseline_correction,
     calculate_average,
-    plot_reference,
     plot_sample,
     normalize_spectra_l2,
     plot_normalization,
     deconvolve_nnls,
     plot_deconvolution,
     create_output_dir,
-    ensure_output_subdir
+    ensure_output_subdir,
+    load_and_process_reference
 )
 
 # Data directories
@@ -31,52 +31,33 @@ WAVENUMBER_RANGE = (1000, 1500)
 output = create_output_dir("mcf7-vs-skbr3-2025-11-04", base_dir="results")
 print(f"Output directory: {output}\n")
 
-# Create subdirectory for reference plots
-refs_dir = ensure_output_subdir(output, "references")
-
-
 # ============================================================
 # Step 1: Load and process references (from 2025-07-17)
 # ============================================================
-
-references = {}
 
 print("="*60)
 print("LOADING REFERENCES")
 print("="*60)
 
-# Reference 1: DTNB HER2
-print("\nProcessing: DTNB HER2")
-dtnb_dir = f"{REFERENCE_DIR}/DTNB HER2"
-dtnb_spectra = load_spectra(dtnb_dir)
-print(f"✓ Loaded {len(dtnb_spectra)} spectra")
-dtnb_corrected = [apply_baseline_correction(s) for s in dtnb_spectra]
-dtnb_averaged = calculate_average(dtnb_corrected)
-plot_reference(dtnb_averaged, molecule="DTNB", output_path=f"{refs_dir}/DTNB.png")
-print(f"✓ Processed and saved")
-references["DTNB"] = dtnb_averaged
+references = {
+    "MBA": load_and_process_reference(
+        f"{REFERENCE_DIR}/MBA EpCAM",
+        molecule="MBA",
+        output_dir=output
+    ),
+    "DTNB": load_and_process_reference(
+        f"{REFERENCE_DIR}/DTNB HER2",
+        molecule="DTNB",
+        output_dir=output
+    ),
+    "TFMBA": load_and_process_reference(
+        f"{REFERENCE_DIR}/TFMBA TROP2",
+        molecule="TFMBA",
+        output_dir=output
+    ),
+}
 
-# Reference 2: MBA EpCAM
-print("\nProcessing: MBA EpCAM")
-mba_dir = f"{REFERENCE_DIR}/MBA EpCAM"
-mba_spectra = load_spectra(mba_dir)
-print(f"✓ Loaded {len(mba_spectra)} spectra")
-mba_corrected = [apply_baseline_correction(s) for s in mba_spectra]
-mba_averaged = calculate_average(mba_corrected)
-plot_reference(mba_averaged, molecule="MBA", output_path=f"{refs_dir}/MBA.png")
-print(f"✓ Processed and saved")
-references["MBA"] = mba_averaged
-
-# Reference 3: TFMBA TROP2
-print("\nProcessing: TFMBA TROP2")
-tfmba_dir = f"{REFERENCE_DIR}/TFMBA TROP2"
-tfmba_spectra = load_spectra(tfmba_dir)
-print(f"✓ Loaded {len(tfmba_spectra)} spectra")
-tfmba_corrected = [apply_baseline_correction(s) for s in tfmba_spectra]
-tfmba_averaged = calculate_average(tfmba_corrected)
-plot_reference(tfmba_averaged, molecule="TFMBA", output_path=f"{refs_dir}/TFMBA.png")
-print(f"✓ Processed and saved")
-references["TFMBA"] = tfmba_averaged
+print(f"✓ Processed {len(references)} references\n")
 
 
 # ============================================================

@@ -1,0 +1,78 @@
+"""
+High-level workflow functions for Raman spectroscopy analysis.
+
+These functions encapsulate common multi-step workflows to simplify experiment scripts.
+"""
+
+import os
+from .io import load_spectra, ensure_output_subdir
+from .baseline import apply_baseline_correction
+from .averaging import calculate_average
+from .plotting import plot_reference
+
+
+def load_and_process_reference(
+    directory: str,
+    molecule: str,
+    output_dir: str
+) -> dict:
+    """
+    Load reference spectra, apply ALS baseline correction, average, and plot.
+
+    This function encapsulates the complete workflow for processing reference samples:
+    1. Load all spectra from the directory
+    2. Apply ALS baseline correction to each spectrum
+    3. Calculate the average and standard deviation
+    4. Generate and save a reference plot
+
+    Args:
+        directory: Path to directory containing reference spectrum files (.txt)
+        molecule: Molecule tag (e.g., "MBA", "DTNB", "TFMBA")
+        output_dir: Base output directory (will create 'references/' subdirectory)
+
+    Returns:
+        dict: Averaged spectrum data with the following structure:
+            {
+                'wavenumbers': list[float],
+                'raw_avg': list[float],
+                'raw_std': list[float],
+                'corrected_avg': list[float],
+                'corrected_std': list[float],
+                'baseline_avg': list[float],
+                'count': int,
+                'molecule': str
+            }
+    """
+    # Ensure output subdirectory exists
+    refs_dir = ensure_output_subdir(output_dir, "references")
+
+    # Expand tilde in directory path
+    directory = os.path.expanduser(directory)
+
+    print(f"\nProcessing: {molecule}")
+    print(f"Loading from: {directory}")
+
+    # Load all spectra from directory
+    spectra = load_spectra(directory)
+    print(f"✓ Loaded {len(spectra)} spectra")
+
+    # Apply baseline correction to each spectrum
+    print("Applying baseline correction...")
+    corrected_spectra = [apply_baseline_correction(s) for s in spectra]
+    print("✓ Baseline correction applied")
+
+    # Calculate average
+    print("Calculating average...")
+    averaged = calculate_average(corrected_spectra)
+    print(f"✓ Average calculated from {averaged['count']} spectra")
+
+    # Add molecule tag
+    averaged['molecule'] = molecule
+
+    # Generate plot
+    plot_path = f"{refs_dir}/{molecule}.png"
+    print(f"Creating plot: {plot_path}")
+    plot_reference(averaged, molecule=molecule, output_path=plot_path)
+    print("✓ Plot saved")
+
+    return averaged

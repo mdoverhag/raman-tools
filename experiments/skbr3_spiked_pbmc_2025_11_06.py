@@ -10,14 +10,14 @@ from raman_lib import (
     load_spectra,
     apply_baseline_correction,
     calculate_average,
-    plot_reference,
     plot_sample,
     normalize_spectra_l2,
     plot_normalization,
     deconvolve_nnls,
     plot_deconvolution,
     create_output_dir,
-    ensure_output_subdir
+    ensure_output_subdir,
+    load_and_process_reference
 )
 
 # Data directories
@@ -31,92 +31,33 @@ WAVENUMBER_RANGE = (1000, 1500)
 output = create_output_dir("skbr3-spiked-pbmc-2025-11-06", base_dir="results")
 print(f"Output directory: {output}\n")
 
-# Create subdirectory for reference plots
-refs_dir = ensure_output_subdir(output, "references")
-
-
 # ============================================================
 # Step 1: Load and process references (from 2025-07-17)
 # ============================================================
 
-references = {}
-
-# Reference 1: DTNB HER2
 print("="*60)
-print("Processing: DTNB HER2 (Reference)")
+print("LOADING REFERENCES")
 print("="*60)
 
-dtnb_dir = f"{REFERENCE_DIR}/DTNB HER2"
-print(f"Loading from: {dtnb_dir}")
+references = {
+    "MBA": load_and_process_reference(
+        f"{REFERENCE_DIR}/MBA EpCAM",
+        molecule="MBA",
+        output_dir=output
+    ),
+    "DTNB": load_and_process_reference(
+        f"{REFERENCE_DIR}/DTNB HER2",
+        molecule="DTNB",
+        output_dir=output
+    ),
+    "TFMBA": load_and_process_reference(
+        f"{REFERENCE_DIR}/TFMBA TROP2",
+        molecule="TFMBA",
+        output_dir=output
+    ),
+}
 
-dtnb_spectra = load_spectra(dtnb_dir)
-print(f"✓ Loaded {len(dtnb_spectra)} spectra")
-
-print("Applying baseline correction...")
-dtnb_corrected = [apply_baseline_correction(s) for s in dtnb_spectra]
-print("✓ Baseline correction applied")
-
-print("Calculating average...")
-dtnb_averaged = calculate_average(dtnb_corrected)
-print(f"✓ Average calculated from {dtnb_averaged['count']} spectra")
-
-print(f"Creating plot: {refs_dir}/DTNB.png")
-plot_reference(dtnb_averaged, molecule="DTNB", output_path=f"{refs_dir}/DTNB.png")
-print("✓ Plot saved\n")
-
-references["DTNB"] = dtnb_averaged
-
-
-# Reference 2: MBA EpCAM
-print("="*60)
-print("Processing: MBA EpCAM (Reference)")
-print("="*60)
-
-mba_dir = f"{REFERENCE_DIR}/MBA EpCAM"
-print(f"Loading from: {mba_dir}")
-
-mba_spectra = load_spectra(mba_dir)
-print(f"✓ Loaded {len(mba_spectra)} spectra")
-
-print("Applying baseline correction...")
-mba_corrected = [apply_baseline_correction(s) for s in mba_spectra]
-print("✓ Baseline correction applied")
-
-print("Calculating average...")
-mba_averaged = calculate_average(mba_corrected)
-print(f"✓ Average calculated from {mba_averaged['count']} spectra")
-
-print(f"Creating plot: {refs_dir}/MBA.png")
-plot_reference(mba_averaged, molecule="MBA", output_path=f"{refs_dir}/MBA.png")
-print("✓ Plot saved\n")
-
-references["MBA"] = mba_averaged
-
-
-# Reference 3: TFMBA TROP2
-print("="*60)
-print("Processing: TFMBA TROP2 (Reference)")
-print("="*60)
-
-tfmba_dir = f"{REFERENCE_DIR}/TFMBA TROP2"
-print(f"Loading from: {tfmba_dir}")
-
-tfmba_spectra = load_spectra(tfmba_dir)
-print(f"✓ Loaded {len(tfmba_spectra)} spectra")
-
-print("Applying baseline correction...")
-tfmba_corrected = [apply_baseline_correction(s) for s in tfmba_spectra]
-print("✓ Baseline correction applied")
-
-print("Calculating average...")
-tfmba_averaged = calculate_average(tfmba_corrected)
-print(f"✓ Average calculated from {tfmba_averaged['count']} spectra")
-
-print(f"Creating plot: {refs_dir}/TFMBA.png")
-plot_reference(tfmba_averaged, molecule="TFMBA", output_path=f"{refs_dir}/TFMBA.png")
-print("✓ Plot saved\n")
-
-references["TFMBA"] = tfmba_averaged
+print(f"✓ Processed {len(references)} references\n")
 
 
 # ============================================================
@@ -309,8 +250,8 @@ print(f"\nProcessed samples:")
 for sample_name, data in samples.items():
     print(f"  {sample_name}: {data['count']} spectra averaged")
 print(f"\nPlots saved:")
-print(f"  References: {refs_dir}/")
-print(f"  Samples: {samples_dir}/")
-print(f"  Normalization: {norm_dir}/")
-print(f"  Deconvolution: {deconv_dir}/")
+print(f"  References: {output}/references/")
+print(f"  Samples: {output}/samples/")
+print(f"  Normalization: {output}/normalization/")
+print(f"  Deconvolution: {output}/deconvolution/")
 print("="*60)

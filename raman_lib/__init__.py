@@ -44,6 +44,10 @@ from .plotting import (
     plot_deconvolution
 )
 
+from .workflow import (
+    load_and_process_reference
+)
+
 __version__ = "0.1.0"
 
 __all__ = [
@@ -78,4 +82,7 @@ __all__ = [
     "plot_sample",
     "plot_normalization",
     "plot_deconvolution",
+
+    # Workflow
+    "load_and_process_reference",
 ]
