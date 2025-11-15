@@ -50,7 +50,8 @@ Each has:
   - Calculate mean ± std across all replicates
 - Output:
   - `normalization_{sample}_averaged.png` - visualization using averaged spectrum
-  - `deconvolution_{sample}_averaged.png` - 3-panel plot (multiplex vs fitted, individual contributions, residuals)
+  - `deconvolution_{sample}_averaged.png` - 3-panel plot (multiplex vs fitted, individual contributions, residuals) in normalized scale
+  - `deconvolution_{sample}_averaged_original_scale.png` - 3-panel plot in original intensity scale (before normalization)
   - `deconvolution_boxplots.png` - box plots showing distribution of contributions across all replicates for all samples
 
 ## Data Structures
@@ -105,10 +106,11 @@ deconv_results_for_sample = [
     {
         "contributions": {"MBA": 38.9, "DTNB": 53.5, "TFMBA": 7.6},  # percentages
         "coefficients": {...},  # raw NNLS coefficients
-        "reconstructed": [...],  # fitted spectrum
+        "reconstructed": [...],  # fitted spectrum (normalized)
         "residual": [...],
         "metrics": {"rmse": 3.09, "r_squared": 0.95},
-        "individual_contributions": {"MBA": [...], "DTNB": [...], ...}
+        "individual_contributions": {"MBA": [...], "DTNB": [...], ...},  # normalized
+        "norm_factor": 123.45  # L2 norm used for sample normalization
     },
     # ... one result per replicate (150 total)
 ]
@@ -124,7 +126,7 @@ raman_lib/
 ├── averaging.py       # calculate_average()
 ├── normalization.py   # normalize_l2(), normalize_spectra_l2()
 ├── deconvolution.py   # deconvolve_nnls()
-├── plotting.py        # plot_reference(), plot_sample(), plot_normalization(), plot_deconvolution(), plot_deconvolution_boxplots()
+├── plotting.py        # plot_reference(), plot_sample(), plot_normalization(), plot_deconvolution(), plot_deconvolution_original_scale(), plot_deconvolution_boxplots()
 └── workflow.py        # High-level workflow functions (see below)
 ```
 
@@ -242,7 +244,8 @@ print_experiment_summary(...)
   - `reference_{molecule}.png` - Reference spectrum plots
   - `sample_{name}.png` - Sample spectrum plots (averaged)
   - `normalization_{name}_averaged.png` - Normalization comparison (averaged spectrum)
-  - `deconvolution_{name}_averaged.png` - Deconvolution 3-panel plot (averaged spectrum)
+  - `deconvolution_{name}_averaged.png` - Deconvolution 3-panel plot (averaged spectrum, normalized scale)
+  - `deconvolution_{name}_averaged_original_scale.png` - Deconvolution 3-panel plot (averaged spectrum, original scale)
   - `deconvolution_boxplots.png` - Box plots showing distribution across all replicates
 
 ## Common Patterns
