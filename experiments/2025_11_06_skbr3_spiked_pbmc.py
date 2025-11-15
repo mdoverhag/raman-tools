@@ -7,14 +7,10 @@ Description: Process three multiplex Ab samples using references from 2025-07-17
 
 import os
 from raman_lib import (
-    normalize_spectra_l2,
-    plot_normalization,
-    deconvolve_nnls,
-    plot_deconvolution,
     create_output_dir,
-    ensure_output_subdir,
     load_and_process_reference,
-    load_and_process_sample
+    load_and_process_sample,
+    normalize_and_deconvolve_samples
 )
 
 # Data directories
@@ -93,92 +89,45 @@ print(f"✓ Processed {len(samples)} samples\n")
 # Step 3 & 4: Normalize and deconvolute each sample
 # ============================================================
 
-# Create subdirectories for normalization and deconvolution plots
-norm_dir = ensure_output_subdir(output, "normalization")
-deconv_dir = ensure_output_subdir(output, "deconvolution")
-
-for sample_key, sample_data in samples.items():
-    sample_name = sample_key.replace("_", " ")
-
-    # Step 3: Normalization
-    print("="*60)
-    print(f"Normalizing: {sample_name}")
-    print("="*60)
-
-    print(f"Normalization range: {WAVENUMBER_RANGE[0]}-{WAVENUMBER_RANGE[1]} cm⁻¹")
-    print("Applying L2 normalization...")
-
-    normalized = normalize_spectra_l2(
-        sample=sample_data,
-        references=references,
-        wavenumber_range=WAVENUMBER_RANGE
-    )
-
-    print("✓ Normalization complete")
-
-    print(f"Creating plot: {norm_dir}/{sample_key}.png")
-    plot_normalization(
-        sample_name=sample_name,
-        sample_spectrum=normalized['sample'],
-        reference_spectra=normalized['references'],
-        molecules=["MBA", "DTNB", "TFMBA"],
-        wavenumber_range=WAVENUMBER_RANGE,
-        output_path=f"{norm_dir}/{sample_key}.png"
-    )
-    print("✓ Plot saved\n")
-
-    # Step 4: Deconvolution
-    print("="*60)
-    print(f"Deconvoluting: {sample_name}")
-    print("="*60)
-
-    print(f"Analysis range: {WAVENUMBER_RANGE[0]}-{WAVENUMBER_RANGE[1]} cm⁻¹")
-    print("Performing NNLS deconvolution...")
-
-    deconv_result = deconvolve_nnls(
-        sample_spectrum=normalized['sample'],
-        reference_spectra=normalized['references'],
-        wavenumber_range=WAVENUMBER_RANGE
-    )
-
-    print("✓ Deconvolution complete")
-
-    print("\nContributions:")
-    for molecule, percentage in sorted(deconv_result['contributions'].items()):
-        print(f"  {molecule}: {percentage:.1f}%")
-
-    print(f"\nMetrics:")
-    print(f"  RMSE: {deconv_result['metrics']['rmse']:.3f}")
-    print(f"  R²: {deconv_result['metrics']['r_squared']:.3f}")
-
-    print(f"\nCreating plot: {deconv_dir}/{sample_key}.png")
-    plot_deconvolution(
-        sample_name=sample_name,
-        sample_spectrum=normalized['sample'],
-        result=deconv_result,
-        wavenumber_range=WAVENUMBER_RANGE,
-        output_path=f"{deconv_dir}/{sample_key}.png"
-    )
-    print("✓ Plot saved\n")
+deconv_results = normalize_and_deconvolve_samples(
+    samples=samples,
+    references=references,
+    wavenumber_range=WAVENUMBER_RANGE,
+    output_dir=output,
+    molecules=["MBA", "DTNB", "TFMBA"]
+)
 
 
 # ============================================================
 # Summary
 # ============================================================
 
-print("="*60)
+print("\n" + "="*60)
 print("EXPERIMENT COMPLETE")
 print("="*60)
-print(f"Output directory: {output}")
-print(f"\nProcessed references:")
+print(f"\nOutput directory: {output}")
+
+print(f"\nReferences processed:")
 for molecule, data in references.items():
-    print(f"  {molecule}: {data['count']} spectra averaged")
-print(f"\nProcessed samples:")
-for sample_name, data in samples.items():
-    print(f"  {sample_name}: {data['count']} spectra averaged")
-print(f"\nPlots saved:")
-print(f"  References: {output}/references/")
-print(f"  Samples: {output}/samples/")
-print(f"  Normalization: {output}/normalization/")
-print(f"  Deconvolution: {output}/deconvolution/")
+    print(f"  {molecule}: {data['count']} spectra")
+
+print(f"\nSamples processed:")
+for sample_key, data in samples.items():
+    print(f"  {data['name']}: {data['count']} spectra")
+
+print(f"\nDeconvolution Results:")
+print(f"\n{'Sample':<25} {'MBA':>8} {'DTNB':>8} {'TFMBA':>8} {'R²':>8}")
+print("-" * 60)
+for sample_key, result in deconv_results.items():
+    display_name = samples[sample_key]['name']
+    print(f"{display_name:<25} {result['contributions']['MBA']:>7.1f}% " +
+          f"{result['contributions']['DTNB']:>7.1f}% " +
+          f"{result['contributions']['TFMBA']:>7.1f}% " +
+          f"{result['metrics']['r_squared']:>8.3f}")
+
+print(f"\nPlots saved in:")
+print(f"  {output}/references/")
+print(f"  {output}/samples/")
+print(f"  {output}/normalization/")
+print(f"  {output}/deconvolution/")
 print("="*60)

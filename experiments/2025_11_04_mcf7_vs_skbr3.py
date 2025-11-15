@@ -7,14 +7,10 @@ Description: Process all multiplex Ab samples (3x MCF7, 3x SKBR3) using referenc
 
 import os
 from raman_lib import (
-    normalize_spectra_l2,
-    plot_normalization,
-    deconvolve_nnls,
-    plot_deconvolution,
     create_output_dir,
-    ensure_output_subdir,
     load_and_process_reference,
-    load_and_process_sample
+    load_and_process_sample,
+    normalize_and_deconvolve_samples
 )
 
 # Data directories
@@ -111,63 +107,13 @@ print(f"✓ Processed {len(samples)} samples\n")
 # Step 3 & 4: Normalize and deconvolute each sample
 # ============================================================
 
-norm_dir = ensure_output_subdir(output, "normalization")
-deconv_dir = ensure_output_subdir(output, "deconvolution")
-
-print("\n" + "="*60)
-print("NORMALIZATION & DECONVOLUTION")
-print("="*60)
-
-# Store results for summary
-deconv_results = {}
-
-for sample_key, sample_data in samples.items():
-    display_name = sample_data['name']
-
-    print(f"\n{display_name}:")
-    print(f"  Normalizing (range: {WAVENUMBER_RANGE[0]}-{WAVENUMBER_RANGE[1]} cm⁻¹)...")
-
-    # Normalize
-    normalized = normalize_spectra_l2(
-        sample=sample_data,
-        references=references,
-        wavenumber_range=WAVENUMBER_RANGE
-    )
-
-    plot_normalization(
-        sample_name=display_name,
-        sample_spectrum=normalized['sample'],
-        reference_spectra=normalized['references'],
-        molecules=["MBA", "DTNB", "TFMBA"],
-        wavenumber_range=WAVENUMBER_RANGE,
-        output_path=f"{norm_dir}/{sample_key}.png"
-    )
-    print(f"  ✓ Normalized and saved")
-
-    # Deconvolute
-    print(f"  Deconvoluting...")
-    deconv_result = deconvolve_nnls(
-        sample_spectrum=normalized['sample'],
-        reference_spectra=normalized['references'],
-        wavenumber_range=WAVENUMBER_RANGE
-    )
-
-    plot_deconvolution(
-        sample_name=display_name,
-        sample_spectrum=normalized['sample'],
-        result=deconv_result,
-        wavenumber_range=WAVENUMBER_RANGE,
-        output_path=f"{deconv_dir}/{sample_key}.png"
-    )
-
-    # Store results
-    deconv_results[sample_key] = deconv_result
-
-    # Print contributions
-    print(f"  ✓ Deconvoluted: MBA={deconv_result['contributions']['MBA']:.1f}%, " +
-          f"DTNB={deconv_result['contributions']['DTNB']:.1f}%, " +
-          f"TFMBA={deconv_result['contributions']['TFMBA']:.1f}% " +
-          f"(R²={deconv_result['metrics']['r_squared']:.3f})")
+deconv_results = normalize_and_deconvolve_samples(
+    samples=samples,
+    references=references,
+    wavenumber_range=WAVENUMBER_RANGE,
+    output_dir=output,
+    molecules=["MBA", "DTNB", "TFMBA"]
+)
 
 
 # ============================================================

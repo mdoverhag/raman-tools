@@ -8,7 +8,9 @@ import os
 from .io import load_spectra, ensure_output_subdir
 from .baseline import apply_baseline_correction
 from .averaging import calculate_average
-from .plotting import plot_reference, plot_sample
+from .plotting import plot_reference, plot_sample, plot_normalization, plot_deconvolution
+from .normalization import normalize_spectra_l2
+from .deconvolution import deconvolve_nnls
 
 
 def load_and_process_reference(
@@ -148,3 +150,100 @@ def load_and_process_sample(
     print("✓ Plot saved")
 
     return averaged
+
+
+def normalize_and_deconvolve_samples(
+    samples: dict,
+    references: dict,
+    wavenumber_range: tuple[float, float],
+    output_dir: str,
+    molecules: list[str] = ["MBA", "DTNB", "TFMBA"]
+) -> dict:
+    """
+    Normalize and deconvolve all samples against references.
+
+    This function encapsulates the complete workflow for normalization and deconvolution:
+    1. Normalize each sample and all references using L2 normalization
+    2. Create normalization plot for each sample
+    3. Perform NNLS deconvolution on each normalized sample
+    4. Create deconvolution plot for each sample
+    5. Print progress and results for each sample
+
+    Args:
+        samples: Dictionary of sample data (from load_and_process_sample)
+        references: Dictionary of reference data (from load_and_process_reference)
+        wavenumber_range: Tuple of (min, max) wavenumber for analysis window
+        output_dir: Base output directory (will create subdirectories)
+        molecules: List of molecule tags (default ["MBA", "DTNB", "TFMBA"])
+
+    Returns:
+        dict: Deconvolution results for each sample:
+            {
+                sample_key: {
+                    'contributions': {molecule: percentage},
+                    'reconstructed': [...],
+                    'residual': [...],
+                    'metrics': {'rmse': float, 'r_squared': float}
+                }
+            }
+    """
+    # Ensure output subdirectories exist
+    norm_dir = ensure_output_subdir(output_dir, "normalization")
+    deconv_dir = ensure_output_subdir(output_dir, "deconvolution")
+
+    print("="*60)
+    print("NORMALIZATION & DECONVOLUTION")
+    print("="*60)
+
+    # Store results for summary
+    deconv_results = {}
+
+    for sample_key, sample_data in samples.items():
+        display_name = sample_data['name']
+
+        print(f"\n{display_name}:")
+        print(f"  Normalizing (range: {wavenumber_range[0]}-{wavenumber_range[1]} cm⁻¹)...")
+
+        # Normalize
+        normalized = normalize_spectra_l2(
+            sample=sample_data,
+            references=references,
+            wavenumber_range=wavenumber_range
+        )
+
+        plot_normalization(
+            sample_name=display_name,
+            sample_spectrum=normalized['sample'],
+            reference_spectra=normalized['references'],
+            molecules=molecules,
+            wavenumber_range=wavenumber_range,
+            output_path=f"{norm_dir}/{sample_key}.png"
+        )
+        print(f"  ✓ Normalized and saved")
+
+        # Deconvolute
+        print(f"  Deconvoluting...")
+        deconv_result = deconvolve_nnls(
+            sample_spectrum=normalized['sample'],
+            reference_spectra=normalized['references'],
+            wavenumber_range=wavenumber_range
+        )
+
+        plot_deconvolution(
+            sample_name=display_name,
+            sample_spectrum=normalized['sample'],
+            result=deconv_result,
+            wavenumber_range=wavenumber_range,
+            output_path=f"{deconv_dir}/{sample_key}.png"
+        )
+
+        # Store results
+        deconv_results[sample_key] = deconv_result
+
+        # Print contributions
+        print(f"  ✓ Deconvoluted: MBA={deconv_result['contributions']['MBA']:.1f}%, " +
+              f"DTNB={deconv_result['contributions']['DTNB']:.1f}%, " +
+              f"TFMBA={deconv_result['contributions']['TFMBA']:.1f}% " +
+              f"(R²={deconv_result['metrics']['r_squared']:.3f})")
+
+    return deconv_results
