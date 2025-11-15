@@ -185,6 +185,16 @@ def normalize_and_deconvolve_samples(
                 }
             }
     """
+    # Validate all required references exist before processing
+    for sample_key, sample_data in samples.items():
+        for molecule in sample_data['molecules']:
+            if molecule not in references:
+                raise ValueError(
+                    f"Sample '{sample_data['name']}' requires molecule '{molecule}' "
+                    f"but no reference was loaded for it. "
+                    f"Available references: {list(references.keys())}"
+                )
+
     # Ensure output subdirectories exist
     norm_dir = ensure_output_subdir(output_dir, "normalization")
     deconv_dir = ensure_output_subdir(output_dir, "deconvolution")
