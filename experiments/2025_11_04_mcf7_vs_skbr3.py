@@ -101,7 +101,7 @@ samples = {
 
 
 # ============================================================
-# Step 3 & 4: Normalize and deconvolve each sample
+# Step 3: Normalize and deconvolve all replicates
 # ============================================================
 
 print("\n" + "="*60)
