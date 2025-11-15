@@ -50,14 +50,12 @@ references = {
     ),
 }
 
-print(f"✓ Processed {len(references)} references\n")
-
 
 # ============================================================
 # Step 2: Load and process samples
 # ============================================================
 
-print("="*60)
+print("\n" + "="*60)
 print("LOADING SAMPLES")
 print("="*60)
 
@@ -70,12 +68,14 @@ samples = {
     ),
 }
 
-print(f"✓ Processed {len(samples)} sample\n")
-
 
 # ============================================================
 # Step 3 & 4: Normalize and deconvolute each sample
 # ============================================================
+
+print("\n" + "="*60)
+print("NORMALIZATION & DECONVOLUTION")
+print("="*60)
 
 deconv_results = normalize_and_deconvolve_samples(
     samples=samples,
@@ -89,6 +89,10 @@ deconv_results = normalize_and_deconvolve_samples(
 # ============================================================
 # Summary
 # ============================================================
+
+print("\n" + "="*60)
+print("EXPERIMENT COMPLETE")
+print("="*60)
 
 print_experiment_summary(
     output_dir=output,

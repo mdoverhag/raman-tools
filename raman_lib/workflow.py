@@ -191,10 +191,6 @@ def normalize_and_deconvolve_samples(
     norm_dir = ensure_output_subdir(output_dir, "normalization")
     deconv_dir = ensure_output_subdir(output_dir, "deconvolution")
 
-    print("="*60)
-    print("NORMALIZATION & DECONVOLUTION")
-    print("="*60)
-
     # Store results for summary
     deconv_results = {}
 
@@ -274,9 +270,6 @@ def print_experiment_summary(
         deconv_results: Dictionary of deconvolution results (from normalize_and_deconvolve_samples)
         molecules: List of molecule tags (default ["MBA", "DTNB", "TFMBA"])
     """
-    print("\n" + "="*60)
-    print("EXPERIMENT COMPLETE")
-    print("="*60)
     print(f"\nOutput directory: {output_dir}")
 
     print(f"\nReferences processed:")
@@ -302,4 +295,3 @@ def print_experiment_summary(
     print(f"  {output_dir}/samples/")
     print(f"  {output_dir}/normalization/")
     print(f"  {output_dir}/deconvolution/")
-    print("="*60)
