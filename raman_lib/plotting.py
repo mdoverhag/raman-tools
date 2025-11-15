@@ -322,6 +322,125 @@ def plot_deconvolution(
     plt.close()
 
 
+def plot_deconvolution_original_scale(
+    sample_name: str,
+    sample_spectrum: dict,
+    result: dict,
+    wavenumber_range: tuple[float, float],
+    output_path: str
+) -> None:
+    """
+    Create 3-panel deconvolution plot with original-scale intensities.
+
+    Similar to plot_deconvolution(), but shows intensities in the original scale
+    (before normalization) rather than normalized scale.
+
+    Creates a figure with three subplots:
+    1. Top: Multiplex spectrum vs fitted reconstruction (original scale)
+    2. Middle: Individual SERS tag contributions with percentages (original scale)
+    3. Bottom: Fitting residuals with RMS value (normalized scale)
+
+    Args:
+        sample_name: Name of the sample (for title)
+        sample_spectrum: Dict with 'wavenumbers', 'normalized', 'original', and 'norm_factor'
+        result: Deconvolution result dict with:
+                - 'contributions': {molecule: percentage}
+                - 'reconstructed': reconstructed spectrum (normalized)
+                - 'residual': residual values
+                - 'individual_contributions': {molecule: contribution (normalized)}
+                - 'metrics': {'rmse': value}
+                - 'norm_factor': normalization factor
+        wavenumber_range: Tuple of (min_wn, max_wn) for analysis range
+        output_path: Path where the plot will be saved
+    """
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 10))
+
+    wavenumbers = sample_spectrum['wavenumbers']
+    original_data = sample_spectrum['original']
+    contributions = result['contributions']
+    norm_factor = result['norm_factor']
+    rmse = result['metrics']['rmse']
+
+    # Get analysis range indices for residual plotting
+    analysis_range = result['analysis_range']
+    range_indices = analysis_range['indices']
+    residual = result['residual']
+
+    # Convert normalized data back to original scale
+    reconstructed_original = np.array(result['reconstructed']) * norm_factor
+
+    # Top panel: Multiplex vs Fitted (original scale)
+    ax1.plot(wavenumbers, original_data, 'k-', linewidth=2,
+             label='Multiplex', alpha=0.7)
+    ax1.plot(wavenumbers, reconstructed_original, 'r--', linewidth=2,
+             label='Fitted', alpha=0.8)
+
+    # Add expected peak markers
+    for molecule in sorted(contributions.keys()):
+        expected_peak = get_peak(molecule)
+        color = get_color(molecule)
+        ax1.axvline(x=expected_peak, color=color, linestyle=':', linewidth=1.5,
+                   alpha=0.6, zorder=1)
+
+    ax1.set_ylabel('Intensity (Original Scale)', fontsize=12)
+    ax1.set_title(f'Multiplex Spectrum Deconvolution - {sample_name} (Original Scale)',
+                  fontsize=14, fontweight='bold')
+    ax1.legend()
+    ax1.grid(True, alpha=0.3)
+    ax1.set_xlim(wavenumber_range[0], wavenumber_range[1])
+
+    # Middle panel: Individual contributions (original scale)
+    individual_contributions = result['individual_contributions']
+
+    for molecule in sorted(contributions.keys()):
+        percentage = contributions[molecule]
+        color = get_color(molecule)
+        # Scale normalized contribution back to original
+        contribution_original = np.array(individual_contributions[molecule]) * norm_factor
+
+        ax2.plot(wavenumbers, contribution_original, color=color, linewidth=2,
+                 label=f'{molecule} ({percentage:.1f}%)', alpha=0.8)
+
+        # Add expected peak marker for this molecule
+        expected_peak = get_peak(molecule)
+        ax2.axvline(x=expected_peak, color=color, linestyle=':', linewidth=1.5,
+                   alpha=0.6, zorder=1)
+
+    ax2.set_ylabel('Intensity (Original Scale)', fontsize=12)
+    ax2.set_title('Individual SERS Tag Contributions', fontsize=12)
+    ax2.legend()
+    ax2.grid(True, alpha=0.3)
+    ax2.set_xlim(wavenumber_range[0], wavenumber_range[1])
+
+    # Bottom panel: Residuals (original scale)
+    # Create wavenumbers array for residual (only analysis range)
+    residual_wavenumbers = [wavenumbers[i] for i in range_indices]
+
+    # Scale residual back to original scale
+    residual_original = np.array(residual) * norm_factor
+
+    ax3.plot(residual_wavenumbers, residual_original, 'g-', linewidth=1)
+    ax3.axhline(y=0, color='k', linestyle='--', alpha=0.5)
+
+    # Add expected peak markers
+    for molecule in sorted(contributions.keys()):
+        expected_peak = get_peak(molecule)
+        color = get_color(molecule)
+        ax3.axvline(x=expected_peak, color=color, linestyle=':', linewidth=1.5,
+                   alpha=0.6, zorder=1)
+
+    ax3.set_xlabel('Wavenumber (cm⁻¹)', fontsize=12)
+    ax3.set_ylabel('Residual (Original Scale)', fontsize=12)
+    ax3.set_title('Fitting Residuals', fontsize=12)
+    ax3.grid(True, alpha=0.3)
+    ax3.set_xlim(wavenumber_range[0], wavenumber_range[1])
+
+    # Save plot
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    plt.close()
+
+
 def plot_deconvolution_boxplots(
     samples: dict,
     deconv_results: dict,

@@ -8,7 +8,7 @@ import os
 from .io import load_spectra, ensure_output_subdir
 from .baseline import apply_baseline_correction
 from .averaging import calculate_average
-from .plotting import plot_reference, plot_sample, plot_normalization, plot_deconvolution, plot_deconvolution_boxplots
+from .plotting import plot_reference, plot_sample, plot_normalization, plot_deconvolution, plot_deconvolution_original_scale, plot_deconvolution_boxplots
 from .normalization import normalize_spectra_l2
 from .deconvolution import deconvolve_nnls
 
@@ -261,6 +261,15 @@ def normalize_and_deconvolve_samples(
             result=deconv_avg,
             wavenumber_range=wavenumber_range,
             output_path=f"{output_dir}/deconvolution_{sample_key}_averaged.png"
+        )
+
+        # Also create original-scale deconvolution plot
+        plot_deconvolution_original_scale(
+            sample_name=f"{display_name} (averaged)",
+            sample_spectrum=normalized_avg['sample'],
+            result=deconv_avg,
+            wavenumber_range=wavenumber_range,
+            output_path=f"{output_dir}/deconvolution_{sample_key}_averaged_original_scale.png"
         )
 
         # Calculate and print summary statistics across replicates

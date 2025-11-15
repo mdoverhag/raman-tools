@@ -42,6 +42,7 @@ from .plotting import (
     plot_sample,
     plot_normalization,
     plot_deconvolution,
+    plot_deconvolution_original_scale,
     plot_deconvolution_boxplots
 )
 
@@ -86,6 +87,7 @@ __all__ = [
     "plot_sample",
     "plot_normalization",
     "plot_deconvolution",
+    "plot_deconvolution_original_scale",
     "plot_deconvolution_boxplots",
 
     # Workflow

@@ -18,7 +18,7 @@ def deconvolve_nnls(
     Perform NNLS deconvolution on a normalized multiplex spectrum.
 
     Args:
-        sample_spectrum: Normalized sample spectrum dict with 'wavenumbers', 'normalized'
+        sample_spectrum: Normalized sample spectrum dict with 'wavenumbers', 'normalized', 'norm_factor'
         reference_spectra: Dict of {molecule: normalized_spectrum}
         wavenumber_range: Tuple of (min_wn, max_wn) for analysis range
 
@@ -30,6 +30,7 @@ def deconvolve_nnls(
         - 'residual': residual in analysis range
         - 'metrics': {'rmse': value, 'r_squared': value}
         - 'individual_contributions': {molecule: full-length contribution}
+        - 'norm_factor': norm factor used for sample normalization
     """
     wavenumbers = np.array(sample_spectrum['wavenumbers'])
     sample_normalized = np.array(sample_spectrum['normalized'])
@@ -93,6 +94,9 @@ def deconvolve_nnls(
         full_contribution = ref_full * coefficients[i]
         individual_contributions[name] = full_contribution.tolist()
 
+    # Get norm_factor from sample spectrum (if available)
+    norm_factor = sample_spectrum.get('norm_factor', None)
+
     # Create result dictionary
     result = {
         'contributions': {
@@ -112,7 +116,8 @@ def deconvolve_nnls(
         'analysis_range': {
             'wavenumber_range': wavenumber_range,
             'indices': range_indices.tolist()
-        }
+        },
+        'norm_factor': norm_factor
     }
 
     return result
