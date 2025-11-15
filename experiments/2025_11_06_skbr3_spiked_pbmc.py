@@ -94,8 +94,7 @@ deconv_results = normalize_and_deconvolve_samples(
     samples=samples,
     references=references,
     wavenumber_range=WAVENUMBER_RANGE,
-    output_dir=output,
-    molecules=["MBA", "DTNB", "TFMBA"]
+    output_dir=output
 )
 
 

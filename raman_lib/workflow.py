@@ -156,8 +156,7 @@ def normalize_and_deconvolve_samples(
     samples: dict,
     references: dict,
     wavenumber_range: tuple[float, float],
-    output_dir: str,
-    molecules: list[str] = ["MBA", "DTNB", "TFMBA"]
+    output_dir: str
 ) -> dict:
     """
     Normalize and deconvolve all samples against references.
@@ -174,7 +173,6 @@ def normalize_and_deconvolve_samples(
         references: Dictionary of reference data (from load_and_process_reference)
         wavenumber_range: Tuple of (min, max) wavenumber for analysis window
         output_dir: Base output directory (will create subdirectories)
-        molecules: List of molecule tags (default ["MBA", "DTNB", "TFMBA"])
 
     Returns:
         dict: Deconvolution results for each sample:
@@ -196,6 +194,7 @@ def normalize_and_deconvolve_samples(
 
     for sample_key, sample_data in samples.items():
         display_name = sample_data['name']
+        sample_molecules = sample_data['molecules']
 
         print(f"\n{display_name}:")
         print(f"  Normalizing (range: {wavenumber_range[0]}-{wavenumber_range[1]} cm⁻¹)...")
@@ -211,7 +210,7 @@ def normalize_and_deconvolve_samples(
             sample_name=display_name,
             sample_spectrum=normalized['sample'],
             reference_spectra=normalized['references'],
-            molecules=molecules,
+            molecules=sample_molecules,
             wavenumber_range=wavenumber_range,
             output_path=f"{norm_dir}/{sample_key}.png"
         )
@@ -236,10 +235,12 @@ def normalize_and_deconvolve_samples(
         # Store results
         deconv_results[sample_key] = deconv_result
 
-        # Print contributions
-        print(f"  ✓ Deconvoluted: MBA={deconv_result['contributions']['MBA']:.1f}%, " +
-              f"DTNB={deconv_result['contributions']['DTNB']:.1f}%, " +
-              f"TFMBA={deconv_result['contributions']['TFMBA']:.1f}% " +
+        # Print contributions dynamically
+        contributions_str = ", ".join([
+            f"{mol}={deconv_result['contributions'][mol]:.1f}%"
+            for mol in sample_molecules
+        ])
+        print(f"  ✓ Deconvoluted: {contributions_str} " +
               f"(R²={deconv_result['metrics']['r_squared']:.3f})")
 
     return deconv_results
@@ -249,8 +250,7 @@ def print_experiment_summary(
     output_dir: str,
     references: dict,
     samples: dict,
-    deconv_results: dict,
-    molecules: list[str] = ["MBA", "DTNB", "TFMBA"]
+    deconv_results: dict
 ) -> None:
     """
     Print a summary of the experiment results.
@@ -268,7 +268,6 @@ def print_experiment_summary(
         references: Dictionary of reference data (from load_and_process_reference)
         samples: Dictionary of sample data (from load_and_process_sample)
         deconv_results: Dictionary of deconvolution results (from normalize_and_deconvolve_samples)
-        molecules: List of molecule tags (default ["MBA", "DTNB", "TFMBA"])
     """
     print(f"\nOutput directory: {output_dir}")
 
@@ -280,15 +279,35 @@ def print_experiment_summary(
     for sample_key, data in samples.items():
         print(f"  {data['name']}: {data['count']} spectra")
 
+    # Determine all unique molecules across all samples
+    all_molecules = set()
+    for sample_data in samples.values():
+        all_molecules.update(sample_data['molecules'])
+    all_molecules = sorted(all_molecules)
+
     print(f"\nDeconvolution Results:")
-    print(f"\n{'Sample':<25} {'MBA':>8} {'DTNB':>8} {'TFMBA':>8} {'R²':>8}")
-    print("-" * 60)
+
+    # Build header dynamically
+    header = f"{'Sample':<25}"
+    for mol in all_molecules:
+        header += f" {mol:>8}"
+    header += f" {'R²':>8}"
+    print(f"\n{header}")
+    print("-" * (25 + len(all_molecules) * 9 + 9))
+
+    # Print each sample's results
     for sample_key, result in deconv_results.items():
         display_name = samples[sample_key]['name']
-        print(f"{display_name:<25} {result['contributions']['MBA']:>7.1f}% " +
-              f"{result['contributions']['DTNB']:>7.1f}% " +
-              f"{result['contributions']['TFMBA']:>7.1f}% " +
-              f"{result['metrics']['r_squared']:>8.3f}")
+        sample_molecules = samples[sample_key]['molecules']
+
+        row = f"{display_name:<25}"
+        for mol in all_molecules:
+            if mol in sample_molecules:
+                row += f" {result['contributions'][mol]:>7.1f}%"
+            else:
+                row += f" {'-':>8}"
+        row += f" {result['metrics']['r_squared']:>8.3f}"
+        print(row)
 
     print(f"\nPlots saved in:")
     print(f"  {output_dir}/references/")
