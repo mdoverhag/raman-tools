@@ -8,6 +8,7 @@ Description: Process reference spectra for DTNB/HER2, MBA/EpCAM, and TFMBA/TROP2
 import os
 from raman_lib import (
     create_output_dir,
+    build_reference_dict,
     load_and_process_reference,
     load_and_process_sample,
     normalize_and_deconvolve_samples,
@@ -34,41 +35,41 @@ print("=" * 60)
 print("LOADING REFERENCES")
 print("=" * 60)
 
-references_ab = {
-    "DTNB": load_and_process_reference(
-        f"{DATA_DIR}/DTNB HER2", molecule="DTNB", conjugate="HER2", output_dir=output
-    ),
-    "MBA": load_and_process_reference(
+references_ab = build_reference_dict([
+    load_and_process_reference(
         f"{DATA_DIR}/MBA EpCAM", molecule="MBA", conjugate="EpCAM", output_dir=output
     ),
-    "TFMBA": load_and_process_reference(
+    load_and_process_reference(
+        f"{DATA_DIR}/DTNB HER2", molecule="DTNB", conjugate="HER2", output_dir=output
+    ),
+    load_and_process_reference(
         f"{DATA_DIR}/TFMBA TROP2", molecule="TFMBA", conjugate="TROP2", output_dir=output
     ),
-}
+])
 
-references_bsa = {
-    "DTNB": load_and_process_reference(
-        f"{DATA_DIR}/DTNB BSA", molecule="DTNB", conjugate="BSA", output_dir=output
-    ),
-    "MBA": load_and_process_reference(
+references_bsa = build_reference_dict([
+    load_and_process_reference(
         f"{DATA_DIR}/MBA BSA", molecule="MBA", conjugate="BSA", output_dir=output
     ),
-    "TFMBA": load_and_process_reference(
+    load_and_process_reference(
+        f"{DATA_DIR}/DTNB BSA", molecule="DTNB", conjugate="BSA", output_dir=output
+    ),
+    load_and_process_reference(
         f"{DATA_DIR}/TFMBA BSA", molecule="TFMBA", conjugate="BSA", output_dir=output
     ),
-}
+])
 
-references_igg = {
-    "DTNB": load_and_process_reference(
-        f"{DATA_DIR}/DTNB IgG", molecule="DTNB", conjugate="IgG", output_dir=output
-    ),
-    "MBA": load_and_process_reference(
+references_igg = build_reference_dict([
+    load_and_process_reference(
         f"{DATA_DIR}/MBA IgG", molecule="MBA", conjugate="IgG", output_dir=output
     ),
-    "TFMBA": load_and_process_reference(
+    load_and_process_reference(
+        f"{DATA_DIR}/DTNB IgG", molecule="DTNB", conjugate="IgG", output_dir=output
+    ),
+    load_and_process_reference(
         f"{DATA_DIR}/TFMBA IgG", molecule="TFMBA", conjugate="IgG", output_dir=output
     ),
-}
+])
 
 
 # ============================================================

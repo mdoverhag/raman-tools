@@ -13,6 +13,41 @@ from .normalization import normalize_spectra_l2
 from .deconvolution import deconvolve_nnls
 
 
+def build_reference_dict(reference_list: list[dict]) -> dict:
+    """
+    Build a references dict from a list of reference data.
+
+    Uses the 'molecule' property from each reference as the dict key.
+    Validates that all molecules are unique within the reference set.
+
+    Args:
+        reference_list: List of reference dicts returned from load_and_process_reference()
+
+    Returns:
+        dict: Dictionary with molecule names as keys and reference data as values
+
+    Raises:
+        ValueError: If duplicate molecules are found in the reference list
+
+    Example:
+        >>> references = build_reference_dict([
+        ...     load_and_process_reference(..., molecule="MBA", conjugate="EpCAM", ...),
+        ...     load_and_process_reference(..., molecule="DTNB", conjugate="HER2", ...),
+        ... ])
+        >>> # references = {"MBA": {...}, "DTNB": {...}}
+    """
+    references = {}
+    for ref in reference_list:
+        molecule = ref['molecule']
+        if molecule in references:
+            raise ValueError(
+                f"Duplicate reference for molecule '{molecule}'. "
+                f"Each reference set should have only one entry per molecule."
+            )
+        references[molecule] = ref
+    return references
+
+
 def load_and_process_reference(
     directory: str,
     molecule: str,

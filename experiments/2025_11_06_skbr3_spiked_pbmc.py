@@ -8,6 +8,7 @@ Description: Process three multiplex Ab samples using references from 2025-07-17
 import os
 from raman_lib import (
     create_output_dir,
+    build_reference_dict,
     load_and_process_reference,
     load_and_process_sample,
     normalize_and_deconvolve_samples,
@@ -33,26 +34,26 @@ print("="*60)
 print("LOADING REFERENCES")
 print("="*60)
 
-references = {
-    "MBA": load_and_process_reference(
+references = build_reference_dict([
+    load_and_process_reference(
         f"{REFERENCE_DIR}/MBA EpCAM",
         molecule="MBA",
         conjugate="EpCAM",
         output_dir=output
     ),
-    "DTNB": load_and_process_reference(
+    load_and_process_reference(
         f"{REFERENCE_DIR}/DTNB HER2",
         molecule="DTNB",
         conjugate="HER2",
         output_dir=output
     ),
-    "TFMBA": load_and_process_reference(
+    load_and_process_reference(
         f"{REFERENCE_DIR}/TFMBA TROP2",
         molecule="TFMBA",
         conjugate="TROP2",
         output_dir=output
     ),
-}
+])
 
 
 # ============================================================
