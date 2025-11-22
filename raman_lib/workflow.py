@@ -391,63 +391,78 @@ def print_experiment_summary(
     print(f"\nOutput directory: {output_dir}")
 
     print(f"\nReferences processed:")
-    for (molecule, conjugate), data in references.items():
+    for (molecule, conjugate), data in sorted(references.items()):
         print(f"  {molecule}-{conjugate}: {data['count']} spectra")
 
     print(f"\nSamples processed:")
-    for sample_key, data in samples.items():
+    for sample_key, data in sorted(samples.items(), key=lambda x: x[1]['name']):
         print(f"  {data['name']}: {data['count']} spectra")
 
-    # Determine all unique molecule-conjugate pairs across all samples
-    all_mol_conj = set()
-    for sample_data in samples.values():
-        all_mol_conj.update(sample_data['molecule_conjugates'])
-    all_mol_conj = sorted(all_mol_conj)
-
-    print(f"\nDeconvolution Results (mean ± std across replicates):")
-
-    # Build header dynamically - need more space for "mean±std" format and molecule-conjugate labels
-    header = f"{'Sample':<25}"
-    for mol, conj in all_mol_conj:
-        # Use molecule-conjugate label, e.g., "MBA-EpCAM"
-        label = f"{mol}-{conj}"
-        header += f" {label:>20}"
-    header += f" {'R²':>14}"
-    print(f"\n{header}")
-    print("-" * (25 + len(all_mol_conj) * 21 + 15))
-
-    # Print each sample's results (now with mean ± std)
+    # Group samples by their conjugate types (e.g., all Ab samples, all BSA samples)
     import numpy as np
+    from collections import defaultdict
 
-    for sample_key, replicate_results in deconv_results.items():
-        display_name = samples[sample_key]['name']
-        sample_mol_conj = samples[sample_key]['molecule_conjugates']
+    # Group samples by their molecule_conjugates tuple (frozen for hashing)
+    groups = defaultdict(list)
+    for sample_key, sample_data in samples.items():
+        # Use frozenset of conjugates to group (e.g., all samples with EpCAM/HER2/TROP2)
+        conjugate_set = frozenset(conj for mol, conj in sample_data['molecule_conjugates'])
+        groups[conjugate_set].append(sample_key)
 
-        # Calculate mean ± std for each molecule-conjugate
-        contributions_by_mol_conj = {mol_conj: [] for mol_conj in sample_mol_conj}
-        r_squared_values = []
+    # Print a table for each conjugate group
+    for conjugate_set in sorted(groups.keys(), key=lambda x: sorted(x)):
+        sample_keys = groups[conjugate_set]
 
-        for result in replicate_results:
-            for mol_conj in sample_mol_conj:
-                contributions_by_mol_conj[mol_conj].append(result['contributions'][mol_conj])
-            r_squared_values.append(result['metrics']['r_squared'])
+        # Get the molecule-conjugates from first sample (all in group have same ones)
+        first_sample = samples[sample_keys[0]]
+        group_mol_conj = sorted(first_sample['molecule_conjugates'])
 
-        # Build row with mean±std - fixed width format
-        row = f"{display_name:<25}"
-        for mol_conj in all_mol_conj:
-            if mol_conj in sample_mol_conj:
+        # Determine group name from conjugates
+        conjugate_list = sorted(conjugate_set)
+        if len(conjugate_list) == 1:
+            group_name = conjugate_list[0]
+        else:
+            group_name = "/".join(conjugate_list)
+
+        print(f"\n{'='*60}")
+        print(f"Deconvolution Results - {group_name} Conjugates")
+        print(f"{'='*60}")
+
+        # Build header
+        header = f"{'Sample':<25}"
+        for mol, conj in group_mol_conj:
+            label = f"{mol}-{conj}"
+            header += f" {label:>20}"
+        header += f" {'R²':>14}"
+        print(f"\n{header}")
+        print("-" * (25 + len(group_mol_conj) * 21 + 15))
+
+        # Print each sample in this group (sorted alphabetically by name)
+        for sample_key in sorted(sample_keys, key=lambda k: samples[k]['name']):
+            display_name = samples[sample_key]['name']
+            replicate_results = deconv_results[sample_key]
+            sample_mol_conj = samples[sample_key]['molecule_conjugates']
+
+            # Calculate mean ± std for each molecule-conjugate
+            contributions_by_mol_conj = {mol_conj: [] for mol_conj in sample_mol_conj}
+            r_squared_values = []
+
+            for result in replicate_results:
+                for mol_conj in sample_mol_conj:
+                    contributions_by_mol_conj[mol_conj].append(result['contributions'][mol_conj])
+                r_squared_values.append(result['metrics']['r_squared'])
+
+            # Build row
+            row = f"{display_name:<25}"
+            for mol_conj in group_mol_conj:
                 mean = np.mean(contributions_by_mol_conj[mol_conj])
                 std = np.std(contributions_by_mol_conj[mol_conj])
-                # Fixed width: "XX.X±XX.X%" = 11 chars, right-aligned in 20 char field
                 row += f" {f'{mean:.1f}±{std:.1f}%':>20}"
-            else:
-                row += f" {'-':>20}"
 
-        r2_mean = np.mean(r_squared_values)
-        r2_std = np.std(r_squared_values)
-        # Fixed width for R²
-        row += f" {f'{r2_mean:.3f}±{r2_std:.3f}':>14}"
-        print(row)
+            r2_mean = np.mean(r_squared_values)
+            r2_std = np.std(r_squared_values)
+            row += f" {f'{r2_mean:.3f}±{r2_std:.3f}':>14}"
+            print(row)
 
     print(f"\nPlots saved in:")
     print(f"  {output_dir}/")

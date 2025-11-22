@@ -84,6 +84,18 @@ samples = {
         molecule_conjugates=[("MBA", "EpCAM"), ("DTNB", "HER2"), ("TFMBA", "TROP2")],
         output_dir=output,
     ),
+    "Multiplex_BSA": load_and_process_sample(
+        f"{DATA_DIR}/Multiplex BSA",
+        name="Multiplex BSA",
+        molecule_conjugates=[("MBA", "BSA"), ("DTNB", "BSA"), ("TFMBA", "BSA")],
+        output_dir=output,
+    ),
+    "Multiplex_IgG": load_and_process_sample(
+        f"{DATA_DIR}/Multiplex IgG",
+        name="Multiplex IgG",
+        molecule_conjugates=[("MBA", "IgG"), ("DTNB", "IgG"), ("TFMBA", "IgG")],
+        output_dir=output,
+    ),
 }
 
 
