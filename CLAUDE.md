@@ -33,12 +33,12 @@ Each has:
 ## Analysis Workflow
 
 ### 1. Reference Samples (Pure single-molecule samples)
-- Input: Directory with spectrum files, molecule tag (e.g., "MBA")
+- Input: Directory with spectrum files, molecule tag (e.g., "MBA"), conjugate (e.g., "EpCAM")
 - Process: Load → ALS baseline correction → Average → Plot
-- Output: `reference_{molecule}.png` showing raw and corrected spectra with expected peak
+- Output: `reference_{molecule}_{conjugate}.png` showing raw and corrected spectra with expected peak
 
 ### 2. Experiment Samples (Multiplexed samples)
-- Input: Directory with spectrum files, sample name, molecule tags list
+- Input: Directory with spectrum files, sample name, molecule-conjugate pairs list
 - Process: Load → ALS baseline correction → Average → Store replicates → Plot
 - Output: `sample_{sample_name}.png` showing averaged spectra with all expected peaks
 
@@ -76,7 +76,8 @@ averaged_reference = {
     "corrected_std": [...],
     "baseline_avg": [...],
     "count": 150,  # number of spectra
-    "molecule": "MBA"
+    "molecule": "MBA",
+    "conjugate": "EpCAM"
 }
 
 # Averaged spectrum (for samples) - includes replicates
@@ -88,7 +89,7 @@ averaged_sample = {
     "corrected_std": [...],
     "baseline_avg": [...],
     "count": 150,  # number of spectra
-    "molecules": ["MBA", "DTNB", "TFMBA"],
+    "molecule_conjugates": [("MBA", "EpCAM"), ("DTNB", "HER2"), ("TFMBA", "TROP2")],
     "name": "Sample 1",
     "replicates": [  # List of individual corrected spectra
         {
@@ -104,12 +105,12 @@ averaged_sample = {
 # Deconvolution results (list of results, one per replicate)
 deconv_results_for_sample = [
     {
-        "contributions": {"MBA": 38.9, "DTNB": 53.5, "TFMBA": 7.6},  # percentages
+        "contributions": {("MBA", "EpCAM"): 38.9, ("DTNB", "HER2"): 53.5, ("TFMBA", "TROP2"): 7.6},  # percentages
         "coefficients": {...},  # raw NNLS coefficients
         "reconstructed": [...],  # fitted spectrum (normalized)
         "residual": [...],
         "metrics": {"rmse": 3.09, "r_squared": 0.95},
-        "individual_contributions": {"MBA": [...], "DTNB": [...], ...},  # normalized
+        "individual_contributions": {("MBA", "EpCAM"): [...], ("DTNB", "HER2"): [...], ...},  # normalized
         "norm_factor": 123.45  # L2 norm used for sample normalization
     },
     # ... one result per replicate (150 total)
@@ -127,7 +128,7 @@ raman_lib/
 ├── normalization.py   # normalize_l2(), normalize_spectra_l2()
 ├── deconvolution.py   # deconvolve_nnls()
 ├── plotting.py        # plot_reference(), plot_sample(), plot_normalization(), plot_deconvolution(), plot_deconvolution_original_scale(), plot_deconvolution_boxplots()
-└── workflow.py        # High-level workflow functions (see below)
+└── workflow.py        # build_reference_dict(), load_and_process_reference(), load_and_process_sample(), normalize_and_deconvolve_samples(), print_experiment_summary()
 ```
 
 ## Key API - Workflow Functions
@@ -135,21 +136,34 @@ raman_lib/
 These high-level functions encapsulate complete workflows:
 
 ```python
-# Load and process a reference (pure single-molecule sample)
-references = {
-    "MBA": load_and_process_reference(
+# Load and process references (pure single-molecule samples)
+references = build_reference_dict([
+    load_and_process_reference(
         directory="path/to/MBA_EpCAM",
         molecule="MBA",
+        conjugate="EpCAM",
         output_dir=output
-    )
-}
+    ),
+    load_and_process_reference(
+        directory="path/to/DTNB_HER2",
+        molecule="DTNB",
+        conjugate="HER2",
+        output_dir=output
+    ),
+    load_and_process_reference(
+        directory="path/to/TFMBA_TROP2",
+        molecule="TFMBA",
+        conjugate="TROP2",
+        output_dir=output
+    ),
+])
 
 # Load and process a sample (multiplex)
 samples = {
     "Sample_1": load_and_process_sample(
         directory="path/to/sample",
         name="Sample 1",
-        molecules=["MBA", "DTNB", "TFMBA"],
+        molecule_conjugates=[("MBA", "EpCAM"), ("DTNB", "HER2"), ("TFMBA", "TROP2")],
         output_dir=output
     )
 }
@@ -185,6 +199,7 @@ Date: YYYY-MM-DD
 import os
 from raman_lib import (
     create_output_dir,
+    build_reference_dict,
     load_and_process_reference,
     load_and_process_sample,
     normalize_and_deconvolve_samples,
@@ -241,7 +256,7 @@ print_experiment_summary(...)
 - **Output plots**: PNG images at 300 DPI
 - **Output directories**: Auto-versioned (name, name-2, name-3, etc.)
 - **Output structure**: Flat directory with prefixed filenames:
-  - `reference_{molecule}.png` - Reference spectrum plots
+  - `reference_{molecule}_{conjugate}.png` - Reference spectrum plots
   - `sample_{name}.png` - Sample spectrum plots (averaged)
   - `normalization_{name}_averaged.png` - Normalization comparison (averaged spectrum)
   - `deconvolution_{name}_averaged.png` - Deconvolution 3-panel plot (averaged spectrum, normalized scale)
@@ -259,3 +274,7 @@ print_experiment_summary(...)
 - Individual replicates are processed for statistical analysis (mean ± std)
 - Averaged spectra are used for visualization plots to verify algorithm performance
 - Box plots show distribution of molecular contributions across all replicates
+- References use `(molecule, conjugate)` tuples as dict keys, allowing multiple conjugates per molecule in one dict
+- Samples specify their `molecule_conjugates` list, which is used to filter references for deconvolution
+- Summary tables are grouped by conjugate type (e.g., all EpCAM/HER2/TROP2 samples in one table)
+- References and samples are sorted alphabetically in output for easier reading
