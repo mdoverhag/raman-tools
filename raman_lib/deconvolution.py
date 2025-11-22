@@ -19,17 +19,17 @@ def deconvolve_nnls(
 
     Args:
         sample_spectrum: Normalized sample spectrum dict with 'wavenumbers', 'normalized', 'norm_factor'
-        reference_spectra: Dict of {molecule: normalized_spectrum}
+        reference_spectra: Dict of {(molecule, conjugate): normalized_spectrum}
         wavenumber_range: Tuple of (min_wn, max_wn) for analysis range
 
     Returns:
         Dictionary with:
-        - 'contributions': {molecule: percentage}
-        - 'coefficients': {molecule: raw coefficient}
+        - 'contributions': {(molecule, conjugate): percentage}
+        - 'coefficients': {(molecule, conjugate): raw coefficient}
         - 'reconstructed': full-length reconstructed spectrum
         - 'residual': residual in analysis range
         - 'metrics': {'rmse': value, 'r_squared': value}
-        - 'individual_contributions': {molecule: full-length contribution}
+        - 'individual_contributions': {(molecule, conjugate): full-length contribution}
         - 'norm_factor': norm factor used for sample normalization
     """
     wavenumbers = np.array(sample_spectrum['wavenumbers'])
@@ -49,10 +49,11 @@ def deconvolve_nnls(
     sample_region = sample_normalized[range_indices]
 
     # Build the reference matrix (each column is a reference spectrum)
-    reference_names = list(reference_spectra.keys())
+    # reference_keys is a list of (molecule, conjugate) tuples
+    reference_keys = list(reference_spectra.keys())
     reference_matrix = np.column_stack([
-        np.array(reference_spectra[name]['normalized'])[range_indices]
-        for name in reference_names
+        np.array(reference_spectra[key]['normalized'])[range_indices]
+        for key in reference_keys
     ])
 
     # Perform NNLS: find x such that ||Ax - b||^2 is minimized, x >= 0
@@ -86,13 +87,13 @@ def deconvolve_nnls(
 
     # Create individual contributions for plotting
     individual_contributions = {}
-    for i, name in enumerate(reference_names):
-        # Each molecule's contribution is its reference spectrum scaled by its coefficient
+    for i, key in enumerate(reference_keys):
+        # Each molecule-conjugate's contribution is its reference spectrum scaled by its coefficient
         full_contribution = np.zeros(len(wavenumbers))
-        ref_full = np.array(reference_spectra[name]['normalized'])
+        ref_full = np.array(reference_spectra[key]['normalized'])
         # Scale the entire reference spectrum by its coefficient
         full_contribution = ref_full * coefficients[i]
-        individual_contributions[name] = full_contribution.tolist()
+        individual_contributions[key] = full_contribution.tolist()
 
     # Get norm_factor from sample spectrum (if available)
     norm_factor = sample_spectrum.get('norm_factor', None)
@@ -100,10 +101,10 @@ def deconvolve_nnls(
     # Create result dictionary
     result = {
         'contributions': {
-            name: float(percentages[i]) for i, name in enumerate(reference_names)
+            key: float(percentages[i]) for i, key in enumerate(reference_keys)
         },
         'coefficients': {
-            name: float(coefficients[i]) for i, name in enumerate(reference_names)
+            key: float(coefficients[i]) for i, key in enumerate(reference_keys)
         },
         'reconstructed': full_reconstructed.tolist(),
         'residual': residual.tolist(),

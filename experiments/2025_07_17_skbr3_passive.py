@@ -35,7 +35,8 @@ print("=" * 60)
 print("LOADING REFERENCES")
 print("=" * 60)
 
-references_ab = build_reference_dict([
+references = build_reference_dict([
+    # Antibody-conjugated references
     load_and_process_reference(
         f"{DATA_DIR}/MBA EpCAM", molecule="MBA", conjugate="EpCAM", output_dir=output
     ),
@@ -45,9 +46,7 @@ references_ab = build_reference_dict([
     load_and_process_reference(
         f"{DATA_DIR}/TFMBA TROP2", molecule="TFMBA", conjugate="TROP2", output_dir=output
     ),
-])
-
-references_bsa = build_reference_dict([
+    # BSA control references
     load_and_process_reference(
         f"{DATA_DIR}/MBA BSA", molecule="MBA", conjugate="BSA", output_dir=output
     ),
@@ -57,9 +56,7 @@ references_bsa = build_reference_dict([
     load_and_process_reference(
         f"{DATA_DIR}/TFMBA BSA", molecule="TFMBA", conjugate="BSA", output_dir=output
     ),
-])
-
-references_igg = build_reference_dict([
+    # IgG control references
     load_and_process_reference(
         f"{DATA_DIR}/MBA IgG", molecule="MBA", conjugate="IgG", output_dir=output
     ),
@@ -84,7 +81,7 @@ samples = {
     "Multiplex_Ab": load_and_process_sample(
         f"{DATA_DIR}/Multiplex Ab",
         name="Multiplex Ab",
-        molecules=["MBA", "DTNB", "TFMBA"],
+        molecule_conjugates=[("MBA", "EpCAM"), ("DTNB", "HER2"), ("TFMBA", "TROP2")],
         output_dir=output,
     ),
 }
@@ -100,7 +97,7 @@ print("=" * 60)
 
 deconv_results = normalize_and_deconvolve_samples(
     samples=samples,
-    references=references_ab,
+    references=references,
     wavenumber_range=WAVENUMBER_RANGE,
     output_dir=output,
 )
@@ -116,7 +113,7 @@ print("=" * 60)
 
 print_experiment_summary(
     output_dir=output,
-    references=references_ab,
+    references=references,
     samples=samples,
     deconv_results=deconv_results,
 )

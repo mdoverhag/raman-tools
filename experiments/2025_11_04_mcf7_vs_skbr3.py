@@ -68,37 +68,37 @@ samples = {
     "MCF7_Ab_1": load_and_process_sample(
         f"{SAMPLE_DIR}/MCF7 spiked PBMC_10E5_Multiplex Ab 1",
         name="MCF7 Multiplex Ab 1",
-        molecules=["MBA", "DTNB", "TFMBA"],
+        molecule_conjugates=[("MBA", "EpCAM"), ("DTNB", "HER2"), ("TFMBA", "TROP2")],
         output_dir=output
     ),
     "MCF7_Ab_2": load_and_process_sample(
         f"{SAMPLE_DIR}/MCF7 spiked PBMC_10E5_Multiplex Ab 2",
         name="MCF7 Multiplex Ab 2",
-        molecules=["MBA", "DTNB", "TFMBA"],
+        molecule_conjugates=[("MBA", "EpCAM"), ("DTNB", "HER2"), ("TFMBA", "TROP2")],
         output_dir=output
     ),
     "MCF7_Ab_3": load_and_process_sample(
         f"{SAMPLE_DIR}/MCF7 spiked PBMC_10E5_Multiplex Ab 3",
         name="MCF7 Multiplex Ab 3",
-        molecules=["MBA", "DTNB", "TFMBA"],
+        molecule_conjugates=[("MBA", "EpCAM"), ("DTNB", "HER2"), ("TFMBA", "TROP2")],
         output_dir=output
     ),
     "SKBR3_Ab_1": load_and_process_sample(
         f"{SAMPLE_DIR}/SKBR3 spiked PBMC_10E5_Multiplex Ab 1",
         name="SKBR3 Multiplex Ab 1",
-        molecules=["MBA", "DTNB", "TFMBA"],
+        molecule_conjugates=[("MBA", "EpCAM"), ("DTNB", "HER2"), ("TFMBA", "TROP2")],
         output_dir=output
     ),
     "SKBR3_Ab_2": load_and_process_sample(
         f"{SAMPLE_DIR}/SKBR3 spiked PBMC_10E5_Multiplex Ab 2",
         name="SKBR3 Multiplex Ab 2",
-        molecules=["MBA", "DTNB", "TFMBA"],
+        molecule_conjugates=[("MBA", "EpCAM"), ("DTNB", "HER2"), ("TFMBA", "TROP2")],
         output_dir=output
     ),
     "SKBR3_Ab_3": load_and_process_sample(
         f"{SAMPLE_DIR}/SKBR3 spiked PBMC_10E5_Multiplex Ab 3",
         name="SKBR3 Multiplex Ab 3",
-        molecules=["MBA", "DTNB", "TFMBA"],
+        molecule_conjugates=[("MBA", "EpCAM"), ("DTNB", "HER2"), ("TFMBA", "TROP2")],
         output_dir=output
     ),
 }

@@ -81,13 +81,13 @@ def normalize_spectra_l2(
 
     Args:
         sample: Sample spectrum dictionary
-        references: Dictionary of {molecule: spectrum_dict}
+        references: Dictionary of {(molecule, conjugate): spectrum_dict}
         wavenumber_range: Tuple of (min_wn, max_wn) for normalization
 
     Returns:
         Dictionary with:
         - 'sample': normalized sample spectrum
-        - 'references': dict of {molecule: normalized reference spectrum}
+        - 'references': dict of {(molecule, conjugate): normalized reference spectrum}
         - 'wavenumber_range': the range used for normalization
     """
     # Normalize the sample
@@ -95,8 +95,8 @@ def normalize_spectra_l2(
 
     # Normalize each reference
     normalized_references = {}
-    for molecule, ref_spectrum in references.items():
-        normalized_references[molecule] = normalize_l2(ref_spectrum, wavenumber_range)
+    for mol_conj, ref_spectrum in references.items():
+        normalized_references[mol_conj] = normalize_l2(ref_spectrum, wavenumber_range)
 
     return {
         'sample': normalized_sample,

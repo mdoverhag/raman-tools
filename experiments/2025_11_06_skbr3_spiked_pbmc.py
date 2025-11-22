@@ -68,19 +68,19 @@ samples = {
     "Multiplex_Ab_1": load_and_process_sample(
         f"{SAMPLE_DIR}/SKBR3 spiked PBMC_10E5_Multiplex Ab 1",
         name="Multiplex Ab 1",
-        molecules=["MBA", "DTNB", "TFMBA"],
+        molecule_conjugates=[("MBA", "EpCAM"), ("DTNB", "HER2"), ("TFMBA", "TROP2")],
         output_dir=output
     ),
     "Multiplex_Ab_2": load_and_process_sample(
         f"{SAMPLE_DIR}/SKBR3 spiked PBMC_10E5_Multiplex Ab 2",
         name="Multiplex Ab 2",
-        molecules=["MBA", "DTNB", "TFMBA"],
+        molecule_conjugates=[("MBA", "EpCAM"), ("DTNB", "HER2"), ("TFMBA", "TROP2")],
         output_dir=output
     ),
     "Multiplex_Ab_3": load_and_process_sample(
         f"{SAMPLE_DIR}/SKBR3 spiked PBMC_10E5_Multiplex Ab 3",
         name="Multiplex Ab 3",
-        molecules=["MBA", "DTNB", "TFMBA"],
+        molecule_conjugates=[("MBA", "EpCAM"), ("DTNB", "HER2"), ("TFMBA", "TROP2")],
         output_dir=output
     ),
 }

@@ -136,8 +136,8 @@ def plot_normalization(
     Args:
         sample_name: Name of the sample (for title)
         sample_spectrum: Dictionary with 'wavenumbers', 'original', 'normalized'
-        reference_spectra: Dict of {molecule: spectrum_dict with 'original', 'normalized'}
-        molecules: List of molecules to plot
+        reference_spectra: Dict of {(molecule, conjugate): spectrum_dict with 'original', 'normalized'}
+        molecules: List of molecules to plot (just molecule names, not tuples)
         wavenumber_range: Tuple of (min_wn, max_wn) for normalization range
         output_path: Path where the plot will be saved
     """
@@ -155,11 +155,14 @@ def plot_normalization(
 
     # Plot reference originals (molecule colors)
     for molecule in molecules:
-        if molecule in reference_spectra:
-            ref_original = reference_spectra[molecule]['original']
-            color = get_color(molecule)
-            ax1.plot(wavenumbers, ref_original, color=color, linewidth=1.5,
-                    label=f'{molecule} reference', alpha=0.8)
+        # Find the reference with matching molecule (references now have tuple keys)
+        for (mol, conj), ref_data in reference_spectra.items():
+            if mol == molecule:
+                ref_original = ref_data['original']
+                color = get_color(molecule)
+                ax1.plot(wavenumbers, ref_original, color=color, linewidth=1.5,
+                        label=f'{molecule}-{conj} reference', alpha=0.8)
+                break
 
     # Highlight normalization range with a rectangle
     y_min, y_max = ax1.get_ylim()
@@ -187,17 +190,20 @@ def plot_normalization(
 
     # Plot references normalized (molecule colors)
     for molecule in molecules:
-        if molecule in reference_spectra:
-            ref_normalized = reference_spectra[molecule]['normalized']
-            color = get_color(molecule)
+        # Find the reference with matching molecule (references now have tuple keys)
+        for (mol, conj), ref_data in reference_spectra.items():
+            if mol == molecule:
+                ref_normalized = ref_data['normalized']
+                color = get_color(molecule)
 
-            ax2.plot(wavenumbers, ref_normalized, color=color, linewidth=1.5,
-                    label=f'{molecule} reference', alpha=0.8, zorder=5)
+                ax2.plot(wavenumbers, ref_normalized, color=color, linewidth=1.5,
+                        label=f'{molecule}-{conj} reference', alpha=0.8, zorder=5)
 
-            # Mark expected peak
-            expected_peak = get_peak(molecule)
-            ax2.axvline(x=expected_peak, color=color, linestyle='--', linewidth=1.5,
-                       alpha=0.5, zorder=1)
+                # Mark expected peak
+                expected_peak = get_peak(molecule)
+                ax2.axvline(x=expected_peak, color=color, linestyle='--', linewidth=1.5,
+                           alpha=0.5, zorder=1)
+                break
 
     ax2.set_xlabel('Wavenumber (cm⁻¹)', fontsize=12)
     ax2.set_ylabel('Normalized Intensity', fontsize=12)
@@ -234,10 +240,10 @@ def plot_deconvolution(
         sample_name: Name of the sample (for title)
         sample_spectrum: Dict with 'wavenumbers' and 'normalized'
         result: Deconvolution result dict with:
-                - 'contributions': {molecule: percentage}
+                - 'contributions': {(molecule, conjugate): percentage}
                 - 'reconstructed': reconstructed spectrum
                 - 'residual': residual values
-                - 'individual_contributions': {molecule: contribution}
+                - 'individual_contributions': {(molecule, conjugate): contribution}
                 - 'metrics': {'rmse': value}
         wavenumber_range: Tuple of (min_wn, max_wn) for analysis range
         output_path: Path where the plot will be saved
@@ -263,7 +269,8 @@ def plot_deconvolution(
              label='Fitted', alpha=0.8)
 
     # Add expected peak markers
-    for molecule in sorted(contributions.keys()):
+    for mol_conj in sorted(contributions.keys()):
+        molecule, conjugate = mol_conj
         expected_peak = get_peak(molecule)
         color = get_color(molecule)
         ax1.axvline(x=expected_peak, color=color, linestyle=':', linewidth=1.5,
@@ -277,13 +284,14 @@ def plot_deconvolution(
     ax1.set_xlim(wavenumber_range[0], wavenumber_range[1])
 
     # Middle panel: Individual contributions
-    for molecule in sorted(contributions.keys()):
-        percentage = contributions[molecule]
+    for mol_conj in sorted(contributions.keys()):
+        molecule, conjugate = mol_conj
+        percentage = contributions[mol_conj]
         color = get_color(molecule)
-        contribution = individual_contributions[molecule]
+        contribution = individual_contributions[mol_conj]
 
         ax2.plot(wavenumbers, contribution, color=color, linewidth=2,
-                 label=f'{molecule} ({percentage:.1f}%)', alpha=0.8)
+                 label=f'{molecule}-{conjugate} ({percentage:.1f}%)', alpha=0.8)
 
         # Add expected peak marker for this molecule
         expected_peak = get_peak(molecule)
@@ -304,7 +312,8 @@ def plot_deconvolution(
     ax3.axhline(y=0, color='k', linestyle='--', alpha=0.5)
 
     # Add expected peak markers
-    for molecule in sorted(contributions.keys()):
+    for mol_conj in sorted(contributions.keys()):
+        molecule, conjugate = mol_conj
         expected_peak = get_peak(molecule)
         color = get_color(molecule)
         ax3.axvline(x=expected_peak, color=color, linestyle=':', linewidth=1.5,
@@ -344,10 +353,10 @@ def plot_deconvolution_original_scale(
         sample_name: Name of the sample (for title)
         sample_spectrum: Dict with 'wavenumbers', 'normalized', 'original', and 'norm_factor'
         result: Deconvolution result dict with:
-                - 'contributions': {molecule: percentage}
+                - 'contributions': {(molecule, conjugate): percentage}
                 - 'reconstructed': reconstructed spectrum (normalized)
                 - 'residual': residual values
-                - 'individual_contributions': {molecule: contribution (normalized)}
+                - 'individual_contributions': {(molecule, conjugate): contribution (normalized)}
                 - 'metrics': {'rmse': value}
                 - 'norm_factor': normalization factor
         wavenumber_range: Tuple of (min_wn, max_wn) for analysis range
@@ -376,7 +385,8 @@ def plot_deconvolution_original_scale(
              label='Fitted', alpha=0.8)
 
     # Add expected peak markers
-    for molecule in sorted(contributions.keys()):
+    for mol_conj in sorted(contributions.keys()):
+        molecule, conjugate = mol_conj
         expected_peak = get_peak(molecule)
         color = get_color(molecule)
         ax1.axvline(x=expected_peak, color=color, linestyle=':', linewidth=1.5,
@@ -392,14 +402,15 @@ def plot_deconvolution_original_scale(
     # Middle panel: Individual contributions (original scale)
     individual_contributions = result['individual_contributions']
 
-    for molecule in sorted(contributions.keys()):
-        percentage = contributions[molecule]
+    for mol_conj in sorted(contributions.keys()):
+        molecule, conjugate = mol_conj
+        percentage = contributions[mol_conj]
         color = get_color(molecule)
         # Scale normalized contribution back to original
-        contribution_original = np.array(individual_contributions[molecule]) * norm_factor
+        contribution_original = np.array(individual_contributions[mol_conj]) * norm_factor
 
         ax2.plot(wavenumbers, contribution_original, color=color, linewidth=2,
-                 label=f'{molecule} ({percentage:.1f}%)', alpha=0.8)
+                 label=f'{molecule}-{conjugate} ({percentage:.1f}%)', alpha=0.8)
 
         # Add expected peak marker for this molecule
         expected_peak = get_peak(molecule)
@@ -423,7 +434,8 @@ def plot_deconvolution_original_scale(
     ax3.axhline(y=0, color='k', linestyle='--', alpha=0.5)
 
     # Add expected peak markers
-    for molecule in sorted(contributions.keys()):
+    for mol_conj in sorted(contributions.keys()):
+        molecule, conjugate = mol_conj
         expected_peak = get_peak(molecule)
         color = get_color(molecule)
         ax3.axvline(x=expected_peak, color=color, linestyle=':', linewidth=1.5,
@@ -470,24 +482,25 @@ def plot_deconvolution_boxplots(
         ax = axes[idx]
         sample_data = samples[sample_key]
         display_name = sample_data['name']
-        sample_molecules = sample_data['molecules']
+        sample_mol_conj = sample_data['molecule_conjugates']
 
-        # Collect contributions for each molecule
-        contributions_by_mol = {mol: [] for mol in sample_molecules}
+        # Collect contributions for each molecule-conjugate
+        contributions_by_mol_conj = {mol_conj: [] for mol_conj in sample_mol_conj}
 
         for result in replicate_results:
-            for mol in sample_molecules:
-                contributions_by_mol[mol].append(result['contributions'][mol])
+            for mol_conj in sample_mol_conj:
+                contributions_by_mol_conj[mol_conj].append(result['contributions'][mol_conj])
 
         # Prepare data for box plot
         box_data = []
         labels = []
         colors = []
 
-        for mol in sample_molecules:
-            box_data.append(contributions_by_mol[mol])
-            labels.append(mol)
-            colors.append(get_color(mol))
+        for mol_conj in sample_mol_conj:
+            molecule, conjugate = mol_conj
+            box_data.append(contributions_by_mol_conj[mol_conj])
+            labels.append(f'{molecule}-{conjugate}')
+            colors.append(get_color(molecule))
 
         # Create box plot
         bp = ax.boxplot(box_data, labels=labels, patch_artist=True,

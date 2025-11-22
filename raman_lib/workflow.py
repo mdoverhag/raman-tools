@@ -17,34 +17,37 @@ def build_reference_dict(reference_list: list[dict]) -> dict:
     """
     Build a references dict from a list of reference data.
 
-    Uses the 'molecule' property from each reference as the dict key.
-    Validates that all molecules are unique within the reference set.
+    Uses the (molecule, conjugate) tuple from each reference as the dict key.
+    Validates that all molecule-conjugate pairs are unique within the reference set.
 
     Args:
         reference_list: List of reference dicts returned from load_and_process_reference()
 
     Returns:
-        dict: Dictionary with molecule names as keys and reference data as values
+        dict: Dictionary with (molecule, conjugate) tuples as keys and reference data as values
 
     Raises:
-        ValueError: If duplicate molecules are found in the reference list
+        ValueError: If duplicate molecule-conjugate pairs are found in the reference list
 
     Example:
         >>> references = build_reference_dict([
         ...     load_and_process_reference(..., molecule="MBA", conjugate="EpCAM", ...),
         ...     load_and_process_reference(..., molecule="DTNB", conjugate="HER2", ...),
         ... ])
-        >>> # references = {"MBA": {...}, "DTNB": {...}}
+        >>> # references = {("MBA", "EpCAM"): {...}, ("DTNB", "HER2"): {...}}
     """
     references = {}
     for ref in reference_list:
         molecule = ref['molecule']
-        if molecule in references:
+        conjugate = ref['conjugate']
+        key = (molecule, conjugate)
+
+        if key in references:
             raise ValueError(
-                f"Duplicate reference for molecule '{molecule}'. "
-                f"Each reference set should have only one entry per molecule."
+                f"Duplicate reference for {molecule}-{conjugate}. "
+                f"Each reference set should have only one entry per molecule-conjugate pair."
             )
-        references[molecule] = ref
+        references[key] = ref
     return references
 
 
@@ -119,7 +122,7 @@ def load_and_process_reference(
 def load_and_process_sample(
     directory: str,
     name: str,
-    molecules: list[str],
+    molecule_conjugates: list[tuple[str, str]],
     output_dir: str
 ) -> dict:
     """
@@ -134,7 +137,8 @@ def load_and_process_sample(
     Args:
         directory: Path to directory containing sample spectrum files (.txt)
         name: Display name for the sample (e.g., "Multiplex Ab 1")
-        molecules: List of molecule tags present in sample (e.g., ["MBA", "DTNB", "TFMBA"])
+        molecule_conjugates: List of (molecule, conjugate) tuples present in sample
+                           (e.g., [("MBA", "EpCAM"), ("DTNB", "HER2"), ("TFMBA", "TROP2")])
         output_dir: Base output directory (will create 'samples/' subdirectory)
 
     Returns:
@@ -147,7 +151,7 @@ def load_and_process_sample(
                 'corrected_std': list[float],
                 'baseline_avg': list[float],
                 'count': int,
-                'molecules': list[str],
+                'molecule_conjugates': list[tuple[str, str]],
                 'name': str,
                 'replicates': list[dict]  # List of individual corrected spectra
             }
@@ -173,7 +177,7 @@ def load_and_process_sample(
     print(f"✓ Average calculated from {averaged['count']} spectra")
 
     # Add metadata tags to averaged data
-    averaged['molecules'] = molecules
+    averaged['molecule_conjugates'] = molecule_conjugates
     averaged['name'] = name
 
     # Add replicates to the result
@@ -183,6 +187,9 @@ def load_and_process_sample(
     safe_name = name.replace(" ", "_").replace("/", "-")
     plot_path = f"{output_dir}/sample_{safe_name}.png"
     print(f"Creating plot: {plot_path}")
+
+    # Extract just molecules for plotting (plotting functions expect molecule names only)
+    molecules = [mol for mol, conj in molecule_conjugates]
     plot_sample(averaged, sample_name=name, molecules=molecules, output_path=plot_path)
     print("✓ Plot saved")
 
@@ -216,7 +223,7 @@ def normalize_and_deconvolve_samples(
             {
                 sample_key: [
                     {
-                        'contributions': {molecule: percentage},
+                        'contributions': {(molecule, conjugate): percentage},
                         'reconstructed': [...],
                         'residual': [...],
                         'metrics': {'rmse': float, 'r_squared': float}
@@ -227,10 +234,11 @@ def normalize_and_deconvolve_samples(
     """
     # Validate all required references exist before processing
     for sample_key, sample_data in samples.items():
-        for molecule in sample_data['molecules']:
-            if molecule not in references:
+        for mol_conj in sample_data['molecule_conjugates']:
+            if mol_conj not in references:
+                molecule, conjugate = mol_conj
                 raise ValueError(
-                    f"Sample '{sample_data['name']}' requires molecule '{molecule}' "
+                    f"Sample '{sample_data['name']}' requires {molecule}-{conjugate} "
                     f"but no reference was loaded for it. "
                     f"Available references: {list(references.keys())}"
                 )
@@ -240,12 +248,18 @@ def normalize_and_deconvolve_samples(
 
     for sample_key, sample_data in samples.items():
         display_name = sample_data['name']
-        sample_molecules = sample_data['molecules']
+        sample_molecule_conjugates = sample_data['molecule_conjugates']
         replicates = sample_data['replicates']
 
         print(f"\n{display_name}:")
         print(f"  Processing {len(replicates)} replicates...")
         print(f"  Normalizing and deconvolving (range: {wavenumber_range[0]}-{wavenumber_range[1]} cm⁻¹)...")
+
+        # Filter references to only include the ones in this sample
+        sample_references = {
+            mol_conj: references[mol_conj]
+            for mol_conj in sample_molecule_conjugates
+        }
 
         # Process each replicate
         replicate_results = []
@@ -254,7 +268,7 @@ def normalize_and_deconvolve_samples(
             # Normalize this replicate
             normalized = normalize_spectra_l2(
                 sample=replicate,
-                references=references,
+                references=sample_references,
                 wavenumber_range=wavenumber_range
             )
 
@@ -274,15 +288,18 @@ def normalize_and_deconvolve_samples(
         # Normalize the averaged spectrum for plotting
         normalized_avg = normalize_spectra_l2(
             sample=sample_data,
-            references=references,
+            references=sample_references,
             wavenumber_range=wavenumber_range
         )
+
+        # Extract just molecules for plotting (plotting functions expect molecule names only)
+        molecules_only = [mol for mol, conj in sample_molecule_conjugates]
 
         plot_normalization(
             sample_name=f"{display_name} (averaged)",
             sample_spectrum=normalized_avg['sample'],
             reference_spectra=normalized_avg['references'],
-            molecules=sample_molecules,
+            molecules=molecules_only,
             wavenumber_range=wavenumber_range,
             output_path=f"{output_dir}/normalization_{sample_key}_averaged.png"
         )
@@ -314,18 +331,19 @@ def normalize_and_deconvolve_samples(
         # Calculate and print summary statistics across replicates
         import numpy as np
 
-        contributions_by_mol = {mol: [] for mol in sample_molecules}
+        contributions_by_mol_conj = {mol_conj: [] for mol_conj in sample_molecule_conjugates}
         r_squared_values = []
 
         for result in replicate_results:
-            for mol in sample_molecules:
-                contributions_by_mol[mol].append(result['contributions'][mol])
+            for mol_conj in sample_molecule_conjugates:
+                contributions_by_mol_conj[mol_conj].append(result['contributions'][mol_conj])
             r_squared_values.append(result['metrics']['r_squared'])
 
-        # Print mean ± std for each molecule
+        # Print mean ± std for each molecule-conjugate
         contributions_str = ", ".join([
-            f"{mol}={np.mean(contributions_by_mol[mol]):.1f}±{np.std(contributions_by_mol[mol]):.1f}%"
-            for mol in sample_molecules
+            f"{mol}-{conj}={np.mean(contributions_by_mol_conj[mol_conj]):.1f}±{np.std(contributions_by_mol_conj[mol_conj]):.1f}%"
+            for mol_conj in sample_molecule_conjugates
+            for mol, conj in [mol_conj]  # Unpack tuple for formatting
         ])
         r2_mean = np.mean(r_squared_values)
         r2_std = np.std(r_squared_values)
@@ -373,55 +391,57 @@ def print_experiment_summary(
     print(f"\nOutput directory: {output_dir}")
 
     print(f"\nReferences processed:")
-    for molecule, data in references.items():
-        print(f"  {molecule}: {data['count']} spectra")
+    for (molecule, conjugate), data in references.items():
+        print(f"  {molecule}-{conjugate}: {data['count']} spectra")
 
     print(f"\nSamples processed:")
     for sample_key, data in samples.items():
         print(f"  {data['name']}: {data['count']} spectra")
 
-    # Determine all unique molecules across all samples
-    all_molecules = set()
+    # Determine all unique molecule-conjugate pairs across all samples
+    all_mol_conj = set()
     for sample_data in samples.values():
-        all_molecules.update(sample_data['molecules'])
-    all_molecules = sorted(all_molecules)
+        all_mol_conj.update(sample_data['molecule_conjugates'])
+    all_mol_conj = sorted(all_mol_conj)
 
     print(f"\nDeconvolution Results (mean ± std across replicates):")
 
-    # Build header dynamically - need more space for "mean±std" format
+    # Build header dynamically - need more space for "mean±std" format and molecule-conjugate labels
     header = f"{'Sample':<25}"
-    for mol in all_molecules:
-        header += f" {mol:>16}"
+    for mol, conj in all_mol_conj:
+        # Use molecule-conjugate label, e.g., "MBA-EpCAM"
+        label = f"{mol}-{conj}"
+        header += f" {label:>20}"
     header += f" {'R²':>14}"
     print(f"\n{header}")
-    print("-" * (25 + len(all_molecules) * 17 + 15))
+    print("-" * (25 + len(all_mol_conj) * 21 + 15))
 
     # Print each sample's results (now with mean ± std)
     import numpy as np
 
     for sample_key, replicate_results in deconv_results.items():
         display_name = samples[sample_key]['name']
-        sample_molecules = samples[sample_key]['molecules']
+        sample_mol_conj = samples[sample_key]['molecule_conjugates']
 
-        # Calculate mean ± std for each molecule
-        contributions_by_mol = {mol: [] for mol in sample_molecules}
+        # Calculate mean ± std for each molecule-conjugate
+        contributions_by_mol_conj = {mol_conj: [] for mol_conj in sample_mol_conj}
         r_squared_values = []
 
         for result in replicate_results:
-            for mol in sample_molecules:
-                contributions_by_mol[mol].append(result['contributions'][mol])
+            for mol_conj in sample_mol_conj:
+                contributions_by_mol_conj[mol_conj].append(result['contributions'][mol_conj])
             r_squared_values.append(result['metrics']['r_squared'])
 
         # Build row with mean±std - fixed width format
         row = f"{display_name:<25}"
-        for mol in all_molecules:
-            if mol in sample_molecules:
-                mean = np.mean(contributions_by_mol[mol])
-                std = np.std(contributions_by_mol[mol])
-                # Fixed width: "XX.X±XX.X%" = 11 chars, right-aligned in 16 char field
-                row += f" {f'{mean:.1f}±{std:.1f}%':>16}"
+        for mol_conj in all_mol_conj:
+            if mol_conj in sample_mol_conj:
+                mean = np.mean(contributions_by_mol_conj[mol_conj])
+                std = np.std(contributions_by_mol_conj[mol_conj])
+                # Fixed width: "XX.X±XX.X%" = 11 chars, right-aligned in 20 char field
+                row += f" {f'{mean:.1f}±{std:.1f}%':>20}"
             else:
-                row += f" {'-':>16}"
+                row += f" {'-':>20}"
 
         r2_mean = np.mean(r_squared_values)
         r2_std = np.std(r_squared_values)
