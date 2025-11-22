@@ -2,7 +2,7 @@
 """
 Experiment: SKBR3 Spiked PBMCs Multiplex Analysis
 Date: 2025-11-06
-Description: Process three multiplex Ab samples using references from 2025-07-17
+Description: Process all multiplex samples (Ab, BSA, IgG) using references from 2025-07-17
 """
 
 import os
@@ -35,6 +35,7 @@ print("LOADING REFERENCES")
 print("="*60)
 
 references = build_reference_dict([
+    # Antibody-conjugated references
     load_and_process_reference(
         f"{REFERENCE_DIR}/MBA EpCAM",
         molecule="MBA",
@@ -51,6 +52,44 @@ references = build_reference_dict([
         f"{REFERENCE_DIR}/TFMBA TROP2",
         molecule="TFMBA",
         conjugate="TROP2",
+        output_dir=output
+    ),
+    # BSA control references
+    load_and_process_reference(
+        f"{REFERENCE_DIR}/MBA BSA",
+        molecule="MBA",
+        conjugate="BSA",
+        output_dir=output
+    ),
+    load_and_process_reference(
+        f"{REFERENCE_DIR}/DTNB BSA",
+        molecule="DTNB",
+        conjugate="BSA",
+        output_dir=output
+    ),
+    load_and_process_reference(
+        f"{REFERENCE_DIR}/TFMBA BSA",
+        molecule="TFMBA",
+        conjugate="BSA",
+        output_dir=output
+    ),
+    # IgG control references
+    load_and_process_reference(
+        f"{REFERENCE_DIR}/MBA IgG",
+        molecule="MBA",
+        conjugate="IgG",
+        output_dir=output
+    ),
+    load_and_process_reference(
+        f"{REFERENCE_DIR}/DTNB IgG",
+        molecule="DTNB",
+        conjugate="IgG",
+        output_dir=output
+    ),
+    load_and_process_reference(
+        f"{REFERENCE_DIR}/TFMBA IgG",
+        molecule="TFMBA",
+        conjugate="IgG",
         output_dir=output
     ),
 ])
@@ -81,6 +120,42 @@ samples = {
         f"{SAMPLE_DIR}/SKBR3 spiked PBMC_10E5_Multiplex Ab 3",
         name="Multiplex Ab 3",
         molecule_conjugates=[("MBA", "EpCAM"), ("DTNB", "HER2"), ("TFMBA", "TROP2")],
+        output_dir=output
+    ),
+    "Multiplex_BSA_1": load_and_process_sample(
+        f"{SAMPLE_DIR}/SKBR3 spiked PBMC_10E5_Multiplex BSA 1",
+        name="Multiplex BSA 1",
+        molecule_conjugates=[("MBA", "BSA"), ("DTNB", "BSA"), ("TFMBA", "BSA")],
+        output_dir=output
+    ),
+    "Multiplex_BSA_2": load_and_process_sample(
+        f"{SAMPLE_DIR}/SKBR3 spiked PBMC_10E5_Multiplex BSA 2",
+        name="Multiplex BSA 2",
+        molecule_conjugates=[("MBA", "BSA"), ("DTNB", "BSA"), ("TFMBA", "BSA")],
+        output_dir=output
+    ),
+    "Multiplex_BSA_3": load_and_process_sample(
+        f"{SAMPLE_DIR}/SKBR3 spiked PBMC_10E5_Multiplex BSA 3",
+        name="Multiplex BSA 3",
+        molecule_conjugates=[("MBA", "BSA"), ("DTNB", "BSA"), ("TFMBA", "BSA")],
+        output_dir=output
+    ),
+    "Multiplex_IgG_1": load_and_process_sample(
+        f"{SAMPLE_DIR}/SKBR3 spiked PBMC_10E5_Multiplex IgG 1",
+        name="Multiplex IgG 1",
+        molecule_conjugates=[("MBA", "IgG"), ("DTNB", "IgG"), ("TFMBA", "IgG")],
+        output_dir=output
+    ),
+    "Multiplex_IgG_2": load_and_process_sample(
+        f"{SAMPLE_DIR}/SKBR3 spiked PBMC_10E5_Multiplex IgG 2",
+        name="Multiplex IgG 2",
+        molecule_conjugates=[("MBA", "IgG"), ("DTNB", "IgG"), ("TFMBA", "IgG")],
+        output_dir=output
+    ),
+    "Multiplex_IgG_3": load_and_process_sample(
+        f"{SAMPLE_DIR}/SKBR3 spiked PBMC_10E5_Multiplex IgG3",
+        name="Multiplex IgG 3",
+        molecule_conjugates=[("MBA", "IgG"), ("DTNB", "IgG"), ("TFMBA", "IgG")],
         output_dir=output
     ),
 }
