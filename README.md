@@ -51,16 +51,19 @@ references = {
     "MBA": load_and_process_reference(
         f"{REFERENCE_DIR}/MBA EpCAM",
         molecule="MBA",
+        conjugate="EpCAM",
         output_dir=output
     ),
     "DTNB": load_and_process_reference(
         f"{REFERENCE_DIR}/DTNB HER2",
         molecule="DTNB",
+        conjugate="HER2",
         output_dir=output
     ),
     "TFMBA": load_and_process_reference(
         f"{REFERENCE_DIR}/TFMBA TROP2",
         molecule="TFMBA",
+        conjugate="TROP2",
         output_dir=output
     ),
 }
@@ -140,9 +143,9 @@ Results are saved in auto-versioned directories under `results/` with a flat str
 
 ```
 results/2025-11-06-skbr3-spiked-pbmc/
-├── reference_MBA.png
-├── reference_DTNB.png
-├── reference_TFMBA.png
+├── reference_MBA_EpCAM.png
+├── reference_DTNB_HER2.png
+├── reference_TFMBA_TROP2.png
 ├── sample_Multiplex_Ab_1.png
 ├── sample_Multiplex_Ab_2.png
 ├── sample_Multiplex_Ab_3.png

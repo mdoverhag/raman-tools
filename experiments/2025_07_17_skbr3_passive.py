@@ -11,11 +11,13 @@ from raman_lib import (
     load_and_process_reference,
     load_and_process_sample,
     normalize_and_deconvolve_samples,
-    print_experiment_summary
+    print_experiment_summary,
 )
 
 # Data directory
-DATA_DIR = os.path.expanduser("~/Documents/Spectroscopy Results/2025-07-17 SKBR3 passive")
+DATA_DIR = os.path.expanduser(
+    "~/Documents/Spectroscopy Results/2025-07-17 SKBR3 passive"
+)
 
 # Wavenumber range for normalization
 WAVENUMBER_RANGE = (1000, 1500)
@@ -28,25 +30,43 @@ print(f"Output directory: {output}\n")
 # Step 1: Load and process references
 # ============================================================
 
-print("="*60)
+print("=" * 60)
 print("LOADING REFERENCES")
-print("="*60)
+print("=" * 60)
 
-references = {
-    "MBA": load_and_process_reference(
-        f"{DATA_DIR}/MBA EpCAM",
-        molecule="MBA",
-        output_dir=output
-    ),
+references_ab = {
     "DTNB": load_and_process_reference(
-        f"{DATA_DIR}/DTNB HER2",
-        molecule="DTNB",
-        output_dir=output
+        f"{DATA_DIR}/DTNB HER2", molecule="DTNB", conjugate="HER2", output_dir=output
+    ),
+    "MBA": load_and_process_reference(
+        f"{DATA_DIR}/MBA EpCAM", molecule="MBA", conjugate="EpCAM", output_dir=output
     ),
     "TFMBA": load_and_process_reference(
-        f"{DATA_DIR}/TFMBA TROP2",
-        molecule="TFMBA",
-        output_dir=output
+        f"{DATA_DIR}/TFMBA TROP2", molecule="TFMBA", conjugate="TROP2", output_dir=output
+    ),
+}
+
+references_bsa = {
+    "DTNB": load_and_process_reference(
+        f"{DATA_DIR}/DTNB BSA", molecule="DTNB", conjugate="BSA", output_dir=output
+    ),
+    "MBA": load_and_process_reference(
+        f"{DATA_DIR}/MBA BSA", molecule="MBA", conjugate="BSA", output_dir=output
+    ),
+    "TFMBA": load_and_process_reference(
+        f"{DATA_DIR}/TFMBA BSA", molecule="TFMBA", conjugate="BSA", output_dir=output
+    ),
+}
+
+references_igg = {
+    "DTNB": load_and_process_reference(
+        f"{DATA_DIR}/DTNB IgG", molecule="DTNB", conjugate="IgG", output_dir=output
+    ),
+    "MBA": load_and_process_reference(
+        f"{DATA_DIR}/MBA IgG", molecule="MBA", conjugate="IgG", output_dir=output
+    ),
+    "TFMBA": load_and_process_reference(
+        f"{DATA_DIR}/TFMBA IgG", molecule="TFMBA", conjugate="IgG", output_dir=output
     ),
 }
 
@@ -55,16 +75,16 @@ references = {
 # Step 2: Load and process samples
 # ============================================================
 
-print("\n" + "="*60)
+print("\n" + "=" * 60)
 print("LOADING SAMPLES")
-print("="*60)
+print("=" * 60)
 
 samples = {
     "Multiplex_Ab": load_and_process_sample(
         f"{DATA_DIR}/Multiplex Ab",
         name="Multiplex Ab",
         molecules=["MBA", "DTNB", "TFMBA"],
-        output_dir=output
+        output_dir=output,
     ),
 }
 
@@ -73,15 +93,15 @@ samples = {
 # Step 3: Normalize and deconvolve all replicates
 # ============================================================
 
-print("\n" + "="*60)
+print("\n" + "=" * 60)
 print("NORMALIZATION & DECONVOLUTION")
-print("="*60)
+print("=" * 60)
 
 deconv_results = normalize_and_deconvolve_samples(
     samples=samples,
-    references=references,
+    references=references_ab,
     wavenumber_range=WAVENUMBER_RANGE,
-    output_dir=output
+    output_dir=output,
 )
 
 
@@ -89,13 +109,13 @@ deconv_results = normalize_and_deconvolve_samples(
 # Summary
 # ============================================================
 
-print("\n" + "="*60)
+print("\n" + "=" * 60)
 print("EXPERIMENT COMPLETE")
-print("="*60)
+print("=" * 60)
 
 print_experiment_summary(
     output_dir=output,
-    references=references,
+    references=references_ab,
     samples=samples,
-    deconv_results=deconv_results
+    deconv_results=deconv_results,
 )

@@ -16,6 +16,7 @@ from .deconvolution import deconvolve_nnls
 def load_and_process_reference(
     directory: str,
     molecule: str,
+    conjugate: str,
     output_dir: str
 ) -> dict:
     """
@@ -30,6 +31,7 @@ def load_and_process_reference(
     Args:
         directory: Path to directory containing reference spectrum files (.txt)
         molecule: Molecule tag (e.g., "MBA", "DTNB", "TFMBA")
+        conjugate: What the molecule is conjugated to (e.g., "EpCAM", "BSA", "IgG")
         output_dir: Base output directory (will create 'references/' subdirectory)
 
     Returns:
@@ -42,13 +44,14 @@ def load_and_process_reference(
                 'corrected_std': list[float],
                 'baseline_avg': list[float],
                 'count': int,
-                'molecule': str
+                'molecule': str,
+                'conjugate': str
             }
     """
     # Expand tilde in directory path
     directory = os.path.expanduser(directory)
 
-    print(f"\nProcessing: {molecule}")
+    print(f"\nProcessing: {molecule}-{conjugate}")
     print(f"Loading from: {directory}")
 
     # Load all spectra from directory
@@ -65,11 +68,12 @@ def load_and_process_reference(
     averaged = calculate_average(corrected_spectra)
     print(f"✓ Average calculated from {averaged['count']} spectra")
 
-    # Add molecule tag
+    # Add molecule and conjugate tags
     averaged['molecule'] = molecule
+    averaged['conjugate'] = conjugate
 
     # Generate plot - flat structure with prefix
-    plot_path = f"{output_dir}/reference_{molecule}.png"
+    plot_path = f"{output_dir}/reference_{molecule}_{conjugate}.png"
     print(f"Creating plot: {plot_path}")
     plot_reference(averaged, molecule=molecule, output_path=plot_path)
     print("✓ Plot saved")

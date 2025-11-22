@@ -37,16 +37,19 @@ references = {
     "MBA": load_and_process_reference(
         f"{REFERENCE_DIR}/MBA EpCAM",
         molecule="MBA",
+        conjugate="EpCAM",
         output_dir=output
     ),
     "DTNB": load_and_process_reference(
         f"{REFERENCE_DIR}/DTNB HER2",
         molecule="DTNB",
+        conjugate="HER2",
         output_dir=output
     ),
     "TFMBA": load_and_process_reference(
         f"{REFERENCE_DIR}/TFMBA TROP2",
         molecule="TFMBA",
+        conjugate="TROP2",
         output_dir=output
     ),
 }
