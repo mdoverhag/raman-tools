@@ -526,3 +526,95 @@ def plot_deconvolution_boxplots(
     plt.tight_layout()
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()
+
+
+def plot_peak_intensity_histogram(
+    molecule: str,
+    conjugate_intensities: dict[str, list[float]],
+    output_path: str,
+    bin_size: int = 25,
+    x_max: float = None,
+    y_max: int = None
+) -> None:
+    """
+    Create histogram of peak intensities for a molecule across conjugate types.
+
+    Creates a histogram showing the distribution of intensities at the molecule's
+    characteristic peak across all replicates, grouped by conjugate type.
+
+    Args:
+        molecule: Molecule name (e.g., "MBA", "DTNB", "TFMBA")
+        conjugate_intensities: Dict mapping conjugate names to lists of intensities
+                              (e.g., {"EpCAM": [120.5, 115.3, ...], "BSA": [...]})
+        output_path: Full path where the plot will be saved
+        bin_size: Bin size for histogram (default: 25)
+        x_max: Optional maximum value for x-axis (intensity). If None, auto-scales.
+        y_max: Optional maximum value for y-axis (count). If None, auto-scales.
+    """
+    from .molecules import CONJUGATE_COLORS
+
+    peak_wn = get_peak(molecule)
+
+    # Create histogram plot
+    fig, ax = plt.subplots(figsize=(12, 6))
+
+    # Determine bin edges
+    all_intensities = []
+    for intensities in conjugate_intensities.values():
+        all_intensities.extend(intensities)
+
+    if not all_intensities:
+        print(f"  Warning: No data for {molecule}, skipping")
+        plt.close()
+        return
+
+    min_intensity = 0
+    # Use provided x_max or calculate from data
+    if x_max is not None:
+        max_intensity = x_max
+    else:
+        max_intensity = max(all_intensities)
+    bins = np.arange(min_intensity, max_intensity + bin_size, bin_size)
+
+    # Sort conjugates alphabetically for consistent ordering
+    sorted_conjugates = sorted(conjugate_intensities.keys())
+
+    # Plot histogram for each conjugate
+    for conjugate in sorted_conjugates:
+        intensities = conjugate_intensities[conjugate]
+        n_samples = len(intensities)
+
+        # Create histogram
+        counts, bin_edges = np.histogram(intensities, bins=bins)
+        bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+
+        # Get color from CONJUGATE_COLORS, default to gray
+        line_color = CONJUGATE_COLORS.get(conjugate, 'gray')
+
+        # Plot as line with markers
+        ax.plot(bin_centers, counts, marker='o', linewidth=2,
+               label=f'{conjugate} (n={n_samples})', color=line_color)
+
+    # Formatting
+    ax.set_xlabel('Intensity (deconvoluted, de-normalized)', fontsize=12)
+    ax.set_ylabel('Number of samples', fontsize=12)
+    ax.set_title(f'{molecule} Frequency Distribution at {peak_wn} cm⁻¹',
+                fontsize=14, fontweight='bold')
+    ax.legend(loc='upper right')
+    ax.grid(True, alpha=0.3)
+
+    # Set axis limits
+    if x_max is not None:
+        ax.set_xlim(0, x_max)
+    else:
+        ax.set_xlim(left=0)
+
+    if y_max is not None:
+        ax.set_ylim(0, y_max)
+    else:
+        ax.set_ylim(bottom=0)
+
+    # Save plot
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    plt.close()

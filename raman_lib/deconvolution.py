@@ -118,7 +118,8 @@ def deconvolve_nnls(
             'wavenumber_range': wavenumber_range,
             'indices': range_indices.tolist()
         },
-        'norm_factor': norm_factor
+        'norm_factor': norm_factor,
+        'wavenumbers': sample_spectrum['wavenumbers']
     }
 
     return result

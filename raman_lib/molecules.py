@@ -21,6 +21,15 @@ RAMAN_MOLECULES = {
     }
 }
 
+# Configuration for conjugate colors in histograms
+CONJUGATE_COLORS = {
+    "BSA": "black",
+    "EpCAM": "blue",
+    "HER2": "blue",
+    "TROP2": "blue",
+    "IgG": "red"
+}
+
 
 def get_peak(molecule: str) -> int:
     """

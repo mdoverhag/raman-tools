@@ -365,6 +365,69 @@ def normalize_and_deconvolve_samples(
     return deconv_results
 
 
+def extract_peak_intensities(
+    molecule: str,
+    deconv_results: dict
+) -> dict[str, list[float]]:
+    """
+    Extract peak intensities for a molecule from deconvolution results.
+
+    For each replicate in the deconvolution results, extracts the intensity at the
+    molecule's characteristic peak from the deconvolved individual contributions.
+    Returns intensities grouped by conjugate type.
+
+    Args:
+        molecule: Molecule name (e.g., "MBA", "DTNB", "TFMBA")
+        deconv_results: Dictionary of replicate deconvolution results (can be filtered subset)
+
+    Returns:
+        Dict mapping conjugate names to lists of peak intensities
+        (e.g., {"EpCAM": [120.5, 115.3, ...], "BSA": [...]})
+    """
+    import numpy as np
+    from .molecules import get_peak
+
+    peak_wn = get_peak(molecule)
+    conjugate_intensities = {}
+
+    # Process all samples in the provided results
+    for sample_key, replicate_results in deconv_results.items():
+        # Extract peak intensity from each replicate
+        for result in replicate_results:
+            # Find the molecule-conjugate pair in this result's contributions
+            mol_conj = None
+            for key in result['contributions'].keys():
+                mol, conj = key
+                if mol == molecule:
+                    mol_conj = key
+                    conjugate = conj
+                    break
+
+            if mol_conj is None:
+                continue  # This molecule not in this result
+
+            # Initialize list for this conjugate if needed
+            if conjugate not in conjugate_intensities:
+                conjugate_intensities[conjugate] = []
+
+            # Get the individual contribution (normalized scale)
+            contribution_normalized = np.array(result['individual_contributions'][mol_conj])
+
+            # Scale back to original using norm_factor
+            norm_factor = result['norm_factor']
+            contribution_original = contribution_normalized * norm_factor
+
+            # Find the index closest to the peak wavenumber
+            wavenumbers = np.array(result['wavenumbers'])
+            peak_idx = np.argmin(np.abs(wavenumbers - peak_wn))
+
+            # Get intensity at peak
+            peak_intensity = contribution_original[peak_idx]
+            conjugate_intensities[conjugate].append(peak_intensity)
+
+    return conjugate_intensities
+
+
 def print_experiment_summary(
     output_dir: str,
     references: dict,
