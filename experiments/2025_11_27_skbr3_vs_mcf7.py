@@ -2,7 +2,7 @@
 """
 Experiment: MCF7 vs SKBR3 Multiplex Analysis
 Date: 2025-11-27
-Description: Process multiplex samples (6x MCF7, 7x SKBR3) - Ab/BSA/IgG conjugates using references from 2025-07-17
+Description: MCF7 and SKBR3 spiked in healthy donor PBMCs - repeat of 2025-11-25 experiment.
 """
 
 import os
