@@ -301,7 +301,7 @@ def normalize_and_deconvolve_samples(
             reference_spectra=normalized_avg['references'],
             molecules=molecules_only,
             wavenumber_range=wavenumber_range,
-            output_path=f"{output_dir}/normalization_{sample_key}_averaged.png"
+            output_path=f"{output_dir}/normalization_averaged_{sample_key}.png"
         )
 
         # Deconvolve the averaged spectrum for plotting
@@ -316,7 +316,7 @@ def normalize_and_deconvolve_samples(
             sample_spectrum=normalized_avg['sample'],
             result=deconv_avg,
             wavenumber_range=wavenumber_range,
-            output_path=f"{output_dir}/deconvolution_{sample_key}_averaged.png"
+            output_path=f"{output_dir}/deconvolution_averaged_{sample_key}.png"
         )
 
         # Also create original-scale deconvolution plot
@@ -325,7 +325,7 @@ def normalize_and_deconvolve_samples(
             sample_spectrum=normalized_avg['sample'],
             result=deconv_avg,
             wavenumber_range=wavenumber_range,
-            output_path=f"{output_dir}/deconvolution_{sample_key}_averaged_original_scale.png"
+            output_path=f"{output_dir}/deconvolution_averaged_original_scale_{sample_key}.png"
         )
 
         # Calculate and print summary statistics across replicates

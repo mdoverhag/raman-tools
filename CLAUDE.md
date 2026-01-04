@@ -49,9 +49,9 @@ Each has:
   - Deconvolve each replicate using NNLS to determine molecular contributions
   - Calculate mean ± std across all replicates
 - Output:
-  - `normalization_{sample}_averaged.png` - visualization using averaged spectrum
-  - `deconvolution_{sample}_averaged.png` - 3-panel plot (multiplex vs fitted, individual contributions, residuals) in normalized scale
-  - `deconvolution_{sample}_averaged_original_scale.png` - 3-panel plot in original intensity scale (before normalization)
+  - `normalization_averaged_{sample}.png` - visualization using averaged spectrum
+  - `deconvolution_averaged_{sample}.png` - 3-panel plot (multiplex vs fitted, individual contributions, residuals) in normalized scale
+  - `deconvolution_averaged_original_scale_{sample}.png` - 3-panel plot in original intensity scale (before normalization)
   - `deconvolution_boxplots.png` - box plots showing distribution of contributions across all replicates for all samples
 
 ## Data Structures
@@ -258,10 +258,11 @@ print_experiment_summary(...)
 - **Output structure**: Flat directory with prefixed filenames:
   - `reference_{molecule}_{conjugate}.png` - Reference spectrum plots
   - `sample_{name}.png` - Sample spectrum plots (averaged)
-  - `normalization_{name}_averaged.png` - Normalization comparison (averaged spectrum)
-  - `deconvolution_{name}_averaged.png` - Deconvolution 3-panel plot (averaged spectrum, normalized scale)
-  - `deconvolution_{name}_averaged_original_scale.png` - Deconvolution 3-panel plot (averaged spectrum, original scale)
+  - `normalization_averaged_{name}.png` - Normalization comparison (averaged spectrum)
+  - `deconvolution_averaged_{name}.png` - Deconvolution 3-panel plot (averaged spectrum, normalized scale)
+  - `deconvolution_averaged_original_scale_{name}.png` - Deconvolution 3-panel plot (averaged spectrum, original scale)
   - `deconvolution_boxplots.png` - Box plots showing distribution across all replicates
+  - `peak_intensity_histogram_{group}_{molecule}.png` - Peak intensity histograms per group/molecule
 
 ## Common Patterns
 
