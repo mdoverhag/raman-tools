@@ -538,7 +538,8 @@ def plot_peak_histograms(
     output_dir: str,
     bin_size: int = 25,
     x_max: float = None,
-    y_max: float = None
+    y_max: float = None,
+    x_label: str = "Intensity (a.u.)"
 ) -> None:
     """
     Plot peak intensity histograms from pre-extracted intensity data.
@@ -553,6 +554,7 @@ def plot_peak_histograms(
         bin_size: Bin width for histograms (default 25)
         x_max: X-axis maximum. If None, calculated from data.
         y_max: Y-axis maximum. If None, calculated from data.
+        x_label: Label for x-axis (default: "Peak Intensity (a.u.)")
 
     Output files:
         peak_intensity_histogram_{prefix}_{molecule}.png for each group/molecule
@@ -582,7 +584,8 @@ def plot_peak_histograms(
                 output_path=output_path,
                 bin_size=bin_size,
                 x_max=x_max,
-                y_max=y_max
+                y_max=y_max,
+                x_label=x_label
             )
             print(f"  ✓ Saved: {filename}")
 
@@ -624,7 +627,10 @@ def plot_peak_histograms_from_deconv(
             for mol in molecules
         }
 
-    plot_peak_histograms(group_intensities, output_dir, bin_size, x_max, y_max)
+    plot_peak_histograms(
+        group_intensities, output_dir, bin_size, x_max, y_max,
+        x_label="Intensity (deconvoluted, de-normalized)"
+    )
 
 
 def plot_peak_histograms_from_samples(
@@ -669,7 +675,10 @@ def plot_peak_histograms_from_samples(
             for mol in molecules
         }
 
-    plot_peak_histograms(group_intensities, output_dir, bin_size, x_max, y_max)
+    plot_peak_histograms(
+        group_intensities, output_dir, bin_size, x_max, y_max,
+        x_label="Intensity (baseline-corrected)"
+    )
 
 
 def print_experiment_summary(

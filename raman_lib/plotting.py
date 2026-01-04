@@ -534,7 +534,8 @@ def plot_peak_intensity_histogram(
     output_path: str,
     bin_size: int = 25,
     x_max: float = None,
-    y_max: int = None
+    y_max: int = None,
+    x_label: str = "Intensity (a.u.)"
 ) -> None:
     """
     Create histogram of peak intensities for a molecule across conjugate types.
@@ -550,6 +551,7 @@ def plot_peak_intensity_histogram(
         bin_size: Bin size for histogram (default: 25)
         x_max: Optional maximum value for x-axis (intensity). If None, auto-scales.
         y_max: Optional maximum value for y-axis (count). If None, auto-scales.
+        x_label: Label for x-axis (default: "Peak Intensity (a.u.)")
     """
     from .molecules import CONJUGATE_COLORS
 
@@ -596,7 +598,7 @@ def plot_peak_intensity_histogram(
                label=f'{conjugate} (n={n_samples})', color=line_color)
 
     # Formatting
-    ax.set_xlabel('Intensity (deconvoluted, de-normalized)', fontsize=12)
+    ax.set_xlabel(x_label, fontsize=12)
     ax.set_ylabel('Number of samples', fontsize=12)
     ax.set_title(f'{molecule} Frequency Distribution at {peak_wn} cm⁻¹',
                 fontsize=14, fontweight='bold')
