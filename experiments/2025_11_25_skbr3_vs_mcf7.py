@@ -2,7 +2,7 @@
 """
 Experiment: MCF7 vs SKBR3 Multiplex Analysis
 Date: 2025-11-25
-Description: MCF7 and SKBR3 spiked in healthy donor PBMCs. 
+Description: MCF7 and SKBR3 spiked in healthy donor PBMCs.
 """
 
 import os
@@ -12,6 +12,7 @@ from raman_lib import (
     load_and_process_reference,
     load_and_process_sample,
     normalize_and_deconvolve_samples,
+    plot_all_peak_histograms,
     print_experiment_summary,
 )
 
@@ -116,16 +117,16 @@ samples = {
         molecule_conjugates=[("MBA", "EpCAM"), ("DTNB", "HER2"), ("TFMBA", "TROP2")],
         output_dir=output,
     ),
-    "MCF7_BSA_1": load_and_process_sample(
-        f"{SAMPLE_DIR}/MCF7 BSA1",
-        name="MCF7 BSA 1",
-        molecule_conjugates=[("MBA", "BSA"), ("DTNB", "BSA"), ("TFMBA", "BSA")],
-        output_dir=output,
-    ),
     "MCF7_IgG_1": load_and_process_sample(
         f"{SAMPLE_DIR}/MCF7 IgG1",
         name="MCF7 IgG 1",
         molecule_conjugates=[("MBA", "IgG"), ("DTNB", "IgG"), ("TFMBA", "IgG")],
+        output_dir=output,
+    ),
+    "MCF7_BSA_1": load_and_process_sample(
+        f"{SAMPLE_DIR}/MCF7 BSA1",
+        name="MCF7 BSA 1",
+        molecule_conjugates=[("MBA", "BSA"), ("DTNB", "BSA"), ("TFMBA", "BSA")],
         output_dir=output,
     ),
     "SKBR3_AB_2": load_and_process_sample(
@@ -134,16 +135,16 @@ samples = {
         molecule_conjugates=[("MBA", "EpCAM"), ("DTNB", "HER2"), ("TFMBA", "TROP2")],
         output_dir=output,
     ),
-    "SKBR3_BSA_2": load_and_process_sample(
-        f"{SAMPLE_DIR}/SKBR3 BSA 2",
-        name="SKBR3 BSA 2",
-        molecule_conjugates=[("MBA", "BSA"), ("DTNB", "BSA"), ("TFMBA", "BSA")],
-        output_dir=output,
-    ),
     "SKBR3_IgG_2": load_and_process_sample(
         f"{SAMPLE_DIR}/SKBR3 IgG2",
         name="SKBR3 IgG 2",
         molecule_conjugates=[("MBA", "IgG"), ("DTNB", "IgG"), ("TFMBA", "IgG")],
+        output_dir=output,
+    ),
+    "SKBR3_BSA_2": load_and_process_sample(
+        f"{SAMPLE_DIR}/SKBR3 BSA 2",
+        name="SKBR3 BSA 2",
+        molecule_conjugates=[("MBA", "BSA"), ("DTNB", "BSA"), ("TFMBA", "BSA")],
         output_dir=output,
     ),
 }
@@ -161,6 +162,24 @@ deconv_results = normalize_and_deconvolve_samples(
     samples=samples,
     references=references,
     wavenumber_range=WAVENUMBER_RANGE,
+    output_dir=output,
+)
+
+
+# ============================================================
+# Peak intensity histograms
+# ============================================================
+
+print("\n" + "=" * 60)
+print("PEAK INTENSITY HISTOGRAMS")
+print("=" * 60)
+
+plot_all_peak_histograms(
+    deconv_results,
+    groups={
+        "mcf7": ["MCF7_AB_1", "MCF7_BSA_1", "MCF7_IgG_1"],
+        "skbr3": ["SKBR3_AB_2", "SKBR3_BSA_2", "SKBR3_IgG_2"],
+    },
     output_dir=output,
 )
 
