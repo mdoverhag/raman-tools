@@ -26,7 +26,8 @@ from raman_lib import (
     load_and_process_reference,
     load_and_process_sample,
     normalize_and_deconvolve_samples,
-    print_experiment_summary
+    plot_all_peak_histograms,
+    print_experiment_summary,
 )
 
 # Data directories
@@ -117,6 +118,21 @@ deconv_results = normalize_and_deconvolve_samples(
 
 
 # ============================================================
+# Peak intensity histograms
+# ============================================================
+
+print("\n" + "="*60)
+print("PEAK INTENSITY HISTOGRAMS")
+print("="*60)
+
+plot_all_peak_histograms(
+    deconv_results,
+    groups={"multiplex": ["Multiplex_Ab_1", "Multiplex_Ab_2", "Multiplex_Ab_3"]},
+    output_dir=output,
+)
+
+
+# ============================================================
 # Summary
 # ============================================================
 
@@ -159,7 +175,10 @@ results/2025-11-06-skbr3-spiked-pbmc/
 ├── deconvolution_Multiplex_Ab_2_averaged_original_scale.png
 ├── deconvolution_Multiplex_Ab_3_averaged.png
 ├── deconvolution_Multiplex_Ab_3_averaged_original_scale.png
-└── deconvolution_boxplots.png
+├── deconvolution_boxplots.png
+├── peak_intensity_histogram_multiplex_MBA.png
+├── peak_intensity_histogram_multiplex_DTNB.png
+└── peak_intensity_histogram_multiplex_TFMBA.png
 ```
 
 The workflow performs:
@@ -169,3 +188,4 @@ The workflow performs:
 4. **NNLS deconvolution** on each replicate to determine molecular contributions
 5. **Statistical analysis** calculating mean ± standard deviation across all replicates
 6. **Box plots** showing the distribution of contributions for quality assessment
+7. **Peak intensity histograms** showing intensity distributions at characteristic peaks

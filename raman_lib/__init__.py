@@ -54,6 +54,7 @@ from .workflow import (
     load_and_process_sample,
     normalize_and_deconvolve_samples,
     extract_peak_intensities,
+    plot_all_peak_histograms,
     print_experiment_summary
 )
 
@@ -102,5 +103,6 @@ __all__ = [
     "load_and_process_sample",
     "normalize_and_deconvolve_samples",
     "extract_peak_intensities",
+    "plot_all_peak_histograms",
     "print_experiment_summary",
 ]

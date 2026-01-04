@@ -12,8 +12,7 @@ from raman_lib import (
     load_and_process_reference,
     load_and_process_sample,
     normalize_and_deconvolve_samples,
-    extract_peak_intensities,
-    plot_peak_intensity_histogram,
+    plot_all_peak_histograms,
     print_experiment_summary,
 )
 
@@ -210,79 +209,23 @@ deconv_results = normalize_and_deconvolve_samples(
 
 
 # ============================================================
-# Peak intensity histograms (SKBR3 only)
+# Peak intensity histograms
 # ============================================================
 
 print("\n" + "=" * 60)
 print("PEAK INTENSITY HISTOGRAMS")
 print("=" * 60)
 
-# Filter to just SKBR3 replicate 1 samples
-import numpy as np
-
-skbr3_keys = ["SKBR3_AB_1", "SKBR3_BSA_1", "SKBR3_IgG_1"]
-skbr3_results = {k: deconv_results[k] for k in skbr3_keys}
-
-# Extract intensities for all three molecules
-mba_intensities = extract_peak_intensities(
-    molecule="MBA",
-    deconv_results=skbr3_results
+plot_all_peak_histograms(
+    deconv_results,
+    groups={
+        "mcf7_rep1": ["MCF7_AB_1", "MCF7_BSA_1", "MCF7_IgG_1"],
+        "mcf7_rep2": ["MCF7_AB_2", "MCF7_BSA_2", "MCF7_IgG_2"],
+        "skbr3_rep1": ["SKBR3_AB_1", "SKBR3_BSA_1", "SKBR3_IgG_1"],
+        "skbr3_rep2": ["SKBR3_AB_2", "SKBR3_BSA_2", "SKBR3_IgG_2"],
+    },
+    output_dir=output,
 )
-dtnb_intensities = extract_peak_intensities(
-    molecule="DTNB",
-    deconv_results=skbr3_results
-)
-tfmba_intensities = extract_peak_intensities(
-    molecule="TFMBA",
-    deconv_results=skbr3_results
-)
-
-# Calculate global max intensity (x-axis)
-all_intensities = []
-for dataset in [mba_intensities, dtnb_intensities, tfmba_intensities]:
-    for intensities in dataset.values():
-        all_intensities.extend(intensities)
-x_max = max(all_intensities)
-
-# Calculate global max count (y-axis) by binning all datasets
-bin_size = 25
-bins = np.arange(0, x_max + bin_size, bin_size)
-max_count = 0
-
-for dataset in [mba_intensities, dtnb_intensities, tfmba_intensities]:
-    for intensities in dataset.values():
-        counts, _ = np.histogram(intensities, bins=bins)
-        max_count = max(max_count, max(counts))
-
-y_max = int(max_count * 1.1)  # Add 10% padding
-
-# Plot all three with same scales
-plot_peak_intensity_histogram(
-    molecule="MBA",
-    conjugate_intensities=mba_intensities,
-    output_path=f"{output}/peak_intensity_histogram_MBA.png",
-    x_max=x_max,
-    y_max=y_max
-)
-print("  ✓ Saved: peak_intensity_histogram_MBA.png")
-
-plot_peak_intensity_histogram(
-    molecule="DTNB",
-    conjugate_intensities=dtnb_intensities,
-    output_path=f"{output}/peak_intensity_histogram_DTNB.png",
-    x_max=x_max,
-    y_max=y_max
-)
-print("  ✓ Saved: peak_intensity_histogram_DTNB.png")
-
-plot_peak_intensity_histogram(
-    molecule="TFMBA",
-    conjugate_intensities=tfmba_intensities,
-    output_path=f"{output}/peak_intensity_histogram_TFMBA.png",
-    x_max=x_max,
-    y_max=y_max
-)
-print("  ✓ Saved: peak_intensity_histogram_TFMBA.png")
 
 
 # ============================================================

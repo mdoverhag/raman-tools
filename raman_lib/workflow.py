@@ -428,6 +428,119 @@ def extract_peak_intensities(
     return conjugate_intensities
 
 
+def calculate_histogram_scales(
+    group_intensities: dict[str, dict[str, dict[str, list[float]]]],
+    bin_size: int = 25
+) -> tuple[float, int]:
+    """
+    Calculate unified x_max and y_max for histogram datasets across multiple groups.
+
+    Computes the maximum intensity value (for x-axis) and maximum bin count (for y-axis)
+    across all molecules and groups, enabling consistent scales across multiple histograms.
+
+    Args:
+        group_intensities: Nested dict structure:
+            {group_prefix: {molecule: {conjugate: [intensities]}}}
+        bin_size: Bin width for histogram (default 25)
+
+    Returns:
+        Tuple of (x_max, y_max) where:
+            x_max: Maximum intensity value across all data
+            y_max: Maximum bin count (with 10% padding) across all histograms
+    """
+    import numpy as np
+
+    # Collect all intensities to find x_max
+    all_intensities = []
+    for group_data in group_intensities.values():
+        for mol_data in group_data.values():
+            for intensities in mol_data.values():
+                all_intensities.extend(intensities)
+
+    if not all_intensities:
+        return (0.0, 0)
+
+    x_max = max(all_intensities)
+
+    # Calculate y_max by binning all datasets
+    bins = np.arange(0, x_max + bin_size, bin_size)
+    max_count = 0
+
+    for group_data in group_intensities.values():
+        for mol_data in group_data.values():
+            for intensities in mol_data.values():
+                if intensities:
+                    counts, _ = np.histogram(intensities, bins=bins)
+                    max_count = max(max_count, max(counts))
+
+    y_max = int(max_count * 1.1)  # Add 10% padding
+
+    return (x_max, y_max)
+
+
+def plot_all_peak_histograms(
+    deconv_results: dict,
+    groups: dict[str, list[str]],
+    output_dir: str,
+    bin_size: int = 25
+) -> None:
+    """
+    Plot peak intensity histograms for all molecules across multiple sample groups.
+
+    Creates histograms showing the distribution of peak intensities for each molecule
+    (MBA, DTNB, TFMBA), with unified scales across all groups for comparison.
+
+    Args:
+        deconv_results: Dictionary of deconvolution results from normalize_and_deconvolve_samples
+        groups: Dictionary mapping group prefix to list of sample keys
+            e.g., {"mcf7_rep1": ["MCF7_AB_1", "MCF7_BSA_1", "MCF7_IgG_1"]}
+            Use empty string "" for no prefix
+        output_dir: Directory to save histogram plots
+        bin_size: Bin width for histograms (default 25)
+
+    Output files:
+        peak_intensity_histogram_{prefix}_{molecule}.png for each group/molecule
+        (or peak_intensity_histogram_{molecule}.png if prefix is empty)
+    """
+    from .plotting import plot_peak_intensity_histogram
+    from .molecules import get_all_molecules
+
+    molecules = get_all_molecules()
+
+    # 1. Extract intensities for all groups and molecules
+    group_intensities = {}
+    for prefix, keys in groups.items():
+        selected = {k: deconv_results[k] for k in keys}
+        group_intensities[prefix] = {
+            mol: extract_peak_intensities(mol, selected)
+            for mol in molecules
+        }
+
+    # 2. Calculate unified scales across all data
+    x_max, y_max = calculate_histogram_scales(group_intensities, bin_size=bin_size)
+
+    # 3. Plot each group's histograms with unified scales
+    for prefix, mol_intensities in group_intensities.items():
+        for molecule, conj_intensities in mol_intensities.items():
+            # Build output filename
+            if prefix:
+                filename = f"peak_intensity_histogram_{prefix}_{molecule}.png"
+            else:
+                filename = f"peak_intensity_histogram_{molecule}.png"
+
+            output_path = f"{output_dir}/{filename}"
+
+            plot_peak_intensity_histogram(
+                molecule=molecule,
+                conjugate_intensities=conj_intensities,
+                output_path=output_path,
+                bin_size=bin_size,
+                x_max=x_max,
+                y_max=y_max
+            )
+            print(f"  ✓ Saved: {filename}")
+
+
 def print_experiment_summary(
     output_dir: str,
     references: dict,
