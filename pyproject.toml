@@ -1,5 +1,5 @@
 [project]
-name = "raman-python"
+name = "raman-tools"
 version = "0.1.0"
 description = "Raman spectroscopy analysis library with SERS multiplex deconvolution"
 readme = "README.md"
