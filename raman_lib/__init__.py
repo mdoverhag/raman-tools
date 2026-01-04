@@ -53,8 +53,11 @@ from .workflow import (
     load_and_process_reference,
     load_and_process_sample,
     normalize_and_deconvolve_samples,
-    extract_peak_intensities,
-    plot_all_peak_histograms,
+    extract_peak_intensities_from_deconv,
+    extract_peak_intensities_from_samples,
+    plot_peak_histograms,
+    plot_peak_histograms_from_deconv,
+    plot_peak_histograms_from_samples,
     print_experiment_summary
 )
 
@@ -102,7 +105,10 @@ __all__ = [
     "load_and_process_reference",
     "load_and_process_sample",
     "normalize_and_deconvolve_samples",
-    "extract_peak_intensities",
-    "plot_all_peak_histograms",
+    "extract_peak_intensities_from_deconv",
+    "extract_peak_intensities_from_samples",
+    "plot_peak_histograms",
+    "plot_peak_histograms_from_deconv",
+    "plot_peak_histograms_from_samples",
     "print_experiment_summary",
 ]

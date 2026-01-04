@@ -365,7 +365,7 @@ def normalize_and_deconvolve_samples(
     return deconv_results
 
 
-def extract_peak_intensities(
+def extract_peak_intensities_from_deconv(
     molecule: str,
     deconv_results: dict
 ) -> dict[str, list[float]]:
@@ -428,6 +428,61 @@ def extract_peak_intensities(
     return conjugate_intensities
 
 
+def extract_peak_intensities_from_samples(
+    molecule: str,
+    samples: dict
+) -> dict[str, list[float]]:
+    """
+    Extract peak intensities for a molecule directly from sample replicates.
+
+    For each replicate in the samples, extracts the intensity at the molecule's
+    characteristic peak from the baseline-corrected spectrum. Useful for single-plex
+    experiments where deconvolution is not needed.
+
+    Args:
+        molecule: Molecule name (e.g., "MBA", "DTNB", "TFMBA")
+        samples: Dictionary of sample data (from load_and_process_sample)
+
+    Returns:
+        Dict mapping conjugate names to lists of peak intensities
+        (e.g., {"PD-L1": [120.5, 115.3, ...], "BSA": [...]})
+    """
+    import numpy as np
+    from .molecules import get_peak
+
+    peak_wn = get_peak(molecule)
+    conjugate_intensities = {}
+
+    for sample_key, sample_data in samples.items():
+        # Find the conjugate for this molecule in this sample
+        conjugate = None
+        for mol, conj in sample_data['molecule_conjugates']:
+            if mol == molecule:
+                conjugate = conj
+                break
+
+        if conjugate is None:
+            continue  # This molecule not in this sample
+
+        # Initialize list for this conjugate if needed
+        if conjugate not in conjugate_intensities:
+            conjugate_intensities[conjugate] = []
+
+        # Extract peak intensity from each replicate
+        for replicate in sample_data['replicates']:
+            wavenumbers = np.array(replicate['wavenumbers'])
+            corrected = np.array(replicate['corrected'])
+
+            # Find the index closest to the peak wavenumber
+            peak_idx = np.argmin(np.abs(wavenumbers - peak_wn))
+
+            # Get intensity at peak
+            peak_intensity = corrected[peak_idx]
+            conjugate_intensities[conjugate].append(peak_intensity)
+
+    return conjugate_intensities
+
+
 def calculate_histogram_scales(
     group_intensities: dict[str, dict[str, dict[str, list[float]]]],
     bin_size: int = 25
@@ -478,48 +533,39 @@ def calculate_histogram_scales(
     return (x_max, y_max)
 
 
-def plot_all_peak_histograms(
-    deconv_results: dict,
-    groups: dict[str, list[str]],
+def plot_peak_histograms(
+    group_intensities: dict[str, dict[str, dict[str, list[float]]]],
     output_dir: str,
-    bin_size: int = 25
+    bin_size: int = 25,
+    x_max: float = None,
+    y_max: float = None
 ) -> None:
     """
-    Plot peak intensity histograms for all molecules across multiple sample groups.
+    Plot peak intensity histograms from pre-extracted intensity data.
 
-    Creates histograms showing the distribution of peak intensities for each molecule
-    (MBA, DTNB, TFMBA), with unified scales across all groups for comparison.
+    Core plotting function that takes already-extracted intensities and creates
+    histograms with unified scales across all groups.
 
     Args:
-        deconv_results: Dictionary of deconvolution results from normalize_and_deconvolve_samples
-        groups: Dictionary mapping group prefix to list of sample keys
-            e.g., {"mcf7_rep1": ["MCF7_AB_1", "MCF7_BSA_1", "MCF7_IgG_1"]}
-            Use empty string "" for no prefix
+        group_intensities: Nested dict structure:
+            {group_prefix: {molecule: {conjugate: [intensities]}}}
         output_dir: Directory to save histogram plots
         bin_size: Bin width for histograms (default 25)
+        x_max: X-axis maximum. If None, calculated from data.
+        y_max: Y-axis maximum. If None, calculated from data.
 
     Output files:
         peak_intensity_histogram_{prefix}_{molecule}.png for each group/molecule
         (or peak_intensity_histogram_{molecule}.png if prefix is empty)
     """
     from .plotting import plot_peak_intensity_histogram
-    from .molecules import get_all_molecules
 
-    molecules = get_all_molecules()
+    # Calculate scales - use provided values if given, otherwise calculate from data
+    calc_x_max, calc_y_max = calculate_histogram_scales(group_intensities, bin_size=bin_size)
+    x_max = x_max if x_max is not None else calc_x_max
+    y_max = y_max if y_max is not None else calc_y_max
 
-    # 1. Extract intensities for all groups and molecules
-    group_intensities = {}
-    for prefix, keys in groups.items():
-        selected = {k: deconv_results[k] for k in keys}
-        group_intensities[prefix] = {
-            mol: extract_peak_intensities(mol, selected)
-            for mol in molecules
-        }
-
-    # 2. Calculate unified scales across all data
-    x_max, y_max = calculate_histogram_scales(group_intensities, bin_size=bin_size)
-
-    # 3. Plot each group's histograms with unified scales
+    # Plot each group's histograms with unified scales
     for prefix, mol_intensities in group_intensities.items():
         for molecule, conj_intensities in mol_intensities.items():
             # Build output filename
@@ -539,6 +585,91 @@ def plot_all_peak_histograms(
                 y_max=y_max
             )
             print(f"  ✓ Saved: {filename}")
+
+
+def plot_peak_histograms_from_deconv(
+    deconv_results: dict,
+    groups: dict[str, list[str]],
+    output_dir: str,
+    bin_size: int = 25,
+    x_max: float = None,
+    y_max: float = None
+) -> None:
+    """
+    Plot peak intensity histograms for all molecules from deconvolution results.
+
+    Extracts peak intensities from deconvolved individual contributions and creates
+    histograms with unified scales across all groups.
+
+    Args:
+        deconv_results: Dictionary of deconvolution results from normalize_and_deconvolve_samples
+        groups: Dictionary mapping group prefix to list of sample keys
+            e.g., {"mcf7_rep1": ["MCF7_AB_1", "MCF7_BSA_1", "MCF7_IgG_1"]}
+            Use empty string "" for no prefix
+        output_dir: Directory to save histogram plots
+        bin_size: Bin width for histograms (default 25)
+        x_max: X-axis maximum. If None, calculated from data.
+        y_max: Y-axis maximum. If None, calculated from data.
+    """
+    from .molecules import get_all_molecules
+
+    molecules = get_all_molecules()
+
+    # Extract intensities for all groups and molecules
+    group_intensities = {}
+    for prefix, keys in groups.items():
+        selected = {k: deconv_results[k] for k in keys}
+        group_intensities[prefix] = {
+            mol: extract_peak_intensities_from_deconv(mol, selected)
+            for mol in molecules
+        }
+
+    plot_peak_histograms(group_intensities, output_dir, bin_size, x_max, y_max)
+
+
+def plot_peak_histograms_from_samples(
+    samples: dict,
+    groups: dict[str, list[str]],
+    output_dir: str,
+    molecules: list[str] = None,
+    bin_size: int = 25,
+    x_max: float = None,
+    y_max: float = None
+) -> None:
+    """
+    Plot peak intensity histograms for molecules directly from sample replicates.
+
+    Extracts peak intensities from baseline-corrected sample spectra and creates
+    histograms with unified scales across all groups. Useful for single-plex
+    experiments where deconvolution is not needed.
+
+    Args:
+        samples: Dictionary of sample data (from load_and_process_sample)
+        groups: Dictionary mapping group prefix to list of sample keys
+            e.g., {"mda231": ["MDA231_PDL1_1", "MDA231_BSA_1", "MDA231_IgG_1"]}
+            Use empty string "" for no prefix
+        output_dir: Directory to save histogram plots
+        molecules: List of molecules to plot. If None, inferred from first sample's
+            molecule_conjugates
+        bin_size: Bin width for histograms (default 25)
+        x_max: X-axis maximum. If None, calculated from data.
+        y_max: Y-axis maximum. If None, calculated from data.
+    """
+    # Infer molecules from samples if not provided
+    if molecules is None:
+        first_sample = next(iter(samples.values()))
+        molecules = list(set(mol for mol, conj in first_sample['molecule_conjugates']))
+
+    # Extract intensities for all groups and molecules
+    group_intensities = {}
+    for prefix, keys in groups.items():
+        selected = {k: samples[k] for k in keys}
+        group_intensities[prefix] = {
+            mol: extract_peak_intensities_from_samples(mol, selected)
+            for mol in molecules
+        }
+
+    plot_peak_histograms(group_intensities, output_dir, bin_size, x_max, y_max)
 
 
 def print_experiment_summary(

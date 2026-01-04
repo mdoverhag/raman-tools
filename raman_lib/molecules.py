@@ -27,6 +27,7 @@ CONJUGATE_COLORS = {
     "EpCAM": "blue",
     "HER2": "blue",
     "TROP2": "blue",
+    "PD-L1": "blue",
     "IgG": "red"
 }
 

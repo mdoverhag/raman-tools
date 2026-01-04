@@ -12,7 +12,7 @@ from raman_lib import (
     load_and_process_reference,
     load_and_process_sample,
     normalize_and_deconvolve_samples,
-    plot_all_peak_histograms,
+    plot_peak_histograms_from_deconv,
     print_experiment_summary,
 )
 
@@ -124,7 +124,7 @@ print("\n" + "=" * 60)
 print("PEAK INTENSITY HISTOGRAMS")
 print("=" * 60)
 
-plot_all_peak_histograms(
+plot_peak_histograms_from_deconv(
     deconv_results,
     groups={"multiplex_rep1": ["Multiplex_Ab", "Multiplex_BSA", "Multiplex_IgG"]},
     output_dir=output,
