@@ -2,7 +2,7 @@
 """
 Experiment: MCF7 vs SKBR3 Spiked PBMCs Multiplex Analysis
 Date: 2025-11-04
-Description: Process all multiplex samples (9x MCF7, 9x SKBR3) - Ab/BSA/IgG conjugates using references from 2025-07-17
+Description: MCF7 vs SKBR3 Spiked PBMCs Multiplex Analysis
 """
 
 import os
@@ -12,7 +12,8 @@ from raman_lib import (
     load_and_process_reference,
     load_and_process_sample,
     normalize_and_deconvolve_samples,
-    print_experiment_summary
+    plot_peak_histograms_from_deconv,
+    print_experiment_summary,
 )
 
 # Data directories
@@ -233,7 +234,29 @@ deconv_results = normalize_and_deconvolve_samples(
     samples=samples,
     references=references,
     wavenumber_range=WAVENUMBER_RANGE,
-    output_dir=output
+    output_dir=output,
+)
+
+
+# ============================================================
+# Peak intensity histograms
+# ============================================================
+
+print("\n" + "=" * 60)
+print("PEAK INTENSITY HISTOGRAMS")
+print("=" * 60)
+
+plot_peak_histograms_from_deconv(
+    deconv_results,
+    groups={
+        "mcf7_rep1": ["MCF7_Ab_1", "MCF7_BSA_1", "MCF7_IgG_1"],
+        "mcf7_rep2": ["MCF7_Ab_2", "MCF7_BSA_2", "MCF7_IgG_2"],
+        "mcf7_rep3": ["MCF7_Ab_3", "MCF7_BSA_3", "MCF7_IgG_3"],
+        "skbr3_rep1": ["SKBR3_Ab_1", "SKBR3_BSA_1", "SKBR3_IgG_1"],
+        "skbr3_rep2": ["SKBR3_Ab_2", "SKBR3_BSA_2", "SKBR3_IgG_2"],
+        "skbr3_rep3": ["SKBR3_Ab_3", "SKBR3_BSA_3", "SKBR3_IgG_3"],
+    },
+    output_dir=output,
 )
 
 
@@ -241,13 +264,13 @@ deconv_results = normalize_and_deconvolve_samples(
 # Summary
 # ============================================================
 
-print("\n" + "="*60)
+print("\n" + "=" * 60)
 print("EXPERIMENT COMPLETE")
-print("="*60)
+print("=" * 60)
 
 print_experiment_summary(
     output_dir=output,
     references=references,
     samples=samples,
-    deconv_results=deconv_results
+    deconv_results=deconv_results,
 )

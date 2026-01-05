@@ -2,7 +2,7 @@
 """
 Experiment: SKBR3 Spiked PBMCs Multiplex Analysis
 Date: 2025-11-06
-Description: Process all multiplex samples (Ab, BSA, IgG) using references from 2025-07-17
+Description: SKBR3 Spiked PBMCs Multiplex Analysis
 """
 
 import os
@@ -12,7 +12,8 @@ from raman_lib import (
     load_and_process_reference,
     load_and_process_sample,
     normalize_and_deconvolve_samples,
-    print_experiment_summary
+    plot_peak_histograms_from_deconv,
+    print_experiment_summary,
 )
 
 # Data directories
@@ -173,7 +174,26 @@ deconv_results = normalize_and_deconvolve_samples(
     samples=samples,
     references=references,
     wavenumber_range=WAVENUMBER_RANGE,
-    output_dir=output
+    output_dir=output,
+)
+
+
+# ============================================================
+# Peak intensity histograms
+# ============================================================
+
+print("\n" + "=" * 60)
+print("PEAK INTENSITY HISTOGRAMS")
+print("=" * 60)
+
+plot_peak_histograms_from_deconv(
+    deconv_results,
+    groups={
+        "rep1": ["Multiplex_Ab_1", "Multiplex_BSA_1", "Multiplex_IgG_1"],
+        "rep2": ["Multiplex_Ab_2", "Multiplex_BSA_2", "Multiplex_IgG_2"],
+        "rep3": ["Multiplex_Ab_3", "Multiplex_BSA_3", "Multiplex_IgG_3"],
+    },
+    output_dir=output,
 )
 
 
@@ -181,13 +201,13 @@ deconv_results = normalize_and_deconvolve_samples(
 # Summary
 # ============================================================
 
-print("\n" + "="*60)
+print("\n" + "=" * 60)
 print("EXPERIMENT COMPLETE")
-print("="*60)
+print("=" * 60)
 
 print_experiment_summary(
     output_dir=output,
     references=references,
     samples=samples,
-    deconv_results=deconv_results
+    deconv_results=deconv_results,
 )
