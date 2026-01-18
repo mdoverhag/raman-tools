@@ -364,7 +364,7 @@ def normalize_and_deconvolve_samples(
         print(f"  ✓ R²: {r2_mean:.3f}±{r2_std:.3f}")
 
     # Create box plots showing distribution across all samples
-    print(f"\nCreating box plots...")
+    print("\nCreating box plots...")
     boxplot_path = f"{output_dir}/deconvolution_boxplots.png"
     plot_deconvolution_boxplots(
         samples=samples, deconv_results=deconv_results, output_path=boxplot_path
@@ -722,11 +722,11 @@ def print_experiment_summary(
     """
     print(f"\nOutput directory: {output_dir}")
 
-    print(f"\nReferences processed:")
+    print("\nReferences processed:")
     for (molecule, conjugate), data in sorted(references.items()):
         print(f"  {molecule}-{conjugate}: {data['count']} spectra")
 
-    print(f"\nSamples processed:")
+    print("\nSamples processed:")
     for sample_key, data in sorted(samples.items(), key=lambda x: x[1]["name"]):
         print(f"  {data['name']}: {data['count']} spectra")
 
@@ -800,5 +800,5 @@ def print_experiment_summary(
             row += f" {f'{r2_mean:.3f}±{r2_std:.3f}':>14}"
             print(row)
 
-    print(f"\nPlots saved in:")
+    print("\nPlots saved in:")
     print(f"  {output_dir}/")
