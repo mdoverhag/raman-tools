@@ -463,7 +463,7 @@ def extract_peak_intensities_from_samples(
     peak_wn = get_peak(molecule)
     conjugate_intensities = {}
 
-    for sample_key, sample_data in samples.items():
+    for sample_data in samples.values():
         # Find the conjugate for this molecule in this sample
         conjugate = None
         for mol, conj in sample_data["molecule_conjugates"]:
@@ -679,7 +679,7 @@ def plot_peak_histograms_from_samples(
     # Infer molecules from samples if not provided
     if molecules is None:
         first_sample = next(iter(samples.values()))
-        molecules = list(set(mol for mol, conj in first_sample["molecule_conjugates"]))
+        molecules = list(set(mol for mol, _ in first_sample["molecule_conjugates"]))
 
     # Extract intensities for all groups and molecules
     group_intensities = {}
