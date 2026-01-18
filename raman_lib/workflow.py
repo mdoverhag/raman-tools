@@ -405,14 +405,15 @@ def extract_peak_intensities_from_deconv(
             # Find the molecule-conjugate pair in this result's contributions
             mol_conj = None
             for key in result["contributions"].keys():
-                mol, conj = key
+                mol, _ = key
                 if mol == molecule:
                     mol_conj = key
-                    conjugate = conj
                     break
 
             if mol_conj is None:
                 continue  # This molecule not in this result
+
+            _, conjugate = mol_conj
 
             # Initialize list for this conjugate if needed
             if conjugate not in conjugate_intensities:
