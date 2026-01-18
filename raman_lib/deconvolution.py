@@ -12,7 +12,7 @@ from scipy.optimize import nnls
 def deconvolve_nnls(
     sample_spectrum: dict,
     reference_spectra: dict,
-    wavenumber_range: tuple[float, float]
+    wavenumber_range: tuple[float, float],
 ) -> dict:
     """
     Perform NNLS deconvolution on a normalized multiplex spectrum.
@@ -32,8 +32,8 @@ def deconvolve_nnls(
         - 'individual_contributions': {(molecule, conjugate): full-length contribution}
         - 'norm_factor': norm factor used for sample normalization
     """
-    wavenumbers = np.array(sample_spectrum['wavenumbers'])
-    sample_normalized = np.array(sample_spectrum['normalized'])
+    wavenumbers = np.array(sample_spectrum["wavenumbers"])
+    sample_normalized = np.array(sample_spectrum["normalized"])
 
     # Find indices within the analysis range
     min_wn, max_wn = wavenumber_range
@@ -41,9 +41,7 @@ def deconvolve_nnls(
     range_indices = np.where(mask)[0]
 
     if len(range_indices) == 0:
-        raise ValueError(
-            f"No data points found in wavenumber range {wavenumber_range}"
-        )
+        raise ValueError(f"No data points found in wavenumber range {wavenumber_range}")
 
     # Extract the region for NNLS
     sample_region = sample_normalized[range_indices]
@@ -51,10 +49,12 @@ def deconvolve_nnls(
     # Build the reference matrix (each column is a reference spectrum)
     # reference_keys is a list of (molecule, conjugate) tuples
     reference_keys = list(reference_spectra.keys())
-    reference_matrix = np.column_stack([
-        np.array(reference_spectra[key]['normalized'])[range_indices]
-        for key in reference_keys
-    ])
+    reference_matrix = np.column_stack(
+        [
+            np.array(reference_spectra[key]["normalized"])[range_indices]
+            for key in reference_keys
+        ]
+    )
 
     # Perform NNLS: find x such that ||Ax - b||^2 is minimized, x >= 0
     # where A is reference_matrix, b is sample_region
@@ -78,7 +78,7 @@ def deconvolve_nnls(
 
     # Calculate R-squared (coefficient of determination)
     ss_res = np.sum(residual**2)
-    ss_tot = np.sum((sample_region - np.mean(sample_region))**2)
+    ss_tot = np.sum((sample_region - np.mean(sample_region)) ** 2)
     r_squared = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0
 
     # Create full-length reconstructed spectrum (zero outside analysis range)
@@ -90,36 +90,36 @@ def deconvolve_nnls(
     for i, key in enumerate(reference_keys):
         # Each molecule-conjugate's contribution is its reference spectrum scaled by its coefficient
         full_contribution = np.zeros(len(wavenumbers))
-        ref_full = np.array(reference_spectra[key]['normalized'])
+        ref_full = np.array(reference_spectra[key]["normalized"])
         # Scale the entire reference spectrum by its coefficient
         full_contribution = ref_full * coefficients[i]
         individual_contributions[key] = full_contribution.tolist()
 
     # Get norm_factor from sample spectrum (if available)
-    norm_factor = sample_spectrum.get('norm_factor', None)
+    norm_factor = sample_spectrum.get("norm_factor", None)
 
     # Create result dictionary
     result = {
-        'contributions': {
+        "contributions": {
             key: float(percentages[i]) for i, key in enumerate(reference_keys)
         },
-        'coefficients': {
+        "coefficients": {
             key: float(coefficients[i]) for i, key in enumerate(reference_keys)
         },
-        'reconstructed': full_reconstructed.tolist(),
-        'residual': residual.tolist(),
-        'metrics': {
-            'rmse': float(rmse),
-            'r_squared': float(r_squared),
-            'residual_norm': float(residual_norm),
+        "reconstructed": full_reconstructed.tolist(),
+        "residual": residual.tolist(),
+        "metrics": {
+            "rmse": float(rmse),
+            "r_squared": float(r_squared),
+            "residual_norm": float(residual_norm),
         },
-        'individual_contributions': individual_contributions,
-        'analysis_range': {
-            'wavenumber_range': wavenumber_range,
-            'indices': range_indices.tolist()
+        "individual_contributions": individual_contributions,
+        "analysis_range": {
+            "wavenumber_range": wavenumber_range,
+            "indices": range_indices.tolist(),
         },
-        'norm_factor': norm_factor,
-        'wavenumbers': sample_spectrum['wavenumbers']
+        "norm_factor": norm_factor,
+        "wavenumbers": sample_spectrum["wavenumbers"],
     }
 
     return result

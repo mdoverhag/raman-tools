@@ -10,7 +10,7 @@ from .molecules import (
     CONJUGATE_COLORS,
     get_peak,
     get_color,
-    get_all_molecules
+    get_all_molecules,
 )
 
 from .io import (

@@ -9,16 +9,16 @@ including their characteristic peak wavenumbers and plotting colors.
 RAMAN_MOLECULES = {
     "MBA": {
         "peak": 1078,  # cm⁻¹
-        "color": "blue"
+        "color": "blue",
     },
     "DTNB": {
         "peak": 1335,  # cm⁻¹
-        "color": "green"
+        "color": "green",
     },
     "TFMBA": {
         "peak": 1377,  # cm⁻¹
-        "color": "orange"
-    }
+        "color": "orange",
+    },
 }
 
 # Configuration for conjugate colors in histograms
@@ -28,7 +28,7 @@ CONJUGATE_COLORS = {
     "HER2": "blue",
     "TROP2": "blue",
     "PD-L1": "blue",
-    "IgG": "red"
+    "IgG": "red",
 }
 
 

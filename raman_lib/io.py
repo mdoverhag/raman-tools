@@ -34,7 +34,7 @@ def load_spectrum(filepath: str) -> dict:
     wavenumbers = []
     intensities = []
 
-    with open(filepath, 'r') as f:
+    with open(filepath, "r") as f:
         for line_num, line in enumerate(f, start=1):
             line = line.strip()
 
@@ -43,7 +43,7 @@ def load_spectrum(filepath: str) -> dict:
                 continue
 
             # Parse tab-delimited data
-            parts = line.split('\t')
+            parts = line.split("\t")
 
             if len(parts) != 2:
                 raise ValueError(
@@ -68,7 +68,7 @@ def load_spectrum(filepath: str) -> dict:
     return {
         "wavenumbers": wavenumbers,
         "intensities": intensities,
-        "filename": filepath.name
+        "filename": filepath.name,
     }
 
 

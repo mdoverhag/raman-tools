@@ -8,7 +8,14 @@ import os
 from .io import load_spectra, ensure_output_subdir
 from .baseline import apply_baseline_correction
 from .averaging import calculate_average
-from .plotting import plot_reference, plot_sample, plot_normalization, plot_deconvolution, plot_deconvolution_original_scale, plot_deconvolution_boxplots
+from .plotting import (
+    plot_reference,
+    plot_sample,
+    plot_normalization,
+    plot_deconvolution,
+    plot_deconvolution_original_scale,
+    plot_deconvolution_boxplots,
+)
 from .normalization import normalize_spectra_l2
 from .deconvolution import deconvolve_nnls
 
@@ -38,8 +45,8 @@ def build_reference_dict(reference_list: list[dict]) -> dict:
     """
     references = {}
     for ref in reference_list:
-        molecule = ref['molecule']
-        conjugate = ref['conjugate']
+        molecule = ref["molecule"]
+        conjugate = ref["conjugate"]
         key = (molecule, conjugate)
 
         if key in references:
@@ -52,10 +59,7 @@ def build_reference_dict(reference_list: list[dict]) -> dict:
 
 
 def load_and_process_reference(
-    directory: str,
-    molecule: str,
-    conjugate: str,
-    output_dir: str
+    directory: str, molecule: str, conjugate: str, output_dir: str
 ) -> dict:
     """
     Load reference spectra, apply ALS baseline correction, average, and plot.
@@ -107,8 +111,8 @@ def load_and_process_reference(
     print(f"✓ Average calculated from {averaged['count']} spectra")
 
     # Add molecule and conjugate tags
-    averaged['molecule'] = molecule
-    averaged['conjugate'] = conjugate
+    averaged["molecule"] = molecule
+    averaged["conjugate"] = conjugate
 
     # Generate plot - flat structure with prefix
     plot_path = f"{output_dir}/reference_{molecule}_{conjugate}.png"
@@ -123,7 +127,7 @@ def load_and_process_sample(
     directory: str,
     name: str,
     molecule_conjugates: list[tuple[str, str]],
-    output_dir: str
+    output_dir: str,
 ) -> dict:
     """
     Load sample spectra, apply ALS baseline correction, average, and plot.
@@ -177,11 +181,11 @@ def load_and_process_sample(
     print(f"✓ Average calculated from {averaged['count']} spectra")
 
     # Add metadata tags to averaged data
-    averaged['molecule_conjugates'] = molecule_conjugates
-    averaged['name'] = name
+    averaged["molecule_conjugates"] = molecule_conjugates
+    averaged["name"] = name
 
     # Add replicates to the result
-    averaged['replicates'] = corrected_spectra
+    averaged["replicates"] = corrected_spectra
 
     # Generate plot - flat structure with prefix
     safe_name = name.replace(" ", "_").replace("/", "-")
@@ -200,7 +204,7 @@ def normalize_and_deconvolve_samples(
     samples: dict,
     references: dict,
     wavenumber_range: tuple[float, float],
-    output_dir: str
+    output_dir: str,
 ) -> dict:
     """
     Normalize and deconvolve all samples against references.
@@ -234,7 +238,7 @@ def normalize_and_deconvolve_samples(
     """
     # Validate all required references exist before processing
     for sample_key, sample_data in samples.items():
-        for mol_conj in sample_data['molecule_conjugates']:
+        for mol_conj in sample_data["molecule_conjugates"]:
             if mol_conj not in references:
                 molecule, conjugate = mol_conj
                 raise ValueError(
@@ -247,18 +251,19 @@ def normalize_and_deconvolve_samples(
     deconv_results = {}
 
     for sample_key, sample_data in samples.items():
-        display_name = sample_data['name']
-        sample_molecule_conjugates = sample_data['molecule_conjugates']
-        replicates = sample_data['replicates']
+        display_name = sample_data["name"]
+        sample_molecule_conjugates = sample_data["molecule_conjugates"]
+        replicates = sample_data["replicates"]
 
         print(f"\n{display_name}:")
         print(f"  Processing {len(replicates)} replicates...")
-        print(f"  Normalizing and deconvolving (range: {wavenumber_range[0]}-{wavenumber_range[1]} cm⁻¹)...")
+        print(
+            f"  Normalizing and deconvolving (range: {wavenumber_range[0]}-{wavenumber_range[1]} cm⁻¹)..."
+        )
 
         # Filter references to only include the ones in this sample
         sample_references = {
-            mol_conj: references[mol_conj]
-            for mol_conj in sample_molecule_conjugates
+            mol_conj: references[mol_conj] for mol_conj in sample_molecule_conjugates
         }
 
         # Process each replicate
@@ -269,14 +274,14 @@ def normalize_and_deconvolve_samples(
             normalized = normalize_spectra_l2(
                 sample=replicate,
                 references=sample_references,
-                wavenumber_range=wavenumber_range
+                wavenumber_range=wavenumber_range,
             )
 
             # Deconvolve this replicate
             deconv_result = deconvolve_nnls(
-                sample_spectrum=normalized['sample'],
-                reference_spectra=normalized['references'],
-                wavenumber_range=wavenumber_range
+                sample_spectrum=normalized["sample"],
+                reference_spectra=normalized["references"],
+                wavenumber_range=wavenumber_range,
             )
 
             replicate_results.append(deconv_result)
@@ -289,7 +294,7 @@ def normalize_and_deconvolve_samples(
         normalized_avg = normalize_spectra_l2(
             sample=sample_data,
             references=sample_references,
-            wavenumber_range=wavenumber_range
+            wavenumber_range=wavenumber_range,
         )
 
         # Extract just molecules for plotting (plotting functions expect molecule names only)
@@ -297,54 +302,60 @@ def normalize_and_deconvolve_samples(
 
         plot_normalization(
             sample_name=f"{display_name} (averaged)",
-            sample_spectrum=normalized_avg['sample'],
-            reference_spectra=normalized_avg['references'],
+            sample_spectrum=normalized_avg["sample"],
+            reference_spectra=normalized_avg["references"],
             molecules=molecules_only,
             wavenumber_range=wavenumber_range,
-            output_path=f"{output_dir}/normalization_averaged_{sample_key}.png"
+            output_path=f"{output_dir}/normalization_averaged_{sample_key}.png",
         )
 
         # Deconvolve the averaged spectrum for plotting
         deconv_avg = deconvolve_nnls(
-            sample_spectrum=normalized_avg['sample'],
-            reference_spectra=normalized_avg['references'],
-            wavenumber_range=wavenumber_range
+            sample_spectrum=normalized_avg["sample"],
+            reference_spectra=normalized_avg["references"],
+            wavenumber_range=wavenumber_range,
         )
 
         plot_deconvolution(
             sample_name=f"{display_name} (averaged)",
-            sample_spectrum=normalized_avg['sample'],
+            sample_spectrum=normalized_avg["sample"],
             result=deconv_avg,
             wavenumber_range=wavenumber_range,
-            output_path=f"{output_dir}/deconvolution_averaged_{sample_key}.png"
+            output_path=f"{output_dir}/deconvolution_averaged_{sample_key}.png",
         )
 
         # Also create original-scale deconvolution plot
         plot_deconvolution_original_scale(
             sample_name=f"{display_name} (averaged)",
-            sample_spectrum=normalized_avg['sample'],
+            sample_spectrum=normalized_avg["sample"],
             result=deconv_avg,
             wavenumber_range=wavenumber_range,
-            output_path=f"{output_dir}/deconvolution_averaged_original_scale_{sample_key}.png"
+            output_path=f"{output_dir}/deconvolution_averaged_original_scale_{sample_key}.png",
         )
 
         # Calculate and print summary statistics across replicates
         import numpy as np
 
-        contributions_by_mol_conj = {mol_conj: [] for mol_conj in sample_molecule_conjugates}
+        contributions_by_mol_conj = {
+            mol_conj: [] for mol_conj in sample_molecule_conjugates
+        }
         r_squared_values = []
 
         for result in replicate_results:
             for mol_conj in sample_molecule_conjugates:
-                contributions_by_mol_conj[mol_conj].append(result['contributions'][mol_conj])
-            r_squared_values.append(result['metrics']['r_squared'])
+                contributions_by_mol_conj[mol_conj].append(
+                    result["contributions"][mol_conj]
+                )
+            r_squared_values.append(result["metrics"]["r_squared"])
 
         # Print mean ± std for each molecule-conjugate
-        contributions_str = ", ".join([
-            f"{mol}-{conj}={np.mean(contributions_by_mol_conj[mol_conj]):.1f}±{np.std(contributions_by_mol_conj[mol_conj]):.1f}%"
-            for mol_conj in sample_molecule_conjugates
-            for mol, conj in [mol_conj]  # Unpack tuple for formatting
-        ])
+        contributions_str = ", ".join(
+            [
+                f"{mol}-{conj}={np.mean(contributions_by_mol_conj[mol_conj]):.1f}±{np.std(contributions_by_mol_conj[mol_conj]):.1f}%"
+                for mol_conj in sample_molecule_conjugates
+                for mol, conj in [mol_conj]  # Unpack tuple for formatting
+            ]
+        )
         r2_mean = np.mean(r_squared_values)
         r2_std = np.std(r_squared_values)
 
@@ -356,9 +367,7 @@ def normalize_and_deconvolve_samples(
     print(f"\nCreating box plots...")
     boxplot_path = f"{output_dir}/deconvolution_boxplots.png"
     plot_deconvolution_boxplots(
-        samples=samples,
-        deconv_results=deconv_results,
-        output_path=boxplot_path
+        samples=samples, deconv_results=deconv_results, output_path=boxplot_path
     )
     print(f"✓ Box plots saved: {boxplot_path}")
 
@@ -366,8 +375,7 @@ def normalize_and_deconvolve_samples(
 
 
 def extract_peak_intensities_from_deconv(
-    molecule: str,
-    deconv_results: dict
+    molecule: str, deconv_results: dict
 ) -> dict[str, list[float]]:
     """
     Extract peak intensities for a molecule from deconvolution results.
@@ -396,7 +404,7 @@ def extract_peak_intensities_from_deconv(
         for result in replicate_results:
             # Find the molecule-conjugate pair in this result's contributions
             mol_conj = None
-            for key in result['contributions'].keys():
+            for key in result["contributions"].keys():
                 mol, conj = key
                 if mol == molecule:
                     mol_conj = key
@@ -411,14 +419,16 @@ def extract_peak_intensities_from_deconv(
                 conjugate_intensities[conjugate] = []
 
             # Get the individual contribution (normalized scale)
-            contribution_normalized = np.array(result['individual_contributions'][mol_conj])
+            contribution_normalized = np.array(
+                result["individual_contributions"][mol_conj]
+            )
 
             # Scale back to original using norm_factor
-            norm_factor = result['norm_factor']
+            norm_factor = result["norm_factor"]
             contribution_original = contribution_normalized * norm_factor
 
             # Find the index closest to the peak wavenumber
-            wavenumbers = np.array(result['wavenumbers'])
+            wavenumbers = np.array(result["wavenumbers"])
             peak_idx = np.argmin(np.abs(wavenumbers - peak_wn))
 
             # Get intensity at peak
@@ -429,8 +439,7 @@ def extract_peak_intensities_from_deconv(
 
 
 def extract_peak_intensities_from_samples(
-    molecule: str,
-    samples: dict
+    molecule: str, samples: dict
 ) -> dict[str, list[float]]:
     """
     Extract peak intensities for a molecule directly from sample replicates.
@@ -456,7 +465,7 @@ def extract_peak_intensities_from_samples(
     for sample_key, sample_data in samples.items():
         # Find the conjugate for this molecule in this sample
         conjugate = None
-        for mol, conj in sample_data['molecule_conjugates']:
+        for mol, conj in sample_data["molecule_conjugates"]:
             if mol == molecule:
                 conjugate = conj
                 break
@@ -469,9 +478,9 @@ def extract_peak_intensities_from_samples(
             conjugate_intensities[conjugate] = []
 
         # Extract peak intensity from each replicate
-        for replicate in sample_data['replicates']:
-            wavenumbers = np.array(replicate['wavenumbers'])
-            corrected = np.array(replicate['corrected'])
+        for replicate in sample_data["replicates"]:
+            wavenumbers = np.array(replicate["wavenumbers"])
+            corrected = np.array(replicate["corrected"])
 
             # Find the index closest to the peak wavenumber
             peak_idx = np.argmin(np.abs(wavenumbers - peak_wn))
@@ -484,8 +493,7 @@ def extract_peak_intensities_from_samples(
 
 
 def calculate_histogram_scales(
-    group_intensities: dict[str, dict[str, dict[str, list[float]]]],
-    bin_size: int = 25
+    group_intensities: dict[str, dict[str, dict[str, list[float]]]], bin_size: int = 25
 ) -> tuple[float, int]:
     """
     Calculate unified x_max and y_max for histogram datasets across multiple groups.
@@ -539,7 +547,7 @@ def plot_peak_histograms(
     bin_size: int = 25,
     x_max: float = None,
     y_max: float = None,
-    x_label: str = "Intensity (a.u.)"
+    x_label: str = "Intensity (a.u.)",
 ) -> None:
     """
     Plot peak intensity histograms from pre-extracted intensity data.
@@ -563,7 +571,9 @@ def plot_peak_histograms(
     from .plotting import plot_peak_intensity_histogram
 
     # Calculate scales - use provided values if given, otherwise calculate from data
-    calc_x_max, calc_y_max = calculate_histogram_scales(group_intensities, bin_size=bin_size)
+    calc_x_max, calc_y_max = calculate_histogram_scales(
+        group_intensities, bin_size=bin_size
+    )
     x_max = x_max if x_max is not None else calc_x_max
     y_max = y_max if y_max is not None else calc_y_max
 
@@ -585,7 +595,7 @@ def plot_peak_histograms(
                 bin_size=bin_size,
                 x_max=x_max,
                 y_max=y_max,
-                x_label=x_label
+                x_label=x_label,
             )
             print(f"  ✓ Saved: {filename}")
 
@@ -596,7 +606,7 @@ def plot_peak_histograms_from_deconv(
     output_dir: str,
     bin_size: int = 25,
     x_max: float = None,
-    y_max: float = None
+    y_max: float = None,
 ) -> None:
     """
     Plot peak intensity histograms for all molecules from deconvolution results.
@@ -628,8 +638,12 @@ def plot_peak_histograms_from_deconv(
         }
 
     plot_peak_histograms(
-        group_intensities, output_dir, bin_size, x_max, y_max,
-        x_label="Intensity (deconvoluted, de-normalized)"
+        group_intensities,
+        output_dir,
+        bin_size,
+        x_max,
+        y_max,
+        x_label="Intensity (deconvoluted, de-normalized)",
     )
 
 
@@ -640,7 +654,7 @@ def plot_peak_histograms_from_samples(
     molecules: list[str] = None,
     bin_size: int = 25,
     x_max: float = None,
-    y_max: float = None
+    y_max: float = None,
 ) -> None:
     """
     Plot peak intensity histograms for molecules directly from sample replicates.
@@ -664,7 +678,7 @@ def plot_peak_histograms_from_samples(
     # Infer molecules from samples if not provided
     if molecules is None:
         first_sample = next(iter(samples.values()))
-        molecules = list(set(mol for mol, conj in first_sample['molecule_conjugates']))
+        molecules = list(set(mol for mol, conj in first_sample["molecule_conjugates"]))
 
     # Extract intensities for all groups and molecules
     group_intensities = {}
@@ -676,16 +690,17 @@ def plot_peak_histograms_from_samples(
         }
 
     plot_peak_histograms(
-        group_intensities, output_dir, bin_size, x_max, y_max,
-        x_label="Intensity (baseline-corrected)"
+        group_intensities,
+        output_dir,
+        bin_size,
+        x_max,
+        y_max,
+        x_label="Intensity (baseline-corrected)",
     )
 
 
 def print_experiment_summary(
-    output_dir: str,
-    references: dict,
-    samples: dict,
-    deconv_results: dict
+    output_dir: str, references: dict, samples: dict, deconv_results: dict
 ) -> None:
     """
     Print a summary of the experiment results.
@@ -711,7 +726,7 @@ def print_experiment_summary(
         print(f"  {molecule}-{conjugate}: {data['count']} spectra")
 
     print(f"\nSamples processed:")
-    for sample_key, data in sorted(samples.items(), key=lambda x: x[1]['name']):
+    for sample_key, data in sorted(samples.items(), key=lambda x: x[1]["name"]):
         print(f"  {data['name']}: {data['count']} spectra")
 
     # Group samples by their conjugate types (e.g., all Ab samples, all BSA samples)
@@ -722,7 +737,9 @@ def print_experiment_summary(
     groups = defaultdict(list)
     for sample_key, sample_data in samples.items():
         # Use frozenset of conjugates to group (e.g., all samples with EpCAM/HER2/TROP2)
-        conjugate_set = frozenset(conj for mol, conj in sample_data['molecule_conjugates'])
+        conjugate_set = frozenset(
+            conj for mol, conj in sample_data["molecule_conjugates"]
+        )
         groups[conjugate_set].append(sample_key)
 
     # Print a table for each conjugate group
@@ -731,7 +748,7 @@ def print_experiment_summary(
 
         # Get the molecule-conjugates from first sample (all in group have same ones)
         first_sample = samples[sample_keys[0]]
-        group_mol_conj = sorted(first_sample['molecule_conjugates'])
+        group_mol_conj = sorted(first_sample["molecule_conjugates"])
 
         # Determine group name from conjugates
         conjugate_list = sorted(conjugate_set)
@@ -740,9 +757,9 @@ def print_experiment_summary(
         else:
             group_name = "/".join(conjugate_list)
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Deconvolution Results - {group_name} Conjugates")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         # Build header
         header = f"{'Sample':<25}"
@@ -754,10 +771,10 @@ def print_experiment_summary(
         print("-" * (25 + len(group_mol_conj) * 21 + 15))
 
         # Print each sample in this group (sorted alphabetically by name)
-        for sample_key in sorted(sample_keys, key=lambda k: samples[k]['name']):
-            display_name = samples[sample_key]['name']
+        for sample_key in sorted(sample_keys, key=lambda k: samples[k]["name"]):
+            display_name = samples[sample_key]["name"]
             replicate_results = deconv_results[sample_key]
-            sample_mol_conj = samples[sample_key]['molecule_conjugates']
+            sample_mol_conj = samples[sample_key]["molecule_conjugates"]
 
             # Calculate mean ± std for each molecule-conjugate
             contributions_by_mol_conj = {mol_conj: [] for mol_conj in sample_mol_conj}
@@ -765,8 +782,10 @@ def print_experiment_summary(
 
             for result in replicate_results:
                 for mol_conj in sample_mol_conj:
-                    contributions_by_mol_conj[mol_conj].append(result['contributions'][mol_conj])
-                r_squared_values.append(result['metrics']['r_squared'])
+                    contributions_by_mol_conj[mol_conj].append(
+                        result["contributions"][mol_conj]
+                    )
+                r_squared_values.append(result["metrics"]["r_squared"])
 
             # Build row
             row = f"{display_name:<25}"

@@ -15,7 +15,7 @@ def als_baseline(
     lambda_param: float = 1e7,
     p: float = 0.01,
     d: int = 2,
-    max_iterations: int = 10
+    max_iterations: int = 10,
 ) -> tuple[list[float], list[float]]:
     """
     Apply Asymmetric Least Squares (ALS) baseline correction.
@@ -59,6 +59,7 @@ def als_baseline(
     else:
         # Generalized form for other orders
         from math import comb
+
         diagonals = []
         offsets = []
         for k in range(d + 1):
@@ -97,10 +98,7 @@ def als_baseline(
 
 
 def apply_baseline_correction(
-    spectrum: dict,
-    lambda_param: float = 1e7,
-    p: float = 0.01,
-    d: int = 2
+    spectrum: dict, lambda_param: float = 1e7, p: float = 0.01, d: int = 2
 ) -> dict:
     """
     Apply ALS baseline correction to a complete spectrum.
@@ -121,15 +119,12 @@ def apply_baseline_correction(
         }
     """
     corrected, baseline = als_baseline(
-        spectrum['intensities'],
-        lambda_param=lambda_param,
-        p=p,
-        d=d
+        spectrum["intensities"], lambda_param=lambda_param, p=p, d=d
     )
 
     return {
-        'wavenumbers': spectrum['wavenumbers'],
-        'intensities': spectrum['intensities'],
-        'corrected': corrected,
-        'baseline': baseline
+        "wavenumbers": spectrum["wavenumbers"],
+        "intensities": spectrum["intensities"],
+        "corrected": corrected,
+        "baseline": baseline,
     }

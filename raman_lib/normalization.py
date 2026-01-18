@@ -7,10 +7,7 @@ Implements L2 normalization within a specified wavenumber range.
 import numpy as np
 
 
-def normalize_l2(
-    spectrum: dict,
-    wavenumber_range: tuple[float, float]
-) -> dict:
+def normalize_l2(spectrum: dict, wavenumber_range: tuple[float, float]) -> dict:
     """
     Apply L2 normalization to a spectrum within a specified wavenumber range.
 
@@ -30,15 +27,15 @@ def normalize_l2(
         - 'norm_factor': the L2 norm value used for normalization
         - 'norm_range': the wavenumber range used
     """
-    wavenumbers = np.array(spectrum['wavenumbers'])
+    wavenumbers = np.array(spectrum["wavenumbers"])
 
     # Get intensities - try corrected_avg first, fall back to intensities
-    if 'corrected_avg' in spectrum:
-        intensities = np.array(spectrum['corrected_avg'])
-    elif 'corrected' in spectrum:
-        intensities = np.array(spectrum['corrected'])
+    if "corrected_avg" in spectrum:
+        intensities = np.array(spectrum["corrected_avg"])
+    elif "corrected" in spectrum:
+        intensities = np.array(spectrum["corrected"])
     else:
-        intensities = np.array(spectrum['intensities'])
+        intensities = np.array(spectrum["intensities"])
 
     # Find indices within the normalization range
     min_wn, max_wn = wavenumber_range
@@ -46,9 +43,7 @@ def normalize_l2(
     range_indices = np.where(mask)[0]
 
     if len(range_indices) == 0:
-        raise ValueError(
-            f"No data points found in wavenumber range {wavenumber_range}"
-        )
+        raise ValueError(f"No data points found in wavenumber range {wavenumber_range}")
 
     # Extract the region for normalization
     region = intensities[range_indices]
@@ -63,18 +58,16 @@ def normalize_l2(
     normalized = intensities / l2_norm
 
     return {
-        'wavenumbers': wavenumbers.tolist(),
-        'normalized': normalized.tolist(),
-        'original': intensities.tolist(),
-        'norm_factor': float(l2_norm),
-        'norm_range': wavenumber_range
+        "wavenumbers": wavenumbers.tolist(),
+        "normalized": normalized.tolist(),
+        "original": intensities.tolist(),
+        "norm_factor": float(l2_norm),
+        "norm_range": wavenumber_range,
     }
 
 
 def normalize_spectra_l2(
-    sample: dict,
-    references: dict,
-    wavenumber_range: tuple[float, float]
+    sample: dict, references: dict, wavenumber_range: tuple[float, float]
 ) -> dict:
     """
     Normalize sample and multiple reference spectra using L2 normalization.
@@ -99,7 +92,7 @@ def normalize_spectra_l2(
         normalized_references[mol_conj] = normalize_l2(ref_spectrum, wavenumber_range)
 
     return {
-        'sample': normalized_sample,
-        'references': normalized_references,
-        'wavenumber_range': wavenumber_range
+        "sample": normalized_sample,
+        "references": normalized_references,
+        "wavenumber_range": wavenumber_range,
     }
