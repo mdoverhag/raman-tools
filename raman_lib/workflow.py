@@ -547,7 +547,7 @@ def plot_peak_histograms(
     output_dir: str,
     bin_size: int = 25,
     x_max: float | None = None,
-    y_max: float | None = None,
+    y_max: int | None = None,
     x_label: str = "Intensity (a.u.)",
 ) -> None:
     """
@@ -607,7 +607,7 @@ def plot_peak_histograms_from_deconv(
     output_dir: str,
     bin_size: int = 25,
     x_max: float | None = None,
-    y_max: float | None = None,
+    y_max: int | None = None,
 ) -> None:
     """
     Plot peak intensity histograms for all molecules from deconvolution results.
@@ -655,7 +655,7 @@ def plot_peak_histograms_from_samples(
     molecules: list[str] | None = None,
     bin_size: int = 25,
     x_max: float | None = None,
-    y_max: float | None = None,
+    y_max: int | None = None,
 ) -> None:
     """
     Plot peak intensity histograms for molecules directly from sample replicates.
