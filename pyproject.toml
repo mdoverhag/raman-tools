@@ -12,6 +12,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "pyright>=1.1.408",
     "ruff>=0.14.13",
 ]
 
@@ -21,3 +22,7 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["raman_lib"]
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
