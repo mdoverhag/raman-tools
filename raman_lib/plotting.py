@@ -7,7 +7,6 @@ and deconvolution results.
 
 import matplotlib.pyplot as plt
 import numpy as np
-from pathlib import Path
 from .molecules import get_peak, get_color
 
 
@@ -25,7 +24,7 @@ def plot_reference(averaged_spectrum: dict, molecule: str, output_path: str) -> 
         molecule: Molecule name (e.g., "MBA", "DTNB", "TFMBA")
         output_path: Path where the plot will be saved
     """
-    fig, ax = plt.subplots(figsize=(12, 6))
+    _, ax = plt.subplots(figsize=(12, 6))
 
     wavenumbers = averaged_spectrum["wavenumbers"]
     raw_avg = averaged_spectrum["raw_avg"]
@@ -94,7 +93,7 @@ def plot_sample(
         molecules: List of molecules present (e.g., ["MBA", "DTNB", "TFMBA"])
         output_path: Path where the plot will be saved
     """
-    fig, ax = plt.subplots(figsize=(12, 6))
+    _, ax = plt.subplots(figsize=(12, 6))
 
     wavenumbers = averaged_spectrum["wavenumbers"]
     raw_avg = averaged_spectrum["raw_avg"]
@@ -204,7 +203,6 @@ def plot_normalization(
                 break
 
     # Highlight normalization range with a rectangle
-    y_min, y_max = ax1.get_ylim()
     ax1.axvspan(
         wavenumber_range[0], wavenumber_range[1], alpha=0.15, color="gray", zorder=0
     )
@@ -316,7 +314,7 @@ def plot_deconvolution(
         wavenumber_range: Tuple of (min_wn, max_wn) for analysis range
         output_path: Path where the plot will be saved
     """
-    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 10))
+    _, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 10))
 
     wavenumbers = sample_spectrum["wavenumbers"]
     multiplex_data = sample_spectrum["normalized"]
@@ -457,13 +455,12 @@ def plot_deconvolution_original_scale(
         wavenumber_range: Tuple of (min_wn, max_wn) for analysis range
         output_path: Path where the plot will be saved
     """
-    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 10))
+    _, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 10))
 
     wavenumbers = sample_spectrum["wavenumbers"]
     original_data = sample_spectrum["original"]
     contributions = result["contributions"]
     norm_factor = result["norm_factor"]
-    rmse = result["metrics"]["rmse"]
 
     # Get analysis range indices for residual plotting
     analysis_range = result["analysis_range"]
@@ -598,8 +595,6 @@ def plot_deconvolution_boxplots(
         deconv_results: Dictionary of replicate deconvolution results
         output_path: Path where the plot will be saved
     """
-    import numpy as np
-
     # Determine how many samples we have
     n_samples = len(samples)
 
@@ -672,8 +667,8 @@ def plot_peak_intensity_histogram(
     conjugate_intensities: dict[str, list[float]],
     output_path: str,
     bin_size: int = 25,
-    x_max: float = None,
-    y_max: int = None,
+    x_max: float | None = None,
+    y_max: int | None = None,
     x_label: str = "Intensity (a.u.)",
 ) -> None:
     """
@@ -697,7 +692,7 @@ def plot_peak_intensity_histogram(
     peak_wn = get_peak(molecule)
 
     # Create histogram plot
-    fig, ax = plt.subplots(figsize=(12, 6))
+    _, ax = plt.subplots(figsize=(12, 6))
 
     # Determine bin edges
     all_intensities = []
