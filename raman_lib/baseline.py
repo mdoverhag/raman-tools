@@ -74,9 +74,10 @@ def als_baseline(
 
     # Step 3: Initialize weights vector w (all ones initially)
     w = np.ones(n)
+    baseline = None
 
     # Step 4: Iterative reweighting (Eilers & Boelens Section 4)
-    for iteration in range(max_iterations):
+    for _ in range(max_iterations):
         # Construct diagonal weight matrix W
         W = sparse.diags(w, format="csr")
 
@@ -90,6 +91,9 @@ def als_baseline(
         # Points below baseline get large weight (1-p)
         residuals = spectrum - baseline
         w = p * (residuals > 0) + (1 - p) * (residuals <= 0)
+
+    if baseline is None:
+        raise RuntimeError("No iterations performed (max_iterations must be >= 1)")
 
     # Calculate corrected spectrum by subtracting baseline
     corrected_spectrum = spectrum - baseline
