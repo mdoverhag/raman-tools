@@ -5,7 +5,7 @@ These functions encapsulate common multi-step workflows to simplify experiment s
 """
 
 import os
-from .io import load_spectra, ensure_output_subdir
+from .io import load_spectra
 from .baseline import apply_baseline_correction
 from .averaging import calculate_average
 from .plotting import (
@@ -193,7 +193,7 @@ def load_and_process_sample(
     print(f"Creating plot: {plot_path}")
 
     # Extract just molecules for plotting (plotting functions expect molecule names only)
-    molecules = [mol for mol, conj in molecule_conjugates]
+    molecules = [mol for mol, _ in molecule_conjugates]
     plot_sample(averaged, sample_name=name, molecules=molecules, output_path=plot_path)
     print("✓ Plot saved")
 
@@ -269,7 +269,7 @@ def normalize_and_deconvolve_samples(
         # Process each replicate
         replicate_results = []
 
-        for i, replicate in enumerate(replicates):
+        for _, replicate in enumerate(replicates):
             # Normalize this replicate
             normalized = normalize_spectra_l2(
                 sample=replicate,
@@ -298,7 +298,7 @@ def normalize_and_deconvolve_samples(
         )
 
         # Extract just molecules for plotting (plotting functions expect molecule names only)
-        molecules_only = [mol for mol, conj in sample_molecule_conjugates]
+        molecules_only = [mol for mol, _ in sample_molecule_conjugates]
 
         plot_normalization(
             sample_name=f"{display_name} (averaged)",
@@ -399,7 +399,7 @@ def extract_peak_intensities_from_deconv(
     conjugate_intensities = {}
 
     # Process all samples in the provided results
-    for sample_key, replicate_results in deconv_results.items():
+    for _, replicate_results in deconv_results.items():
         # Extract peak intensity from each replicate
         for result in replicate_results:
             # Find the molecule-conjugate pair in this result's contributions
@@ -545,8 +545,8 @@ def plot_peak_histograms(
     group_intensities: dict[str, dict[str, dict[str, list[float]]]],
     output_dir: str,
     bin_size: int = 25,
-    x_max: float = None,
-    y_max: float = None,
+    x_max: float | None = None,
+    y_max: float | None = None,
     x_label: str = "Intensity (a.u.)",
 ) -> None:
     """
@@ -605,8 +605,8 @@ def plot_peak_histograms_from_deconv(
     groups: dict[str, list[str]],
     output_dir: str,
     bin_size: int = 25,
-    x_max: float = None,
-    y_max: float = None,
+    x_max: float | None = None,
+    y_max: float | None = None,
 ) -> None:
     """
     Plot peak intensity histograms for all molecules from deconvolution results.
@@ -651,10 +651,10 @@ def plot_peak_histograms_from_samples(
     samples: dict,
     groups: dict[str, list[str]],
     output_dir: str,
-    molecules: list[str] = None,
+    molecules: list[str] | None = None,
     bin_size: int = 25,
-    x_max: float = None,
-    y_max: float = None,
+    x_max: float | None = None,
+    y_max: float | None = None,
 ) -> None:
     """
     Plot peak intensity histograms for molecules directly from sample replicates.
@@ -738,7 +738,7 @@ def print_experiment_summary(
     for sample_key, sample_data in samples.items():
         # Use frozenset of conjugates to group (e.g., all samples with EpCAM/HER2/TROP2)
         conjugate_set = frozenset(
-            conj for mol, conj in sample_data["molecule_conjugates"]
+            conj for _, conj in sample_data["molecule_conjugates"]
         )
         groups[conjugate_set].append(sample_key)
 
