@@ -4,7 +4,6 @@ Input/Output functions for Raman spectroscopy data.
 Handles loading spectrum files from disk and saving plots.
 """
 
-import os
 from pathlib import Path
 
 
@@ -26,15 +25,15 @@ def load_spectrum(filepath: str) -> dict:
         FileNotFoundError: If file doesn't exist
         ValueError: If file format is invalid
     """
-    filepath = Path(filepath)
+    path = Path(filepath)
 
-    if not filepath.exists():
-        raise FileNotFoundError(f"Spectrum file not found: {filepath}")
+    if not path.exists():
+        raise FileNotFoundError(f"Spectrum file not found: {path}")
 
     wavenumbers = []
     intensities = []
 
-    with open(filepath, "r") as f:
+    with open(path, "r") as f:
         for line_num, line in enumerate(f, start=1):
             line = line.strip()
 
@@ -47,7 +46,7 @@ def load_spectrum(filepath: str) -> dict:
 
             if len(parts) != 2:
                 raise ValueError(
-                    f"Invalid format in {filepath.name} at line {line_num}: "
+                    f"Invalid format in {path.name} at line {line_num}: "
                     f"expected 2 columns, got {len(parts)}"
                 )
 
@@ -55,20 +54,18 @@ def load_spectrum(filepath: str) -> dict:
                 wavenumber = float(parts[0])
                 intensity = float(parts[1])
             except ValueError as e:
-                raise ValueError(
-                    f"Invalid data in {filepath.name} at line {line_num}: {e}"
-                )
+                raise ValueError(f"Invalid data in {path.name} at line {line_num}: {e}")
 
             wavenumbers.append(wavenumber)
             intensities.append(intensity)
 
     if not wavenumbers:
-        raise ValueError(f"No data found in {filepath}")
+        raise ValueError(f"No data found in {path}")
 
     return {
         "wavenumbers": wavenumbers,
         "intensities": intensities,
-        "filename": filepath.name,
+        "filename": path.name,
     }
 
 
@@ -88,16 +85,16 @@ def load_spectra(directory: str) -> list[dict]:
         FileNotFoundError: If directory doesn't exist
         ValueError: If no .txt files found or files have invalid format
     """
-    directory = Path(directory)
+    dir_path = Path(directory)
 
-    if not directory.exists():
-        raise FileNotFoundError(f"Directory not found: {directory}")
+    if not dir_path.exists():
+        raise FileNotFoundError(f"Directory not found: {dir_path}")
 
-    if not directory.is_dir():
-        raise ValueError(f"Not a directory: {directory}")
+    if not dir_path.is_dir():
+        raise ValueError(f"Not a directory: {dir_path}")
 
     # Find all .txt files
-    txt_files = sorted(directory.glob("*.txt"))
+    txt_files = sorted(dir_path.glob("*.txt"))
 
     if not txt_files:
         raise ValueError(f"No .txt files found in {directory}")
@@ -107,7 +104,7 @@ def load_spectra(directory: str) -> list[dict]:
 
     for filepath in txt_files:
         try:
-            spectrum = load_spectrum(filepath)
+            spectrum = load_spectrum(str(filepath))
             spectra.append(spectrum)
         except Exception as e:
             errors.append(f"{filepath.name}: {e}")
