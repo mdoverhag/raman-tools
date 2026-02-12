@@ -19,6 +19,10 @@ RAMAN_MOLECULES = {
         "peak": 1377,  # cm⁻¹
         "color": "orange",
     },
+    "MMTAA": {
+        "peak": 1287,  # cm⁻¹
+        "color": "red",
+    },
 }
 
 # Configuration for conjugate colors in histograms
