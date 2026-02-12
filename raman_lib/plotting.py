@@ -724,8 +724,12 @@ def plot_peak_intensity_histogram(
         counts, bin_edges = np.histogram(intensities, bins=bins)
         bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
 
-        # Get color from CONJUGATE_COLORS, default to gray
-        line_color = CONJUGATE_COLORS.get(conjugate, "gray")
+        # Get color by matching conjugate name as substring, default to gray
+        line_color = "gray"
+        for conj_name, conj_color in CONJUGATE_COLORS.items():
+            if conj_name in conjugate:
+                line_color = conj_color
+                break
 
         # Plot as line with markers
         ax.plot(

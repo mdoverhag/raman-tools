@@ -28,10 +28,10 @@ RAMAN_MOLECULES = {
 # Configuration for conjugate colors in histograms
 CONJUGATE_COLORS = {
     "BSA": "black",
-    "EpCAM": "blue",
-    "HER2": "blue",
-    "TROP2": "blue",
-    "PD-L1": "blue",
+    "EpCAM": "#1f77b4",   # blue
+    "HER2": "#2ca02c",    # green
+    "TROP2": "#9467bd",   # purple
+    "PD-L1": "#17becf",   # teal
     "IgG": "red",
 }
 

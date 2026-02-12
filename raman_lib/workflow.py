@@ -449,34 +449,32 @@ def extract_peak_intensities_from_samples(
     characteristic peak from the baseline-corrected spectrum. Useful for single-plex
     experiments where deconvolution is not needed.
 
+    Each sample becomes its own series, keyed by sample name.
+
     Args:
         molecule: Molecule name (e.g., "MBA", "DTNB", "TFMBA")
         samples: Dictionary of sample data (from load_and_process_sample)
 
     Returns:
-        Dict mapping conjugate names to lists of peak intensities
-        (e.g., {"PD-L1": [120.5, 115.3, ...], "BSA": [...]})
+        Dict mapping sample names to lists of peak intensities
+        (e.g., {"MBA EpCAM 1": [120.5, 115.3, ...], "MBA BSA 1": [...]})
     """
     import numpy as np
     from .molecules import get_peak
 
     peak_wn = get_peak(molecule)
-    conjugate_intensities = {}
+    sample_intensities = {}
 
     for sample_data in samples.values():
-        # Find the conjugate for this molecule in this sample
-        conjugate = None
-        for mol, conj in sample_data["molecule_conjugates"]:
-            if mol == molecule:
-                conjugate = conj
-                break
+        # Check if this molecule is in this sample
+        has_molecule = any(
+            mol == molecule for mol, _ in sample_data["molecule_conjugates"]
+        )
+        if not has_molecule:
+            continue
 
-        if conjugate is None:
-            continue  # This molecule not in this sample
-
-        # Initialize list for this conjugate if needed
-        if conjugate not in conjugate_intensities:
-            conjugate_intensities[conjugate] = []
+        sample_name = sample_data["name"]
+        sample_intensities[sample_name] = []
 
         # Extract peak intensity from each replicate
         for replicate in sample_data["replicates"]:
@@ -488,9 +486,9 @@ def extract_peak_intensities_from_samples(
 
             # Get intensity at peak
             peak_intensity = corrected[peak_idx]
-            conjugate_intensities[conjugate].append(peak_intensity)
+            sample_intensities[sample_name].append(peak_intensity)
 
-    return conjugate_intensities
+    return sample_intensities
 
 
 def calculate_histogram_scales(
