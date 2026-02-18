@@ -5,7 +5,7 @@ These functions encapsulate common multi-step workflows to simplify experiment s
 """
 
 import os
-from .io import load_spectra
+from .io import load_spectra, load_multicolumn_spectra
 from .baseline import apply_baseline_correction
 from .averaging import calculate_average
 from .plotting import (
@@ -124,7 +124,7 @@ def load_and_process_reference(
 
 
 def load_and_process_sample(
-    directory: str,
+    path: str,
     name: str,
     molecule_conjugates: list[tuple[str, str]],
     output_dir: str,
@@ -133,13 +133,14 @@ def load_and_process_sample(
     Load sample spectra, apply ALS baseline correction, average, and plot.
 
     This function encapsulates the complete workflow for processing sample data:
-    1. Load all spectra from the directory
+    1. Load all spectra from the path (directory of 2-column files or single multi-column file)
     2. Apply ALS baseline correction to each spectrum
     3. Calculate the average and standard deviation
     4. Generate and save a sample plot
 
     Args:
-        directory: Path to directory containing sample spectrum files (.txt)
+        path: Path to either a directory of spectrum .txt files or a single
+              multi-column .txt file (wavenumber + N intensity columns)
         name: Display name for the sample (e.g., "Multiplex Ab 1")
         molecule_conjugates: List of (molecule, conjugate) tuples present in sample
                            (e.g., [("MBA", "EpCAM"), ("DTNB", "HER2"), ("TFMBA", "TROP2")])
@@ -160,14 +161,17 @@ def load_and_process_sample(
                 'replicates': list[dict]  # List of individual corrected spectra
             }
     """
-    # Expand tilde in directory path
-    directory = os.path.expanduser(directory)
+    # Expand tilde in path
+    path = os.path.expanduser(path)
 
     print(f"\nProcessing: {name}")
-    print(f"Loading from: {directory}")
+    print(f"Loading from: {path}")
 
-    # Load all spectra from directory
-    spectra = load_spectra(directory)
+    # Load spectra — auto-detect file vs directory
+    if os.path.isfile(path):
+        spectra = load_multicolumn_spectra(path)
+    else:
+        spectra = load_spectra(path)
     print(f"✓ Loaded {len(spectra)} spectra")
 
     # Apply baseline correction to each spectrum

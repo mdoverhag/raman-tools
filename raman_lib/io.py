@@ -119,6 +119,89 @@ def load_spectra(directory: str) -> list[dict]:
     return spectra
 
 
+def load_multicolumn_spectra(filepath: str) -> list[dict]:
+    """
+    Load spectra from a multi-column file.
+
+    Expected format: Tab-delimited text file where:
+    - Column 1: Wavenumber (cm⁻¹)
+    - Columns 2+: Intensity values (one column per replicate)
+
+    Args:
+        filepath: Path to the multi-column spectrum .txt file
+
+    Returns:
+        List of spectrum dictionaries (one per column), sorted by column index.
+        Each dict has 'wavenumbers', 'intensities', and 'filename' keys.
+
+    Raises:
+        FileNotFoundError: If file doesn't exist
+        ValueError: If file format is invalid or no data found
+    """
+    path = Path(filepath)
+
+    if not path.exists():
+        raise FileNotFoundError(f"Spectrum file not found: {path}")
+
+    wavenumbers = []
+    columns = []  # list of lists, one per replicate
+
+    with open(path, "r") as f:
+        for line_num, line in enumerate(f, start=1):
+            line = line.strip()
+            if not line:
+                continue
+
+            parts = line.split("\t")
+            if len(parts) < 3:
+                raise ValueError(
+                    f"Invalid format in {path.name} at line {line_num}: "
+                    f"expected at least 3 columns (wavenumber + 2 intensities), "
+                    f"got {len(parts)}"
+                )
+
+            try:
+                wavenumber = float(parts[0])
+            except ValueError as e:
+                raise ValueError(
+                    f"Invalid wavenumber in {path.name} at line {line_num}: {e}"
+                )
+
+            # Initialize columns on first data line
+            if not columns:
+                columns = [[] for _ in range(len(parts) - 1)]
+            elif len(parts) - 1 != len(columns):
+                raise ValueError(
+                    f"Inconsistent column count in {path.name} at line {line_num}: "
+                    f"expected {len(columns) + 1} columns, got {len(parts)}"
+                )
+
+            wavenumbers.append(wavenumber)
+
+            for i, val in enumerate(parts[1:]):
+                try:
+                    columns[i].append(float(val))
+                except ValueError as e:
+                    raise ValueError(
+                        f"Invalid intensity in {path.name} at line {line_num}, "
+                        f"column {i + 2}: {e}"
+                    )
+
+    if not wavenumbers:
+        raise ValueError(f"No data found in {path}")
+
+    # Build one spectrum dict per column
+    spectra = []
+    for i, intensities in enumerate(columns):
+        spectra.append({
+            "wavenumbers": list(wavenumbers),
+            "intensities": intensities,
+            "filename": f"{path.stem}_{i + 1:03d}",
+        })
+
+    return spectra
+
+
 def create_output_dir(name: str, base_dir: str = ".") -> str:
     """
     Create an output directory with automatic versioning.

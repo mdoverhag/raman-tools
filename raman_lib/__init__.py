@@ -16,6 +16,7 @@ from .molecules import (
 from .io import (
     load_spectrum,
     load_spectra,
+    load_multicolumn_spectra,
     create_output_dir,
     ensure_output_subdir
 )
@@ -76,6 +77,7 @@ __all__ = [
     # I/O
     "load_spectrum",
     "load_spectra",
+    "load_multicolumn_spectra",
     "create_output_dir",
     "ensure_output_subdir",
 
