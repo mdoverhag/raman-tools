@@ -35,7 +35,8 @@ from .normalization import (
 )
 
 from .deconvolution import (
-    deconvolve_nnls
+    deconvolve_nnls,
+    scale_contributions
 )
 
 from .plotting import (
@@ -45,7 +46,8 @@ from .plotting import (
     plot_deconvolution,
     plot_deconvolution_original_scale,
     plot_deconvolution_boxplots,
-    plot_peak_intensity_histogram
+    plot_peak_intensity_histogram,
+    plot_scaled_contributions
 )
 
 from .workflow import (
@@ -90,6 +92,7 @@ __all__ = [
 
     # Deconvolution
     "deconvolve_nnls",
+    "scale_contributions",
 
     # Plotting
     "plot_reference",
@@ -99,6 +102,7 @@ __all__ = [
     "plot_deconvolution_original_scale",
     "plot_deconvolution_boxplots",
     "plot_peak_intensity_histogram",
+    "plot_scaled_contributions",
 
     # Workflow
     "build_reference_dict",

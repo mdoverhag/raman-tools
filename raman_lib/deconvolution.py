@@ -8,6 +8,8 @@ reference spectrum to a multiplex spectrum.
 import numpy as np
 from scipy.optimize import nnls
 
+from .molecules import get_peak
+
 
 def deconvolve_nnls(
     sample_spectrum: dict,
@@ -123,3 +125,69 @@ def deconvolve_nnls(
     }
 
     return result
+
+
+def scale_contributions(deconv_result: dict, references: dict) -> dict:
+    """
+    Scale deconvolution contributions by reference signal strength.
+
+    Different Raman reporters have very different inherent signal strengths.
+    This correction divides each molecule's deconvolved signal by its reference
+    peak intensity, then re-normalizes to get molecular abundance percentages.
+
+    Args:
+        deconv_result: Single replicate deconvolution result from deconvolve_nnls()
+        references: Dict of {(molecule, conjugate): averaged_reference} with
+                    'wavenumbers' and 'corrected_avg' keys (original, non-normalized)
+
+    Returns:
+        Dictionary with:
+        - 'scaled_contributions': {(molecule, conjugate): percentage}
+        - 'reference_peaks': {(molecule, conjugate): peak_intensity}
+        - 'multiplex_peaks': {(molecule, conjugate): peak_intensity}
+        - 'relative_amounts': {(molecule, conjugate): relative_amount}
+    """
+    wavenumbers = np.array(deconv_result["wavenumbers"])
+    norm_factor = deconv_result["norm_factor"]
+
+    reference_peaks = {}
+    multiplex_peaks = {}
+    relative_amounts = {}
+
+    for mol_conj in deconv_result["contributions"]:
+        molecule, conjugate = mol_conj
+        peak_wn = get_peak(molecule)
+        peak_idx = np.argmin(np.abs(wavenumbers - peak_wn))
+
+        # Reference peak: intensity at characteristic wavenumber in averaged corrected reference
+        ref = references[mol_conj]
+        ref_wavenumbers = np.array(ref["wavenumbers"])
+        ref_peak_idx = np.argmin(np.abs(ref_wavenumbers - peak_wn))
+        reference_peaks[mol_conj] = float(np.array(ref["corrected_avg"])[ref_peak_idx])
+
+        # Multiplex peak: intensity at characteristic wavenumber in de-normalized individual contribution
+        contribution_normalized = np.array(deconv_result["individual_contributions"][mol_conj])
+        contribution_original = contribution_normalized * norm_factor
+        multiplex_peaks[mol_conj] = float(contribution_original[peak_idx])
+
+        # Relative amount: multiplex peak / reference peak
+        if reference_peaks[mol_conj] > 0:
+            relative_amounts[mol_conj] = multiplex_peaks[mol_conj] / reference_peaks[mol_conj]
+        else:
+            relative_amounts[mol_conj] = 0.0
+
+    # Normalize relative amounts to percentages
+    total = sum(relative_amounts.values())
+    if total > 0:
+        scaled_contributions = {
+            mc: ra / total * 100 for mc, ra in relative_amounts.items()
+        }
+    else:
+        scaled_contributions = {mc: 0.0 for mc in relative_amounts}
+
+    return {
+        "scaled_contributions": scaled_contributions,
+        "reference_peaks": reference_peaks,
+        "multiplex_peaks": multiplex_peaks,
+        "relative_amounts": relative_amounts,
+    }

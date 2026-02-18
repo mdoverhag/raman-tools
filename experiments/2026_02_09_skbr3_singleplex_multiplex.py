@@ -8,14 +8,17 @@ Description: Singleplex peak intensity analysis and multiplex deconvolution
 """
 
 import os
+import numpy as np
 from raman_lib import (
     create_output_dir,
     build_reference_dict,
     load_and_process_reference,
     load_and_process_sample,
     normalize_and_deconvolve_samples,
+    scale_contributions,
     plot_peak_histograms_from_samples,
     plot_peak_histograms_from_deconv,
+    plot_scaled_contributions,
     print_experiment_summary,
 )
 
@@ -406,7 +409,49 @@ deconv_results = normalize_and_deconvolve_samples(
 
 
 # ============================================================
-# Step 5: Multiplex peak intensity histograms
+# Step 5: Scaled contributions (signal strength correction)
+# ============================================================
+
+print("\n" + "=" * 60)
+print("SCALED CONTRIBUTIONS")
+print("=" * 60)
+
+for sample_key, replicate_results in deconv_results.items():
+    sample_mol_conj = multiplex_samples[sample_key]["molecule_conjugates"]
+    sample_refs = {mc: references[mc] for mc in sample_mol_conj}
+    scaled_results = [scale_contributions(r, sample_refs) for r in replicate_results]
+
+    # Average de-normalized contributions across replicates for visualization
+    avg_contributions = {}
+    for mc in sample_mol_conj:
+        contribs = [np.array(r["individual_contributions"][mc]) * r["norm_factor"]
+                     for r in replicate_results]
+        avg_contributions[mc] = np.mean(contribs, axis=0)
+
+    # Aggregate scaling results across replicates
+    mx_mean = {mc: np.mean([r["multiplex_peaks"][mc] for r in scaled_results]) for mc in sample_mol_conj}
+    ratio_mean = {mc: np.mean([r["relative_amounts"][mc] for r in scaled_results]) for mc in sample_mol_conj}
+    scaled_mean = {mc: np.mean([r["scaled_contributions"][mc] for r in scaled_results]) for mc in sample_mol_conj}
+    scaled_std = {mc: np.std([r["scaled_contributions"][mc] for r in scaled_results]) for mc in sample_mol_conj}
+
+    plot_scaled_contributions(
+        sample_name=multiplex_samples[sample_key]["name"],
+        references=sample_refs,
+        deconv_contributions=avg_contributions,
+        wavenumbers=replicate_results[0]["wavenumbers"],
+        reference_peaks=scaled_results[0]["reference_peaks"],
+        multiplex_peaks=mx_mean,
+        relative_amounts=ratio_mean,
+        scaled_contributions=scaled_mean,
+        wavenumber_range=WAVENUMBER_RANGE,
+        output_path=os.path.join(output, f"scaled_contributions_{sample_key}.png"),
+        scaled_std=scaled_std,
+    )
+    print(f"  Saved: scaled_contributions_{sample_key}.png")
+
+
+# ============================================================
+# Step 6: Multiplex peak intensity histograms
 # ============================================================
 
 print("\n" + "=" * 60)

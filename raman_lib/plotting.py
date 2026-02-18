@@ -662,6 +662,139 @@ def plot_deconvolution_boxplots(
     plt.close()
 
 
+def plot_scaled_contributions(
+    sample_name: str,
+    references: dict,
+    deconv_contributions: dict,
+    wavenumbers: list,
+    reference_peaks: dict,
+    multiplex_peaks: dict,
+    relative_amounts: dict,
+    scaled_contributions: dict,
+    wavenumber_range: tuple[float, float],
+    output_path: str,
+    scaled_std: dict | None = None,
+) -> None:
+    """
+    Create 4-panel plot walking through the signal strength correction math.
+
+    Layout (2x2):
+    - Top-left: Reference spectra with horizontal lines at peak intensities
+    - Top-right: Deconvolved contributions with horizontal lines at peak intensities
+    - Bottom-left: Ratio bars (multiplex peak / reference peak)
+    - Bottom-right: Scaled percentages (ratios normalized to 100%)
+
+    Args:
+        sample_name: Name of the sample (for title)
+        references: {(molecule, conjugate): ref_dict} with 'wavenumbers' and 'corrected_avg'
+        deconv_contributions: {(molecule, conjugate): array} de-normalized individual contributions
+        wavenumbers: Shared wavenumber axis for the contributions
+        reference_peaks: {(molecule, conjugate): peak_intensity} from references
+        multiplex_peaks: {(molecule, conjugate): peak_intensity} from deconvolved contributions
+        relative_amounts: {(molecule, conjugate): ratio} multiplex / reference
+        scaled_contributions: {(molecule, conjugate): percentage} after re-normalization
+        wavenumber_range: Tuple of (min_wn, max_wn) for x-axis limits on spectral plots
+        output_path: Path where the plot will be saved
+        scaled_std: Optional {(molecule, conjugate): std} for error bars on final panel
+    """
+    import matplotlib.gridspec as gridspec
+
+    mol_conjs = sorted(scaled_contributions.keys())
+
+    fig = plt.figure(figsize=(14, 14))
+    gs = gridspec.GridSpec(3, 1, height_ratios=[3, 3, 2], hspace=0.35)
+    ax1 = fig.add_subplot(gs[0])
+    ax2 = fig.add_subplot(gs[1])
+    ax_text = fig.add_subplot(gs[2])
+
+    wn_arr = np.array(wavenumbers)
+
+    # ── Panel 1: Reference spectra ──
+    for mol_conj in mol_conjs:
+        molecule, conjugate = mol_conj
+        color = get_color(molecule)
+        ref = references[mol_conj]
+        ref_wn = np.array(ref["wavenumbers"])
+        ref_corrected = np.array(ref["corrected_avg"])
+        peak_wn = get_peak(molecule)
+        peak_val = reference_peaks[mol_conj]
+
+        ax1.plot(ref_wn, ref_corrected, color=color, linewidth=2,
+                 label=f"{molecule}-{conjugate} (peak: {peak_val:.0f})")
+        ax1.axvline(x=peak_wn, color=color, linestyle="--", linewidth=1, alpha=0.5)
+        ax1.axhline(y=peak_val, color=color, linestyle=":", linewidth=1, alpha=0.5)
+
+    ax1.set_xlim(*wavenumber_range)
+    ax1.set_xlabel("Wavenumber (cm\u207b\u00b9)")
+    ax1.set_ylabel("Intensity (a.u.)")
+    ax1.set_title("1. Reference Spectra (averaged)", fontsize=12, fontweight="bold")
+    ax1.legend(loc="upper right")
+    ax1.grid(True, alpha=0.3)
+
+    # ── Panel 2: Deconvolved contributions ──
+    for mol_conj in mol_conjs:
+        molecule, conjugate = mol_conj
+        color = get_color(molecule)
+        contrib = np.array(deconv_contributions[mol_conj])
+        peak_wn = get_peak(molecule)
+        peak_val = multiplex_peaks[mol_conj]
+
+        ax2.plot(wn_arr, contrib, color=color, linewidth=2,
+                 label=f"{molecule}-{conjugate} (peak: {peak_val:.0f})")
+        ax2.axvline(x=peak_wn, color=color, linestyle="--", linewidth=1, alpha=0.5)
+        ax2.axhline(y=peak_val, color=color, linestyle=":", linewidth=1, alpha=0.5)
+
+    ax2.set_xlim(*wavenumber_range)
+    ax2.set_xlabel("Wavenumber (cm\u207b\u00b9)")
+    ax2.set_ylabel("Intensity (a.u.)")
+    ax2.set_title("2. Deconvolved Contributions (original scale)", fontsize=12, fontweight="bold")
+    ax2.legend(loc="upper right")
+    ax2.grid(True, alpha=0.3)
+
+    # ── Panel 3: Math summary as text ──
+    ax_text.axis("off")
+    ax_text.set_title("3. Signal Strength Correction", fontsize=12, fontweight="bold")
+
+    # Build text lines
+    total_ratio = sum(relative_amounts[mc] for mc in mol_conjs)
+    lines = []
+    lines.append("Molecule            Multiplex Peak  \u00f7  Reference Peak  =  Ratio      \u2192  Scaled")
+    lines.append("\u2500" * 90)
+    for mc in mol_conjs:
+        molecule, conjugate = mc
+        mx = multiplex_peaks[mc]
+        ref = reference_peaks[mc]
+        ratio = relative_amounts[mc]
+        pct = scaled_contributions[mc]
+        std_str = ""
+        if scaled_std:
+            std_str = f" \u00b1 {scaled_std[mc]:.1f}%"
+        label = f"{molecule}-{conjugate}"
+        lines.append(
+            f"{label:<20s}{mx:>10.0f}      \u00f7  {ref:>10.0f}      =  {ratio:.4f}     \u2192  {pct:.1f}%{std_str}"
+        )
+    lines.append("\u2500" * 90)
+    lines.append(
+        f"{'Sum':<20s}{'':<10s}{'':>16s}{'':>8s}{total_ratio:.4f}     \u2192  100.0%"
+    )
+
+    ax_text.text(
+        0.5, 0.5, "\n".join(lines),
+        transform=ax_text.transAxes,
+        fontsize=11, fontfamily="monospace",
+        verticalalignment="center", horizontalalignment="center",
+        bbox=dict(boxstyle="round,pad=0.8", facecolor="lightyellow", alpha=0.8),
+    )
+
+    fig.suptitle(
+        f"Signal Strength Correction \u2014 {sample_name}",
+        fontsize=14, fontweight="bold",
+    )
+
+    plt.savefig(output_path, dpi=300, bbox_inches="tight")
+    plt.close()
+
+
 def plot_peak_intensity_histogram(
     molecule: str,
     conjugate_intensities: dict[str, list[float]],
