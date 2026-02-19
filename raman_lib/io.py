@@ -153,10 +153,10 @@ def load_multicolumn_spectra(filepath: str) -> list[dict]:
                 continue
 
             parts = line.split("\t")
-            if len(parts) < 3:
+            if len(parts) < 2:
                 raise ValueError(
                     f"Invalid format in {path.name} at line {line_num}: "
-                    f"expected at least 3 columns (wavenumber + 2 intensities), "
+                    f"expected at least 2 columns (wavenumber + intensity), "
                     f"got {len(parts)}"
                 )
 
