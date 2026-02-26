@@ -188,12 +188,16 @@ print("\n" + "=" * 60)
 print("MCF7 PEAK INTENSITY HISTOGRAMS")
 print("=" * 60)
 
-ALL_KEYS = list(mcf7_samples.keys())
-
 plot_peak_histograms_from_samples(
     mcf7_samples,
     groups={
-        "all": ALL_KEYS,
+        "all": [
+            "MBA_EpCAM_1", "MBA_EpCAM_2", "MBA_EpCAM_3",
+            "MBA_HER2_1", "MBA_HER2_2", "MBA_HER2_3",
+            "MBA_TROP2_1", "MBA_TROP2_2", "MBA_TROP2_3",
+            "MBA_IgG_1", "MBA_IgG_2", "MBA_IgG_3",
+            "MBA_BSA_1", "MBA_BSA_2", "MBA_BSA_3",
+        ],
         "epcam": [
             "MBA_EpCAM_1", "MBA_EpCAM_2", "MBA_EpCAM_3",
             "MBA_IgG_1", "MBA_IgG_2", "MBA_IgG_3",

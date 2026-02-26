@@ -847,11 +847,8 @@ def plot_peak_intensity_histogram(
         max_intensity = max(all_intensities)
     bins = np.arange(min_intensity, max_intensity + bin_size, bin_size)
 
-    # Sort conjugates alphabetically for consistent ordering
-    sorted_conjugates = sorted(conjugate_intensities.keys())
-
-    # Plot histogram for each conjugate
-    for conjugate in sorted_conjugates:
+    # Plot histogram for each conjugate (preserves input order)
+    for conjugate in conjugate_intensities:
         intensities = conjugate_intensities[conjugate]
         n_samples = len(intensities)
 
