@@ -551,6 +551,7 @@ def plot_peak_histograms(
     x_max: float | None = None,
     y_max: int | None = None,
     x_label: str = "Intensity (a.u.)",
+    title_prefix: str = "",
 ) -> None:
     """
     Plot peak intensity histograms from pre-extracted intensity data.
@@ -566,6 +567,7 @@ def plot_peak_histograms(
         x_max: X-axis maximum. If None, calculated from data.
         y_max: Y-axis maximum. If None, calculated from data.
         x_label: Label for x-axis (default: "Peak Intensity (a.u.)")
+        title_prefix: Optional prefix for plot titles (e.g., "MCF7")
 
     Output files:
         peak_intensity_histogram_{prefix}_{molecule}.png for each group/molecule
@@ -599,6 +601,7 @@ def plot_peak_histograms(
                 x_max=x_max,
                 y_max=y_max,
                 x_label=x_label,
+                title_prefix=title_prefix,
             )
             print(f"  ✓ Saved: {filename}")
 
@@ -610,6 +613,7 @@ def plot_peak_histograms_from_deconv(
     bin_size: int = 25,
     x_max: float | None = None,
     y_max: int | None = None,
+    title_prefix: str = "",
 ) -> None:
     """
     Plot peak intensity histograms for all molecules from deconvolution results.
@@ -626,6 +630,7 @@ def plot_peak_histograms_from_deconv(
         bin_size: Bin width for histograms (default 25)
         x_max: X-axis maximum. If None, calculated from data.
         y_max: Y-axis maximum. If None, calculated from data.
+        title_prefix: Optional prefix for plot titles (e.g., "MCF7")
     """
     from .molecules import get_all_molecules
 
@@ -647,6 +652,7 @@ def plot_peak_histograms_from_deconv(
         x_max,
         y_max,
         x_label="Intensity (deconvoluted, de-normalized)",
+        title_prefix=title_prefix,
     )
 
 
@@ -658,6 +664,7 @@ def plot_peak_histograms_from_samples(
     bin_size: int = 25,
     x_max: float | None = None,
     y_max: int | None = None,
+    title_prefix: str = "",
 ) -> None:
     """
     Plot peak intensity histograms for molecules directly from sample replicates.
@@ -677,6 +684,7 @@ def plot_peak_histograms_from_samples(
         bin_size: Bin width for histograms (default 25)
         x_max: X-axis maximum. If None, calculated from data.
         y_max: Y-axis maximum. If None, calculated from data.
+        title_prefix: Optional prefix for plot titles (e.g., "MCF7")
     """
     # Infer molecules from samples if not provided
     if molecules is None:
@@ -699,6 +707,7 @@ def plot_peak_histograms_from_samples(
         x_max,
         y_max,
         x_label="Intensity (baseline-corrected)",
+        title_prefix=title_prefix,
     )
 
 
