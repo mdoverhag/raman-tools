@@ -12,6 +12,7 @@ from raman_lib import (
     create_output_dir,
     load_and_process_sample,
     plot_peak_histograms_from_samples,
+    experiment_summary,
 )
 
 # Data directory
@@ -20,8 +21,11 @@ DATA_DIR = os.path.expanduser(
     "2026-02-12 SKBR3 MBA-EpCAM MBA-HER2 MBA-TROP2 Ag-coated AuNPs"
 )
 
+# Experiment name (derived from script filename)
+experiment = os.path.splitext(os.path.basename(__file__))[0]
+
 # Create output directory (auto-versioned) in results/
-output = create_output_dir("2026-02-12-skbr3-mba-singleplex", base_dir="results")
+output = create_output_dir(experiment, base_dir="results")
 print(f"Output directory: {output}\n")
 
 
@@ -229,14 +233,8 @@ plot_peak_histograms_from_samples(
 # Summary
 # ============================================================
 
-print("\n" + "=" * 60)
-print("EXPERIMENT COMPLETE")
-print("=" * 60)
-
-print(f"\nOutput directory: {output}")
-print(f"\nSKBR3 samples processed:")
-for sample_key, data in sorted(skbr3_samples.items(), key=lambda x: x[1]["name"]):
-    print(f"  {data['name']}: {data['count']} spectra")
-print(f"\nTag samples processed:")
-for sample_key, data in sorted(tag_samples.items(), key=lambda x: x[1]["name"]):
-    print(f"  {data['name']}: {data['count']} spectra")
+experiment_summary(
+    experiment,
+    samples={**skbr3_samples, **tag_samples},
+    output_dir=output,
+)

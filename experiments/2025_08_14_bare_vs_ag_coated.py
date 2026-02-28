@@ -13,7 +13,7 @@ from raman_lib import (
     load_and_process_sample,
     normalize_and_deconvolve_samples,
     plot_peak_histograms_from_deconv,
-    print_experiment_summary,
+    experiment_summary,
 )
 
 # Data directories
@@ -27,8 +27,11 @@ SAMPLE_DIR = os.path.expanduser(
 # Wavenumber range for normalization and deconvolution
 WAVENUMBER_RANGE = (1000, 1500)
 
+# Experiment name (derived from script filename)
+experiment = os.path.splitext(os.path.basename(__file__))[0]
+
 # Create output directory (auto-versioned) in results/
-output = create_output_dir("2025-08-14-bare-vs-ag-coated", base_dir="results")
+output = create_output_dir(experiment, base_dir="results")
 print(f"Output directory: {output}\n")
 
 # ============================================================
@@ -266,13 +269,10 @@ plot_peak_histograms_from_deconv(
 # Summary
 # ============================================================
 
-print("\n" + "=" * 60)
-print("EXPERIMENT COMPLETE")
-print("=" * 60)
-
-print_experiment_summary(
+experiment_summary(
+    experiment,
+    samples=samples,
     output_dir=output,
     references=references,
-    samples=samples,
     deconv_results=deconv_results,
 )

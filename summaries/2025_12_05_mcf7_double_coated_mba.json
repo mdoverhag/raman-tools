@@ -1,0 +1,36 @@
+[
+  {
+    "sample_name": "MCF7 EpCAM 1",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "EpCAM"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 560.6,
+        "std": 65.6,
+        "wavenumber": 1078
+      }
+    }
+  },
+  {
+    "sample_name": "MCF7 BSA 1",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "BSA"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 323.0,
+        "std": 138.7,
+        "wavenumber": 1078
+      }
+    }
+  }
+]

@@ -1,0 +1,479 @@
+[
+  {
+    "sample_name": "Multi Ab 1",
+    "count": 100,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "EpCAM"
+      ],
+      [
+        "DTNB",
+        "HER2"
+      ],
+      [
+        "TFMBA",
+        "TROP2"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 128.6,
+        "std": 27.5,
+        "wavenumber": 1078
+      },
+      "DTNB": {
+        "mean": 204.7,
+        "std": 41.2,
+        "wavenumber": 1335
+      },
+      "TFMBA": {
+        "mean": 130.7,
+        "std": 20.7,
+        "wavenumber": 1377
+      }
+    },
+    "deconvolution": {
+      "MBA-EpCAM": {
+        "mean": 20.2,
+        "std": 5.4
+      },
+      "DTNB-HER2": {
+        "mean": 52.4,
+        "std": 6.1
+      },
+      "TFMBA-TROP2": {
+        "mean": 27.4,
+        "std": 3.7
+      },
+      "r_squared": {
+        "mean": 0.852,
+        "std": 0.06
+      }
+    }
+  },
+  {
+    "sample_name": "Multi Ab 2",
+    "count": 100,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "EpCAM"
+      ],
+      [
+        "DTNB",
+        "HER2"
+      ],
+      [
+        "TFMBA",
+        "TROP2"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 184.3,
+        "std": 36.5,
+        "wavenumber": 1078
+      },
+      "DTNB": {
+        "mean": 302.6,
+        "std": 70.8,
+        "wavenumber": 1335
+      },
+      "TFMBA": {
+        "mean": 129.9,
+        "std": 20.5,
+        "wavenumber": 1377
+      }
+    },
+    "deconvolution": {
+      "MBA-EpCAM": {
+        "mean": 21.2,
+        "std": 5.7
+      },
+      "DTNB-HER2": {
+        "mean": 60.6,
+        "std": 6.2
+      },
+      "TFMBA-TROP2": {
+        "mean": 18.1,
+        "std": 2.2
+      },
+      "r_squared": {
+        "mean": 0.842,
+        "std": 0.022
+      }
+    }
+  },
+  {
+    "sample_name": "Multi Ab 3",
+    "count": 100,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "EpCAM"
+      ],
+      [
+        "DTNB",
+        "HER2"
+      ],
+      [
+        "TFMBA",
+        "TROP2"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 114.8,
+        "std": 18.3,
+        "wavenumber": 1078
+      },
+      "DTNB": {
+        "mean": 303.7,
+        "std": 66.7,
+        "wavenumber": 1335
+      },
+      "TFMBA": {
+        "mean": 142.4,
+        "std": 21.8,
+        "wavenumber": 1377
+      }
+    },
+    "deconvolution": {
+      "MBA-EpCAM": {
+        "mean": 8.4,
+        "std": 4.9
+      },
+      "DTNB-HER2": {
+        "mean": 65.8,
+        "std": 5.8
+      },
+      "TFMBA-TROP2": {
+        "mean": 25.9,
+        "std": 2.9
+      },
+      "r_squared": {
+        "mean": 0.827,
+        "std": 0.019
+      }
+    }
+  },
+  {
+    "sample_name": "Multi BSA 1",
+    "count": 100,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "BSA"
+      ],
+      [
+        "DTNB",
+        "BSA"
+      ],
+      [
+        "TFMBA",
+        "BSA"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 39.4,
+        "std": 7.8,
+        "wavenumber": 1078
+      },
+      "DTNB": {
+        "mean": 47.6,
+        "std": 10.7,
+        "wavenumber": 1335
+      },
+      "TFMBA": {
+        "mean": 42.8,
+        "std": 5.4,
+        "wavenumber": 1377
+      }
+    },
+    "deconvolution": {
+      "MBA-BSA": {
+        "mean": 25.1,
+        "std": 6.3
+      },
+      "DTNB-BSA": {
+        "mean": 39.9,
+        "std": 8.1
+      },
+      "TFMBA-BSA": {
+        "mean": 35.0,
+        "std": 6.7
+      },
+      "r_squared": {
+        "mean": 0.78,
+        "std": 0.018
+      }
+    }
+  },
+  {
+    "sample_name": "Multi BSA 2",
+    "count": 100,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "BSA"
+      ],
+      [
+        "DTNB",
+        "BSA"
+      ],
+      [
+        "TFMBA",
+        "BSA"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 46.7,
+        "std": 11.5,
+        "wavenumber": 1078
+      },
+      "DTNB": {
+        "mean": 64.4,
+        "std": 26.1,
+        "wavenumber": 1335
+      },
+      "TFMBA": {
+        "mean": 41.1,
+        "std": 7.6,
+        "wavenumber": 1377
+      }
+    },
+    "deconvolution": {
+      "MBA-BSA": {
+        "mean": 25.3,
+        "std": 7.7
+      },
+      "DTNB-BSA": {
+        "mean": 48.9,
+        "std": 10.0
+      },
+      "TFMBA-BSA": {
+        "mean": 25.8,
+        "std": 6.3
+      },
+      "r_squared": {
+        "mean": 0.774,
+        "std": 0.021
+      }
+    }
+  },
+  {
+    "sample_name": "Multi BSA 3",
+    "count": 100,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "BSA"
+      ],
+      [
+        "DTNB",
+        "BSA"
+      ],
+      [
+        "TFMBA",
+        "BSA"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 58.8,
+        "std": 9.8,
+        "wavenumber": 1078
+      },
+      "DTNB": {
+        "mean": 62.0,
+        "std": 9.6,
+        "wavenumber": 1335
+      },
+      "TFMBA": {
+        "mean": 46.1,
+        "std": 12.3,
+        "wavenumber": 1377
+      }
+    },
+    "deconvolution": {
+      "MBA-BSA": {
+        "mean": 32.3,
+        "std": 6.5
+      },
+      "DTNB-BSA": {
+        "mean": 43.0,
+        "std": 7.7
+      },
+      "TFMBA-BSA": {
+        "mean": 24.7,
+        "std": 7.9
+      },
+      "r_squared": {
+        "mean": 0.796,
+        "std": 0.018
+      }
+    }
+  },
+  {
+    "sample_name": "Multi IgG 1",
+    "count": 100,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "IgG"
+      ],
+      [
+        "DTNB",
+        "IgG"
+      ],
+      [
+        "TFMBA",
+        "IgG"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 77.4,
+        "std": 68.1,
+        "wavenumber": 1078
+      },
+      "DTNB": {
+        "mean": 118.8,
+        "std": 25.1,
+        "wavenumber": 1335
+      },
+      "TFMBA": {
+        "mean": 63.4,
+        "std": 15.3,
+        "wavenumber": 1377
+      }
+    },
+    "deconvolution": {
+      "MBA-IgG": {
+        "mean": 18.2,
+        "std": 17.2
+      },
+      "DTNB-IgG": {
+        "mean": 61.7,
+        "std": 12.9
+      },
+      "TFMBA-IgG": {
+        "mean": 20.1,
+        "std": 7.2
+      },
+      "r_squared": {
+        "mean": 0.763,
+        "std": 0.042
+      }
+    }
+  },
+  {
+    "sample_name": "Multi IgG 2",
+    "count": 100,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "IgG"
+      ],
+      [
+        "DTNB",
+        "IgG"
+      ],
+      [
+        "TFMBA",
+        "IgG"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 94.5,
+        "std": 29.4,
+        "wavenumber": 1078
+      },
+      "DTNB": {
+        "mean": 128.5,
+        "std": 34.6,
+        "wavenumber": 1335
+      },
+      "TFMBA": {
+        "mean": 55.3,
+        "std": 11.6,
+        "wavenumber": 1377
+      }
+    },
+    "deconvolution": {
+      "MBA-IgG": {
+        "mean": 28.4,
+        "std": 10.8
+      },
+      "DTNB-IgG": {
+        "mean": 60.6,
+        "std": 10.1
+      },
+      "TFMBA-IgG": {
+        "mean": 11.0,
+        "std": 4.9
+      },
+      "r_squared": {
+        "mean": 0.781,
+        "std": 0.029
+      }
+    }
+  },
+  {
+    "sample_name": "Multi IgG 3",
+    "count": 807,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "IgG"
+      ],
+      [
+        "DTNB",
+        "IgG"
+      ],
+      [
+        "TFMBA",
+        "IgG"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 98.7,
+        "std": 55.0,
+        "wavenumber": 1078
+      },
+      "DTNB": {
+        "mean": 161.6,
+        "std": 102.5,
+        "wavenumber": 1335
+      },
+      "TFMBA": {
+        "mean": 83.9,
+        "std": 43.0,
+        "wavenumber": 1377
+      }
+    },
+    "deconvolution": {
+      "MBA-IgG": {
+        "mean": 22.3,
+        "std": 12.6
+      },
+      "DTNB-IgG": {
+        "mean": 56.7,
+        "std": 14.2
+      },
+      "TFMBA-IgG": {
+        "mean": 21.0,
+        "std": 10.0
+      },
+      "r_squared": {
+        "mean": 0.76,
+        "std": 0.039
+      }
+    }
+  }
+]

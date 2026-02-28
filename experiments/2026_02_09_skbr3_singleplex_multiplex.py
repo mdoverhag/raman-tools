@@ -19,7 +19,7 @@ from raman_lib import (
     plot_peak_histograms_from_samples,
     plot_peak_histograms_from_deconv,
     plot_scaled_contributions,
-    print_experiment_summary,
+    experiment_summary,
 )
 
 # Data directories
@@ -30,8 +30,11 @@ DATA_DIR = os.path.expanduser(
 REFERENCE_DIR = f"{DATA_DIR}/Ag-coated AuNP- Ab tags only"
 WAVENUMBER_RANGE = (1000, 1500)
 
+# Experiment name (derived from script filename)
+experiment = os.path.splitext(os.path.basename(__file__))[0]
+
 # Create output directory (auto-versioned) in results/
-output = create_output_dir("2026-02-09-skbr3-singleplex-multiplex", base_dir="results")
+output = create_output_dir(experiment, base_dir="results")
 print(f"Output directory: {output}\n")
 
 
@@ -476,13 +479,10 @@ plot_peak_histograms_from_deconv(
 # Summary
 # ============================================================
 
-print("\n" + "=" * 60)
-print("EXPERIMENT COMPLETE")
-print("=" * 60)
-
-print_experiment_summary(
+experiment_summary(
+    experiment,
+    samples=multiplex_samples,
     output_dir=output,
     references=references,
-    samples=multiplex_samples,
     deconv_results=deconv_results,
 )

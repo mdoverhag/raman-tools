@@ -51,6 +51,10 @@ from .plotting import (
     plot_scaled_contributions
 )
 
+from .summary import (
+    experiment_summary,
+)
+
 from .workflow import (
     build_reference_dict,
     load_and_process_reference,
@@ -61,7 +65,6 @@ from .workflow import (
     plot_peak_histograms,
     plot_peak_histograms_from_deconv,
     plot_peak_histograms_from_samples,
-    print_experiment_summary
 )
 
 __version__ = "0.1.0"
@@ -106,6 +109,9 @@ __all__ = [
     "plot_peak_intensity_histogram",
     "plot_scaled_contributions",
 
+    # Summary
+    "experiment_summary",
+
     # Workflow
     "build_reference_dict",
     "load_and_process_reference",
@@ -116,5 +122,4 @@ __all__ = [
     "plot_peak_histograms",
     "plot_peak_histograms_from_deconv",
     "plot_peak_histograms_from_samples",
-    "print_experiment_summary",
 ]

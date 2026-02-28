@@ -1,0 +1,206 @@
+[
+  {
+    "sample_name": "MBA EpCAM 1",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "EpCAM"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 858.1,
+        "std": 91.6,
+        "wavenumber": 1078
+      }
+    }
+  },
+  {
+    "sample_name": "MBA EpCAM 2",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "EpCAM"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 932.3,
+        "std": 138.8,
+        "wavenumber": 1078
+      }
+    }
+  },
+  {
+    "sample_name": "MBA EpCAM 3",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "EpCAM"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 971.8,
+        "std": 93.8,
+        "wavenumber": 1078
+      }
+    }
+  },
+  {
+    "sample_name": "MBA BSA 1",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "BSA"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 209.7,
+        "std": 14.2,
+        "wavenumber": 1078
+      }
+    }
+  },
+  {
+    "sample_name": "MBA BSA 2",
+    "count": 1,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "BSA"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 931.2,
+        "std": NaN,
+        "wavenumber": 1078
+      }
+    }
+  },
+  {
+    "sample_name": "MBA BSA 3",
+    "count": 1,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "BSA"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 180.2,
+        "std": NaN,
+        "wavenumber": 1078
+      }
+    }
+  },
+  {
+    "sample_name": "MBA IgG 1",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "IgG"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 257.2,
+        "std": 26.7,
+        "wavenumber": 1078
+      }
+    }
+  },
+  {
+    "sample_name": "MBA IgG 2",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "IgG"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 308.9,
+        "std": 63.6,
+        "wavenumber": 1078
+      }
+    }
+  },
+  {
+    "sample_name": "MBA IgG 3",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "IgG"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 284.7,
+        "std": 99.9,
+        "wavenumber": 1078
+      }
+    }
+  },
+  {
+    "sample_name": "MBA EpCAM tags",
+    "count": 15,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "EpCAM"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 13945.7,
+        "std": 256.7,
+        "wavenumber": 1078
+      }
+    }
+  },
+  {
+    "sample_name": "MBA BSA tags",
+    "count": 15,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "BSA"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 17527.9,
+        "std": 231.6,
+        "wavenumber": 1078
+      }
+    }
+  },
+  {
+    "sample_name": "MBA IgG tags",
+    "count": 15,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "IgG"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 12762.4,
+        "std": 254.8,
+        "wavenumber": 1078
+      }
+    }
+  }
+]

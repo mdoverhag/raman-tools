@@ -1,0 +1,121 @@
+[
+  {
+    "sample_name": "MDA-231 PD-L1 1",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "TFMBA",
+        "PD-L1"
+      ]
+    ],
+    "peak_intensities": {
+      "TFMBA": {
+        "mean": 9.8,
+        "std": 3.9,
+        "wavenumber": 1377
+      }
+    }
+  },
+  {
+    "sample_name": "MDA-231 PD-L1 2",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "TFMBA",
+        "PD-L1"
+      ]
+    ],
+    "peak_intensities": {
+      "TFMBA": {
+        "mean": 7.2,
+        "std": 2.6,
+        "wavenumber": 1377
+      }
+    }
+  },
+  {
+    "sample_name": "MDA-231 BSA 1",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "TFMBA",
+        "BSA"
+      ]
+    ],
+    "peak_intensities": {
+      "TFMBA": {
+        "mean": 9.2,
+        "std": 2.6,
+        "wavenumber": 1377
+      }
+    }
+  },
+  {
+    "sample_name": "MDA-231 IgG 1",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "TFMBA",
+        "IgG"
+      ]
+    ],
+    "peak_intensities": {
+      "TFMBA": {
+        "mean": 8.4,
+        "std": 2.8,
+        "wavenumber": 1377
+      }
+    }
+  },
+  {
+    "sample_name": "MDA-468 PD-L1 1",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "TFMBA",
+        "PD-L1"
+      ]
+    ],
+    "peak_intensities": {
+      "TFMBA": {
+        "mean": 6.4,
+        "std": 2.8,
+        "wavenumber": 1377
+      }
+    }
+  },
+  {
+    "sample_name": "MDA-468 BSA 1",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "TFMBA",
+        "BSA"
+      ]
+    ],
+    "peak_intensities": {
+      "TFMBA": {
+        "mean": 5.5,
+        "std": 3.0,
+        "wavenumber": 1377
+      }
+    }
+  },
+  {
+    "sample_name": "MDA-468 IgG 1",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "TFMBA",
+        "IgG"
+      ]
+    ],
+    "peak_intensities": {
+      "TFMBA": {
+        "mean": 5.3,
+        "std": 2.8,
+        "wavenumber": 1377
+      }
+    }
+  }
+]
