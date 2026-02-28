@@ -52,8 +52,7 @@ from .plotting import (
 )
 
 from .summary import (
-    build_sample_record,
-    write_summary,
+    experiment_summary,
 )
 
 from .workflow import (
@@ -112,8 +111,7 @@ __all__ = [
     "plot_scaled_contributions",
 
     # Summary
-    "build_sample_record",
-    "write_summary",
+    "experiment_summary",
 
     # Workflow
     "build_reference_dict",

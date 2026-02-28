@@ -1,7 +1,5 @@
 [
   {
-    "action": "load_sample",
-    "experiment": "2026_02_25_mcf7_mba_fixed_cells",
     "sample_name": "MBA EpCAM 1",
     "count": 50,
     "molecule_conjugates": [
@@ -19,8 +17,6 @@
     }
   },
   {
-    "action": "load_sample",
-    "experiment": "2026_02_25_mcf7_mba_fixed_cells",
     "sample_name": "MBA EpCAM 2",
     "count": 50,
     "molecule_conjugates": [
@@ -38,8 +34,6 @@
     }
   },
   {
-    "action": "load_sample",
-    "experiment": "2026_02_25_mcf7_mba_fixed_cells",
     "sample_name": "MBA EpCAM 3",
     "count": 50,
     "molecule_conjugates": [
@@ -57,8 +51,6 @@
     }
   },
   {
-    "action": "load_sample",
-    "experiment": "2026_02_25_mcf7_mba_fixed_cells",
     "sample_name": "MBA HER2 1",
     "count": 50,
     "molecule_conjugates": [
@@ -76,8 +68,6 @@
     }
   },
   {
-    "action": "load_sample",
-    "experiment": "2026_02_25_mcf7_mba_fixed_cells",
     "sample_name": "MBA HER2 2",
     "count": 50,
     "molecule_conjugates": [
@@ -95,8 +85,6 @@
     }
   },
   {
-    "action": "load_sample",
-    "experiment": "2026_02_25_mcf7_mba_fixed_cells",
     "sample_name": "MBA HER2 3",
     "count": 50,
     "molecule_conjugates": [
@@ -114,8 +102,6 @@
     }
   },
   {
-    "action": "load_sample",
-    "experiment": "2026_02_25_mcf7_mba_fixed_cells",
     "sample_name": "MBA TROP2 1",
     "count": 50,
     "molecule_conjugates": [
@@ -133,8 +119,6 @@
     }
   },
   {
-    "action": "load_sample",
-    "experiment": "2026_02_25_mcf7_mba_fixed_cells",
     "sample_name": "MBA TROP2 2",
     "count": 50,
     "molecule_conjugates": [
@@ -152,8 +136,6 @@
     }
   },
   {
-    "action": "load_sample",
-    "experiment": "2026_02_25_mcf7_mba_fixed_cells",
     "sample_name": "MBA TROP2 3",
     "count": 50,
     "molecule_conjugates": [
@@ -171,8 +153,6 @@
     }
   },
   {
-    "action": "load_sample",
-    "experiment": "2026_02_25_mcf7_mba_fixed_cells",
     "sample_name": "MBA BSA 1",
     "count": 50,
     "molecule_conjugates": [
@@ -190,8 +170,6 @@
     }
   },
   {
-    "action": "load_sample",
-    "experiment": "2026_02_25_mcf7_mba_fixed_cells",
     "sample_name": "MBA BSA 2",
     "count": 50,
     "molecule_conjugates": [
@@ -209,8 +187,6 @@
     }
   },
   {
-    "action": "load_sample",
-    "experiment": "2026_02_25_mcf7_mba_fixed_cells",
     "sample_name": "MBA BSA 3",
     "count": 50,
     "molecule_conjugates": [
@@ -228,8 +204,6 @@
     }
   },
   {
-    "action": "load_sample",
-    "experiment": "2026_02_25_mcf7_mba_fixed_cells",
     "sample_name": "MBA IgG 1",
     "count": 50,
     "molecule_conjugates": [
@@ -247,8 +221,6 @@
     }
   },
   {
-    "action": "load_sample",
-    "experiment": "2026_02_25_mcf7_mba_fixed_cells",
     "sample_name": "MBA IgG 2",
     "count": 50,
     "molecule_conjugates": [
@@ -266,8 +238,6 @@
     }
   },
   {
-    "action": "load_sample",
-    "experiment": "2026_02_25_mcf7_mba_fixed_cells",
     "sample_name": "MBA IgG 3",
     "count": 50,
     "molecule_conjugates": [
@@ -285,8 +255,6 @@
     }
   },
   {
-    "action": "load_sample",
-    "experiment": "2026_02_25_mcf7_mba_fixed_cells",
     "sample_name": "MBA EpCAM tags",
     "count": 50,
     "molecule_conjugates": [
@@ -304,8 +272,6 @@
     }
   },
   {
-    "action": "load_sample",
-    "experiment": "2026_02_25_mcf7_mba_fixed_cells",
     "sample_name": "MBA HER2 tags",
     "count": 50,
     "molecule_conjugates": [
@@ -323,8 +289,6 @@
     }
   },
   {
-    "action": "load_sample",
-    "experiment": "2026_02_25_mcf7_mba_fixed_cells",
     "sample_name": "MBA TROP2 tags",
     "count": 50,
     "molecule_conjugates": [
@@ -342,8 +306,6 @@
     }
   },
   {
-    "action": "load_sample",
-    "experiment": "2026_02_25_mcf7_mba_fixed_cells",
     "sample_name": "MBA BSA tags",
     "count": 50,
     "molecule_conjugates": [
@@ -361,8 +323,6 @@
     }
   },
   {
-    "action": "load_sample",
-    "experiment": "2026_02_25_mcf7_mba_fixed_cells",
     "sample_name": "MBA IgG tags",
     "count": 50,
     "molecule_conjugates": [
@@ -380,8 +340,6 @@
     }
   },
   {
-    "action": "load_sample",
-    "experiment": "2026_02_25_mcf7_mba_fixed_cells",
     "sample_name": "MBA only",
     "count": 50,
     "molecule_conjugates": [

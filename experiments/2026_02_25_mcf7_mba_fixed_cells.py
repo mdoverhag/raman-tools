@@ -12,8 +12,7 @@ from raman_lib import (
     create_output_dir,
     load_and_process_sample,
     plot_peak_histograms_from_samples,
-    build_sample_record,
-    write_summary,
+    experiment_summary,
 )
 
 # Data directory
@@ -248,20 +247,8 @@ plot_peak_histograms_from_samples(
 # Summary
 # ============================================================
 
-print("\n" + "=" * 60)
-print("EXPERIMENT COMPLETE")
-print("=" * 60)
-
-print(f"\nOutput directory: {output}")
-print(f"\nMCF7 samples processed:")
-for sample_key, data in sorted(mcf7_samples.items(), key=lambda x: x[1]["name"]):
-    print(f"  {data['name']}: {data['count']} spectra")
-print(f"\nTag samples processed:")
-for sample_key, data in sorted(tag_samples.items(), key=lambda x: x[1]["name"]):
-    print(f"  {data['name']}: {data['count']} spectra")
-
-# Export JSON summary for version-controlled tracking
-experiment = os.path.splitext(os.path.basename(__file__))[0]
-all_samples = {**mcf7_samples, **tag_samples}
-records = [build_sample_record(s, experiment=experiment) for s in all_samples.values()]
-write_summary(records, f"summaries/{experiment}.json")
+experiment_summary(
+    samples={**mcf7_samples, **tag_samples},
+    output_dir=output,
+    summary_path=f"summaries/{os.path.splitext(os.path.basename(__file__))[0]}.json",
+)
