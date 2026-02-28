@@ -128,7 +128,8 @@ raman_lib/
 ├── normalization.py   # normalize_l2(), normalize_spectra_l2()
 ├── deconvolution.py   # deconvolve_nnls()
 ├── plotting.py        # plot_reference(), plot_sample(), plot_normalization(), plot_deconvolution(), plot_deconvolution_original_scale(), plot_deconvolution_boxplots()
-└── workflow.py        # build_reference_dict(), load_and_process_reference(), load_and_process_sample(), normalize_and_deconvolve_samples(), print_experiment_summary()
+├── summary.py         # experiment_summary() — printed output + optional JSON export
+└── workflow.py        # build_reference_dict(), load_and_process_reference(), load_and_process_sample(), normalize_and_deconvolve_samples()
 ```
 
 ## Key API - Workflow Functions
@@ -176,12 +177,13 @@ deconv_results = normalize_and_deconvolve_samples(
     output_dir=output
 )
 
-# Print summary table
-print_experiment_summary(
+# Print summary (and optionally write JSON)
+experiment_summary(
+    samples=samples,
     output_dir=output,
     references=references,
-    samples=samples,
-    deconv_results=deconv_results
+    deconv_results=deconv_results,
+    summary_path="summaries/experiment_name.json",  # optional
 )
 ```
 
@@ -203,7 +205,7 @@ from raman_lib import (
     load_and_process_reference,
     load_and_process_sample,
     normalize_and_deconvolve_samples,
-    print_experiment_summary
+    experiment_summary,
 )
 
 # Data directories
@@ -232,8 +234,14 @@ print("NORMALIZATION & DECONVOLUTION")
 print("="*60)
 deconv_results = normalize_and_deconvolve_samples(...)
 
-# Summary
-print_experiment_summary(...)
+# Summary (works for both singleplex and multiplex)
+experiment_summary(
+    samples=samples,
+    output_dir=output,
+    references=references,           # optional, for multiplex
+    deconv_results=deconv_results,   # optional, for multiplex
+    summary_path="summaries/...",    # optional, writes JSON
+)
 ```
 
 ## Key Algorithms
