@@ -51,6 +51,11 @@ from .plotting import (
     plot_scaled_contributions
 )
 
+from .summary import (
+    build_sample_record,
+    write_summary,
+)
+
 from .workflow import (
     build_reference_dict,
     load_and_process_reference,
@@ -105,6 +110,10 @@ __all__ = [
     "plot_deconvolution_boxplots",
     "plot_peak_intensity_histogram",
     "plot_scaled_contributions",
+
+    # Summary
+    "build_sample_record",
+    "write_summary",
 
     # Workflow
     "build_reference_dict",
