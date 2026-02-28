@@ -65,7 +65,6 @@ from .workflow import (
     plot_peak_histograms,
     plot_peak_histograms_from_deconv,
     plot_peak_histograms_from_samples,
-    print_experiment_summary
 )
 
 __version__ = "0.1.0"
@@ -123,5 +122,4 @@ __all__ = [
     "plot_peak_histograms",
     "plot_peak_histograms_from_deconv",
     "plot_peak_histograms_from_samples",
-    "print_experiment_summary",
 ]

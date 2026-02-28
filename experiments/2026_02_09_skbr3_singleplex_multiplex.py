@@ -19,7 +19,7 @@ from raman_lib import (
     plot_peak_histograms_from_samples,
     plot_peak_histograms_from_deconv,
     plot_scaled_contributions,
-    print_experiment_summary,
+    experiment_summary,
 )
 
 # Data directories
@@ -476,13 +476,9 @@ plot_peak_histograms_from_deconv(
 # Summary
 # ============================================================
 
-print("\n" + "=" * 60)
-print("EXPERIMENT COMPLETE")
-print("=" * 60)
-
-print_experiment_summary(
+experiment_summary(
+    samples=multiplex_samples,
     output_dir=output,
     references=references,
-    samples=multiplex_samples,
     deconv_results=deconv_results,
 )

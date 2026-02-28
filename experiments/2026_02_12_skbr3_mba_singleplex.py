@@ -12,6 +12,7 @@ from raman_lib import (
     create_output_dir,
     load_and_process_sample,
     plot_peak_histograms_from_samples,
+    experiment_summary,
 )
 
 # Data directory
@@ -229,14 +230,7 @@ plot_peak_histograms_from_samples(
 # Summary
 # ============================================================
 
-print("\n" + "=" * 60)
-print("EXPERIMENT COMPLETE")
-print("=" * 60)
-
-print(f"\nOutput directory: {output}")
-print(f"\nSKBR3 samples processed:")
-for sample_key, data in sorted(skbr3_samples.items(), key=lambda x: x[1]["name"]):
-    print(f"  {data['name']}: {data['count']} spectra")
-print(f"\nTag samples processed:")
-for sample_key, data in sorted(tag_samples.items(), key=lambda x: x[1]["name"]):
-    print(f"  {data['name']}: {data['count']} spectra")
+experiment_summary(
+    samples={**skbr3_samples, **tag_samples},
+    output_dir=output,
+)
