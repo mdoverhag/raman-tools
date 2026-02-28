@@ -18,8 +18,11 @@ SAMPLE_DIR = os.path.expanduser(
     "~/Documents/Spectroscopy Results/2025-12-05 AuNP Ag MCF7 double coated MBA EpCAM vs BSA"
 )
 
+# Experiment name (derived from script filename)
+experiment = os.path.splitext(os.path.basename(__file__))[0]
+
 # Create output directory (auto-versioned) in results/
-output = create_output_dir("2025-12-05-mcf7-double-coated-mba", base_dir="results")
+output = create_output_dir(experiment, base_dir="results")
 print(f"Output directory: {output}\n")
 
 # ============================================================
@@ -67,6 +70,7 @@ plot_peak_histograms_from_samples(
 # ============================================================
 
 experiment_summary(
+    experiment,
     samples=samples,
     output_dir=output,
 )

@@ -1,0 +1,53 @@
+[
+  {
+    "sample_name": "MCF7 EpCAM 1",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "DTNB",
+        "EpCAM"
+      ]
+    ],
+    "peak_intensities": {
+      "DTNB": {
+        "mean": 6.1,
+        "std": 3.6,
+        "wavenumber": 1335
+      }
+    }
+  },
+  {
+    "sample_name": "MCF7 BSA 1",
+    "count": 51,
+    "molecule_conjugates": [
+      [
+        "DTNB",
+        "BSA"
+      ]
+    ],
+    "peak_intensities": {
+      "DTNB": {
+        "mean": 6.9,
+        "std": 3.9,
+        "wavenumber": 1335
+      }
+    }
+  },
+  {
+    "sample_name": "MCF7 IgG 1",
+    "count": 47,
+    "molecule_conjugates": [
+      [
+        "DTNB",
+        "IgG"
+      ]
+    ],
+    "peak_intensities": {
+      "DTNB": {
+        "mean": 5.5,
+        "std": 2.9,
+        "wavenumber": 1335
+      }
+    }
+  }
+]

@@ -1,0 +1,161 @@
+[
+  {
+    "sample_name": "Multiplex Ab",
+    "count": 150,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "EpCAM"
+      ],
+      [
+        "DTNB",
+        "HER2"
+      ],
+      [
+        "TFMBA",
+        "TROP2"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 382.5,
+        "std": 50.6,
+        "wavenumber": 1078
+      },
+      "DTNB": {
+        "mean": 262.1,
+        "std": 27.4,
+        "wavenumber": 1335
+      },
+      "TFMBA": {
+        "mean": 177.6,
+        "std": 18.5,
+        "wavenumber": 1377
+      }
+    },
+    "deconvolution": {
+      "MBA-EpCAM": {
+        "mean": 37.4,
+        "std": 1.8
+      },
+      "DTNB-HER2": {
+        "mean": 52.3,
+        "std": 1.5
+      },
+      "TFMBA-TROP2": {
+        "mean": 10.3,
+        "std": 0.6
+      },
+      "r_squared": {
+        "mean": 0.988,
+        "std": 0.001
+      }
+    }
+  },
+  {
+    "sample_name": "Multiplex BSA",
+    "count": 150,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "BSA"
+      ],
+      [
+        "DTNB",
+        "BSA"
+      ],
+      [
+        "TFMBA",
+        "BSA"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 34.2,
+        "std": 21.3,
+        "wavenumber": 1078
+      },
+      "DTNB": {
+        "mean": 32.2,
+        "std": 19.4,
+        "wavenumber": 1335
+      },
+      "TFMBA": {
+        "mean": 20.1,
+        "std": 10.9,
+        "wavenumber": 1377
+      }
+    },
+    "deconvolution": {
+      "MBA-BSA": {
+        "mean": 29.3,
+        "std": 10.8
+      },
+      "DTNB-BSA": {
+        "mean": 56.2,
+        "std": 13.3
+      },
+      "TFMBA-BSA": {
+        "mean": 14.5,
+        "std": 7.9
+      },
+      "r_squared": {
+        "mean": 0.706,
+        "std": 0.132
+      }
+    }
+  },
+  {
+    "sample_name": "Multiplex IgG",
+    "count": 150,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "IgG"
+      ],
+      [
+        "DTNB",
+        "IgG"
+      ],
+      [
+        "TFMBA",
+        "IgG"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 67.3,
+        "std": 18.9,
+        "wavenumber": 1078
+      },
+      "DTNB": {
+        "mean": 51.6,
+        "std": 15.1,
+        "wavenumber": 1335
+      },
+      "TFMBA": {
+        "mean": 38.2,
+        "std": 14.2,
+        "wavenumber": 1377
+      }
+    },
+    "deconvolution": {
+      "MBA-IgG": {
+        "mean": 35.5,
+        "std": 4.6
+      },
+      "DTNB-IgG": {
+        "mean": 55.3,
+        "std": 4.8
+      },
+      "TFMBA-IgG": {
+        "mean": 9.2,
+        "std": 4.4
+      },
+      "r_squared": {
+        "mean": 0.895,
+        "std": 0.039
+      }
+    }
+  }
+]

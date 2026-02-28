@@ -1,0 +1,691 @@
+[
+  {
+    "sample_name": "MCF7 AB 1",
+    "count": 100,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "EpCAM"
+      ],
+      [
+        "DTNB",
+        "HER2"
+      ],
+      [
+        "TFMBA",
+        "TROP2"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 282.7,
+        "std": 70.1,
+        "wavenumber": 1078
+      },
+      "DTNB": {
+        "mean": 15.7,
+        "std": 8.0,
+        "wavenumber": 1335
+      },
+      "TFMBA": {
+        "mean": 52.6,
+        "std": 14.4,
+        "wavenumber": 1377
+      }
+    },
+    "deconvolution": {
+      "MBA-EpCAM": {
+        "mean": 96.6,
+        "std": 5.0
+      },
+      "DTNB-HER2": {
+        "mean": 1.1,
+        "std": 3.0
+      },
+      "TFMBA-TROP2": {
+        "mean": 2.3,
+        "std": 2.5
+      },
+      "r_squared": {
+        "mean": 0.981,
+        "std": 0.053
+      }
+    }
+  },
+  {
+    "sample_name": "MCF7 BSA 1",
+    "count": 100,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "BSA"
+      ],
+      [
+        "DTNB",
+        "BSA"
+      ],
+      [
+        "TFMBA",
+        "BSA"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 58.9,
+        "std": 18.0,
+        "wavenumber": 1078
+      },
+      "DTNB": {
+        "mean": 9.8,
+        "std": 4.2,
+        "wavenumber": 1335
+      },
+      "TFMBA": {
+        "mean": 13.8,
+        "std": 4.4,
+        "wavenumber": 1377
+      }
+    },
+    "deconvolution": {
+      "MBA-BSA": {
+        "mean": 82.1,
+        "std": 8.6
+      },
+      "DTNB-BSA": {
+        "mean": 10.5,
+        "std": 5.9
+      },
+      "TFMBA-BSA": {
+        "mean": 7.4,
+        "std": 4.4
+      },
+      "r_squared": {
+        "mean": 0.804,
+        "std": 0.084
+      }
+    }
+  },
+  {
+    "sample_name": "MCF7 IgG 1",
+    "count": 100,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "IgG"
+      ],
+      [
+        "DTNB",
+        "IgG"
+      ],
+      [
+        "TFMBA",
+        "IgG"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 104.2,
+        "std": 30.3,
+        "wavenumber": 1078
+      },
+      "DTNB": {
+        "mean": 12.2,
+        "std": 4.3,
+        "wavenumber": 1335
+      },
+      "TFMBA": {
+        "mean": 22.0,
+        "std": 6.0,
+        "wavenumber": 1377
+      }
+    },
+    "deconvolution": {
+      "MBA-IgG": {
+        "mean": 95.2,
+        "std": 6.7
+      },
+      "DTNB-IgG": {
+        "mean": 3.6,
+        "std": 5.2
+      },
+      "TFMBA-IgG": {
+        "mean": 1.1,
+        "std": 2.1
+      },
+      "r_squared": {
+        "mean": 0.923,
+        "std": 0.045
+      }
+    }
+  },
+  {
+    "sample_name": "MCF7 AB 2",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "EpCAM"
+      ],
+      [
+        "DTNB",
+        "HER2"
+      ],
+      [
+        "TFMBA",
+        "TROP2"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 218.4,
+        "std": 57.8,
+        "wavenumber": 1078
+      },
+      "DTNB": {
+        "mean": 13.4,
+        "std": 8.2,
+        "wavenumber": 1335
+      },
+      "TFMBA": {
+        "mean": 36.6,
+        "std": 12.8,
+        "wavenumber": 1377
+      }
+    },
+    "deconvolution": {
+      "MBA-EpCAM": {
+        "mean": 95.4,
+        "std": 6.7
+      },
+      "DTNB-HER2": {
+        "mean": 3.2,
+        "std": 4.3
+      },
+      "TFMBA-TROP2": {
+        "mean": 1.5,
+        "std": 2.7
+      },
+      "r_squared": {
+        "mean": 0.968,
+        "std": 0.08
+      }
+    }
+  },
+  {
+    "sample_name": "MCF7 BSA 2",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "BSA"
+      ],
+      [
+        "DTNB",
+        "BSA"
+      ],
+      [
+        "TFMBA",
+        "BSA"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 51.6,
+        "std": 18.3,
+        "wavenumber": 1078
+      },
+      "DTNB": {
+        "mean": 10.5,
+        "std": 6.6,
+        "wavenumber": 1335
+      },
+      "TFMBA": {
+        "mean": 14.0,
+        "std": 4.9,
+        "wavenumber": 1377
+      }
+    },
+    "deconvolution": {
+      "MBA-BSA": {
+        "mean": 74.6,
+        "std": 15.1
+      },
+      "DTNB-BSA": {
+        "mean": 16.5,
+        "std": 13.8
+      },
+      "TFMBA-BSA": {
+        "mean": 8.9,
+        "std": 6.2
+      },
+      "r_squared": {
+        "mean": 0.741,
+        "std": 0.135
+      }
+    }
+  },
+  {
+    "sample_name": "MCF7 IgG 2",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "IgG"
+      ],
+      [
+        "DTNB",
+        "IgG"
+      ],
+      [
+        "TFMBA",
+        "IgG"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 120.7,
+        "std": 33.9,
+        "wavenumber": 1078
+      },
+      "DTNB": {
+        "mean": 23.9,
+        "std": 41.6,
+        "wavenumber": 1335
+      },
+      "TFMBA": {
+        "mean": 22.9,
+        "std": 7.1,
+        "wavenumber": 1377
+      }
+    },
+    "deconvolution": {
+      "MBA-IgG": {
+        "mean": 91.6,
+        "std": 20.3
+      },
+      "DTNB-IgG": {
+        "mean": 8.3,
+        "std": 20.3
+      },
+      "TFMBA-IgG": {
+        "mean": 0.2,
+        "std": 0.9
+      },
+      "r_squared": {
+        "mean": 0.935,
+        "std": 0.017
+      }
+    }
+  },
+  {
+    "sample_name": "SKBR3 AB 1",
+    "count": 100,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "EpCAM"
+      ],
+      [
+        "DTNB",
+        "HER2"
+      ],
+      [
+        "TFMBA",
+        "TROP2"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 177.3,
+        "std": 80.3,
+        "wavenumber": 1078
+      },
+      "DTNB": {
+        "mean": 15.6,
+        "std": 5.6,
+        "wavenumber": 1335
+      },
+      "TFMBA": {
+        "mean": 33.3,
+        "std": 13.0,
+        "wavenumber": 1377
+      }
+    },
+    "deconvolution": {
+      "MBA-EpCAM": {
+        "mean": 90.2,
+        "std": 5.6
+      },
+      "DTNB-HER2": {
+        "mean": 6.4,
+        "std": 3.7
+      },
+      "TFMBA-TROP2": {
+        "mean": 3.4,
+        "std": 2.8
+      },
+      "r_squared": {
+        "mean": 0.973,
+        "std": 0.023
+      }
+    }
+  },
+  {
+    "sample_name": "SKBR3 BSA 1",
+    "count": 100,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "BSA"
+      ],
+      [
+        "DTNB",
+        "BSA"
+      ],
+      [
+        "TFMBA",
+        "BSA"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 61.0,
+        "std": 29.0,
+        "wavenumber": 1078
+      },
+      "DTNB": {
+        "mean": 8.7,
+        "std": 5.9,
+        "wavenumber": 1335
+      },
+      "TFMBA": {
+        "mean": 14.0,
+        "std": 6.3,
+        "wavenumber": 1377
+      }
+    },
+    "deconvolution": {
+      "MBA-BSA": {
+        "mean": 83.1,
+        "std": 11.3
+      },
+      "DTNB-BSA": {
+        "mean": 9.5,
+        "std": 6.8
+      },
+      "TFMBA-BSA": {
+        "mean": 7.4,
+        "std": 6.0
+      },
+      "r_squared": {
+        "mean": 0.8,
+        "std": 0.203
+      }
+    }
+  },
+  {
+    "sample_name": "SKBR3 IgG 1",
+    "count": 100,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "IgG"
+      ],
+      [
+        "DTNB",
+        "IgG"
+      ],
+      [
+        "TFMBA",
+        "IgG"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 55.6,
+        "std": 16.0,
+        "wavenumber": 1078
+      },
+      "DTNB": {
+        "mean": 9.0,
+        "std": 3.3,
+        "wavenumber": 1335
+      },
+      "TFMBA": {
+        "mean": 13.5,
+        "std": 4.2,
+        "wavenumber": 1377
+      }
+    },
+    "deconvolution": {
+      "MBA-IgG": {
+        "mean": 81.8,
+        "std": 9.2
+      },
+      "DTNB-IgG": {
+        "mean": 9.7,
+        "std": 5.0
+      },
+      "TFMBA-IgG": {
+        "mean": 8.5,
+        "std": 5.9
+      },
+      "r_squared": {
+        "mean": 0.819,
+        "std": 0.086
+      }
+    }
+  },
+  {
+    "sample_name": "SKBR3 AB 2",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "EpCAM"
+      ],
+      [
+        "DTNB",
+        "HER2"
+      ],
+      [
+        "TFMBA",
+        "TROP2"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 125.4,
+        "std": 29.4,
+        "wavenumber": 1078
+      },
+      "DTNB": {
+        "mean": 9.3,
+        "std": 3.7,
+        "wavenumber": 1335
+      },
+      "TFMBA": {
+        "mean": 23.4,
+        "std": 5.4,
+        "wavenumber": 1377
+      }
+    },
+    "deconvolution": {
+      "MBA-EpCAM": {
+        "mean": 89.4,
+        "std": 5.5
+      },
+      "DTNB-HER2": {
+        "mean": 7.6,
+        "std": 3.5
+      },
+      "TFMBA-TROP2": {
+        "mean": 2.9,
+        "std": 2.8
+      },
+      "r_squared": {
+        "mean": 0.938,
+        "std": 0.092
+      }
+    }
+  },
+  {
+    "sample_name": "SKBR3 AB 3",
+    "count": 100,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "EpCAM"
+      ],
+      [
+        "DTNB",
+        "HER2"
+      ],
+      [
+        "TFMBA",
+        "TROP2"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 128.6,
+        "std": 82.1,
+        "wavenumber": 1078
+      },
+      "DTNB": {
+        "mean": 10.1,
+        "std": 4.8,
+        "wavenumber": 1335
+      },
+      "TFMBA": {
+        "mean": 23.5,
+        "std": 11.0,
+        "wavenumber": 1377
+      }
+    },
+    "deconvolution": {
+      "MBA-EpCAM": {
+        "mean": 88.1,
+        "std": 6.2
+      },
+      "DTNB-HER2": {
+        "mean": 7.7,
+        "std": 3.9
+      },
+      "TFMBA-TROP2": {
+        "mean": 4.2,
+        "std": 3.0
+      },
+      "r_squared": {
+        "mean": 0.94,
+        "std": 0.049
+      }
+    }
+  },
+  {
+    "sample_name": "SKBR3 BSA 2",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "BSA"
+      ],
+      [
+        "DTNB",
+        "BSA"
+      ],
+      [
+        "TFMBA",
+        "BSA"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 43.7,
+        "std": 14.8,
+        "wavenumber": 1078
+      },
+      "DTNB": {
+        "mean": 8.4,
+        "std": 5.3,
+        "wavenumber": 1335
+      },
+      "TFMBA": {
+        "mean": 11.2,
+        "std": 3.7,
+        "wavenumber": 1377
+      }
+    },
+    "deconvolution": {
+      "MBA-BSA": {
+        "mean": 73.7,
+        "std": 9.4
+      },
+      "DTNB-BSA": {
+        "mean": 15.8,
+        "std": 7.8
+      },
+      "TFMBA-BSA": {
+        "mean": 10.5,
+        "std": 6.1
+      },
+      "r_squared": {
+        "mean": 0.678,
+        "std": 0.151
+      }
+    }
+  },
+  {
+    "sample_name": "SKBR3 IgG 2",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "IgG"
+      ],
+      [
+        "DTNB",
+        "IgG"
+      ],
+      [
+        "TFMBA",
+        "IgG"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 64.3,
+        "std": 16.8,
+        "wavenumber": 1078
+      },
+      "DTNB": {
+        "mean": 9.5,
+        "std": 3.4,
+        "wavenumber": 1335
+      },
+      "TFMBA": {
+        "mean": 15.4,
+        "std": 4.8,
+        "wavenumber": 1377
+      }
+    },
+    "deconvolution": {
+      "MBA-IgG": {
+        "mean": 86.4,
+        "std": 8.3
+      },
+      "DTNB-IgG": {
+        "mean": 7.1,
+        "std": 5.6
+      },
+      "TFMBA-IgG": {
+        "mean": 6.5,
+        "std": 4.9
+      },
+      "r_squared": {
+        "mean": 0.86,
+        "std": 0.054
+      }
+    }
+  }
+]

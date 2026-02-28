@@ -18,8 +18,11 @@ SAMPLE_DIR = os.path.expanduser(
     "~/Documents/Spectroscopy Results/2025-12-03 MDA 231 30minRT 15min37degrees"
 )
 
+# Experiment name (derived from script filename)
+experiment = os.path.splitext(os.path.basename(__file__))[0]
+
 # Create output directory (auto-versioned) in results/
-output = create_output_dir("2025-12-03-mda-231-30minrt-15min37c", base_dir="results")
+output = create_output_dir(experiment, base_dir="results")
 print(f"Output directory: {output}\n")
 
 # ============================================================
@@ -74,6 +77,7 @@ plot_peak_histograms_from_samples(
 # ============================================================
 
 experiment_summary(
+    experiment,
     samples=samples,
     output_dir=output,
 )

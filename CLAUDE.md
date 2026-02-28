@@ -128,7 +128,7 @@ raman_lib/
 ├── normalization.py   # normalize_l2(), normalize_spectra_l2()
 ├── deconvolution.py   # deconvolve_nnls()
 ├── plotting.py        # plot_reference(), plot_sample(), plot_normalization(), plot_deconvolution(), plot_deconvolution_original_scale(), plot_deconvolution_boxplots()
-├── summary.py         # experiment_summary() — printed output + optional JSON export
+├── summary.py         # experiment_summary() — printed output + JSON export
 └── workflow.py        # build_reference_dict(), load_and_process_reference(), load_and_process_sample(), normalize_and_deconvolve_samples()
 ```
 
@@ -177,13 +177,13 @@ deconv_results = normalize_and_deconvolve_samples(
     output_dir=output
 )
 
-# Print summary (and optionally write JSON)
+# Print summary and write JSON to summaries/{experiment}.json
 experiment_summary(
+    experiment,
     samples=samples,
     output_dir=output,
     references=references,
     deconv_results=deconv_results,
-    summary_path="summaries/experiment_name.json",  # optional
 )
 ```
 
@@ -213,8 +213,11 @@ REFERENCE_DIR = os.path.expanduser("~/Documents/...")
 SAMPLE_DIR = os.path.expanduser("~/Documents/...")
 WAVENUMBER_RANGE = (1000, 1500)
 
+# Experiment name (derived from script filename)
+experiment = os.path.splitext(os.path.basename(__file__))[0]
+
 # Create output (auto-versioned)
-output = create_output_dir("experiment-name", base_dir="results")
+output = create_output_dir(experiment, base_dir="results")
 
 # Load references (with explicit header in script)
 print("="*60)
@@ -236,11 +239,11 @@ deconv_results = normalize_and_deconvolve_samples(...)
 
 # Summary (works for both singleplex and multiplex)
 experiment_summary(
+    experiment,
     samples=samples,
     output_dir=output,
     references=references,           # optional, for multiplex
     deconv_results=deconv_results,   # optional, for multiplex
-    summary_path="summaries/...",    # optional, writes JSON
 )
 ```
 

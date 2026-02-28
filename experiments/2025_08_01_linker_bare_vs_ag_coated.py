@@ -21,8 +21,11 @@ BARE_SAMPLE_DIR = os.path.expanduser(
     "~/Documents/Spectroscopy Results/2025-08-01 Linker Bare AuNP EpCAM only"
 )
 
+# Experiment name (derived from script filename)
+experiment = os.path.splitext(os.path.basename(__file__))[0]
+
 # Create output directory (auto-versioned) in results/
-output = create_output_dir("2025-08-01-linker-bare-vs-ag-coated", base_dir="results")
+output = create_output_dir(experiment, base_dir="results")
 print(f"Output directory: {output}\n")
 
 # ============================================================
@@ -174,6 +177,7 @@ plot_peak_histograms_from_samples(
 # ============================================================
 
 experiment_summary(
+    experiment,
     samples=samples,
     output_dir=output,
 )

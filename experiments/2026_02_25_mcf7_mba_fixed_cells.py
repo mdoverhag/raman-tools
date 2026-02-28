@@ -21,8 +21,11 @@ DATA_DIR = os.path.expanduser(
     "2026-02-25 MCF7 MBA EpCAM MBA HER2 MBA TROP2 fixed cells"
 )
 
+# Experiment name (derived from script filename)
+experiment = os.path.splitext(os.path.basename(__file__))[0]
+
 # Create output directory (auto-versioned) in results/
-output = create_output_dir("2026-02-25-mcf7-mba-fixed-cells", base_dir="results")
+output = create_output_dir(experiment, base_dir="results")
 print(f"Output directory: {output}\n")
 
 
@@ -248,7 +251,7 @@ plot_peak_histograms_from_samples(
 # ============================================================
 
 experiment_summary(
+    experiment,
     samples={**mcf7_samples, **tag_samples},
     output_dir=output,
-    summary_path=f"summaries/{os.path.splitext(os.path.basename(__file__))[0]}.json",
 )

@@ -18,8 +18,11 @@ SAMPLE_DIR = os.path.expanduser(
     "~/Documents/Spectroscopy Results/2025-07-09 passive Ab conjugation, MBA EpCAM, MCF7 with Controls"
 )
 
+# Experiment name (derived from script filename)
+experiment = os.path.splitext(os.path.basename(__file__))[0]
+
 # Create output directory (auto-versioned) in results/
-output = create_output_dir("2025-07-09-passive-mba-epcam-mcf7", base_dir="results")
+output = create_output_dir(experiment, base_dir="results")
 print(f"Output directory: {output}\n")
 
 # ============================================================
@@ -93,6 +96,7 @@ plot_peak_histograms_from_samples(
 # ============================================================
 
 experiment_summary(
+    experiment,
     samples=samples,
     output_dir=output,
 )

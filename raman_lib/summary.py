@@ -1,9 +1,9 @@
 """
-Experiment summary — printed output and optional JSON export.
+Experiment summary — printed output and JSON export.
 
 Provides a single function that replaces both the old print_experiment_summary
 (multiplex only) and the ad-hoc print blocks in singleplex scripts, with
-optional JSON export for version-controlled experiment tracking.
+JSON export for version-controlled experiment tracking.
 """
 
 import json
@@ -16,25 +16,26 @@ from .molecules import get_peak
 
 
 def experiment_summary(
+    experiment,
     samples,
     output_dir,
     references=None,
     deconv_results=None,
-    summary_path=None,
 ):
     """
-    Print experiment summary and optionally write a JSON summary file.
+    Print experiment summary and write a JSON summary file.
 
     Works for both singleplex (samples only) and multiplex (samples +
     references + deconvolution) experiments.
 
     Args:
+        experiment: Experiment name string. Used for the JSON summary
+                    written to summaries/{experiment}.json.
         samples: Dict of sample data (from load_and_process_sample).
         output_dir: Path to the output directory.
         references: Optional dict of reference data (from load_and_process_reference).
         deconv_results: Optional dict of deconvolution results
                         (from normalize_and_deconvolve_samples).
-        summary_path: If provided, write a JSON summary to this path.
     """
     print("\n" + "=" * 60)
     print("EXPERIMENT COMPLETE")
@@ -57,14 +58,14 @@ def experiment_summary(
     print("\nPlots saved in:")
     print(f"  {output_dir}/")
 
-    if summary_path:
-        records = []
-        for sample_key, sample_data in samples.items():
-            sample_deconv = deconv_results.get(sample_key) if deconv_results else None
-            records.append(_build_sample_record(sample_data, sample_deconv))
-        _write_json(records, summary_path)
-        print(f"\nJSON summary written to:")
-        print(f"  {summary_path}")
+    summary_path = os.path.join("summaries", f"{experiment}.json")
+    records = []
+    for sample_key, sample_data in samples.items():
+        sample_deconv = deconv_results.get(sample_key) if deconv_results else None
+        records.append(_build_sample_record(sample_data, sample_deconv))
+    _write_json(records, summary_path)
+    print(f"\nJSON summary written to:")
+    print(f"  {summary_path}")
 
 
 def _print_deconvolution_tables(samples, deconv_results):

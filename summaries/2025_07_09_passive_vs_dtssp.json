@@ -1,0 +1,121 @@
+[
+  {
+    "sample_name": "DTSSP EpCAM 2",
+    "count": 150,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "EpCAM"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 129.9,
+        "std": 25.6,
+        "wavenumber": 1078
+      }
+    }
+  },
+  {
+    "sample_name": "DTSSP IgG 1",
+    "count": 150,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "IgG"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 151.6,
+        "std": 65.1,
+        "wavenumber": 1078
+      }
+    }
+  },
+  {
+    "sample_name": "DTSSP IgG 2",
+    "count": 150,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "IgG"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 153.4,
+        "std": 49.9,
+        "wavenumber": 1078
+      }
+    }
+  },
+  {
+    "sample_name": "DTSSP BSA 1 (mistaken)",
+    "count": 150,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "BSA"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 986.1,
+        "std": 105.0,
+        "wavenumber": 1078
+      }
+    }
+  },
+  {
+    "sample_name": "DTSSP BSA 2 (mistaken)",
+    "count": 150,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "BSA"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 1072.4,
+        "std": 122.8,
+        "wavenumber": 1078
+      }
+    }
+  },
+  {
+    "sample_name": "Passive EpCAM 2",
+    "count": 150,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "EpCAM"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 1116.9,
+        "std": 246.0,
+        "wavenumber": 1078
+      }
+    }
+  },
+  {
+    "sample_name": "Passive IgG 2",
+    "count": 150,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "IgG"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 299.2,
+        "std": 68.6,
+        "wavenumber": 1078
+      }
+    }
+  }
+]
