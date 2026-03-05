@@ -804,23 +804,30 @@ def plot_peak_intensity_histogram(
     y_max: int | None = None,
     x_label: str = "Intensity (a.u.)",
     title_prefix: str = "",
+    colors: dict[str, str] | None = None,
 ) -> None:
     """
-    Create histogram of peak intensities for a molecule across conjugate types.
+    Create histogram of peak intensities for a molecule.
 
     Creates a histogram showing the distribution of intensities at the molecule's
-    characteristic peak across all replicates, grouped by conjugate type.
+    characteristic peak across all replicates, with one series per dict key.
 
     Args:
         molecule: Molecule name (e.g., "MBA", "DTNB", "TFMBA")
-        conjugate_intensities: Dict mapping conjugate names to lists of intensities
-                              (e.g., {"EpCAM": [120.5, 115.3, ...], "BSA": [...]})
+        conjugate_intensities: Dict mapping series labels to lists of intensities.
+            Keys are typically sample names from extract_peak_intensities_from_samples
+            (e.g., {"MBA EpCAM 1": [120.5, 115.3, ...], "MBA BSA 1": [...]})
+            or conjugate names from extract_peak_intensities_from_deconv
+            (e.g., {"EpCAM": [...], "BSA": [...]}).
         output_path: Full path where the plot will be saved
         bin_size: Bin size for histogram (default: 25)
         x_max: Optional maximum value for x-axis (intensity). If None, auto-scales.
         y_max: Optional maximum value for y-axis (count). If None, auto-scales.
         x_label: Label for x-axis (default: "Peak Intensity (a.u.)")
         title_prefix: Optional prefix for the plot title (e.g., "MCF7")
+        colors: Optional dict mapping series labels to colors
+            (e.g., {"MBA EpCAM 1": "red"}). If None, uses CONJUGATE_COLORS
+            substring matching.
     """
     from .molecules import CONJUGATE_COLORS
 
@@ -856,12 +863,16 @@ def plot_peak_intensity_histogram(
         counts, bin_edges = np.histogram(intensities, bins=bins)
         bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
 
-        # Get color by matching conjugate name as substring, default to gray
-        line_color = "gray"
-        for conj_name, conj_color in CONJUGATE_COLORS.items():
-            if conj_name in conjugate:
-                line_color = conj_color
-                break
+        # Determine line color
+        if colors is not None:
+            line_color = colors.get(conjugate, "gray")
+        else:
+            # Default: match conjugate name as substring via CONJUGATE_COLORS
+            line_color = "gray"
+            for conj_name, conj_color in CONJUGATE_COLORS.items():
+                if conj_name in conjugate:
+                    line_color = conj_color
+                    break
 
         # Plot as line with markers
         ax.plot(

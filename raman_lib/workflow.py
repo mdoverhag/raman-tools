@@ -552,6 +552,7 @@ def plot_peak_histograms(
     y_max: int | None = None,
     x_label: str = "Intensity (a.u.)",
     title_prefix: str = "",
+    colors: dict[str, str] | None = None,
 ) -> None:
     """
     Plot peak intensity histograms from pre-extracted intensity data.
@@ -561,13 +562,15 @@ def plot_peak_histograms(
 
     Args:
         group_intensities: Nested dict structure:
-            {group_prefix: {molecule: {conjugate: [intensities]}}}
+            {group_prefix: {molecule: {series_label: [intensities]}}}
         output_dir: Directory to save histogram plots
         bin_size: Bin width for histograms (default 25)
         x_max: X-axis maximum. If None, calculated from data.
         y_max: Y-axis maximum. If None, calculated from data.
         x_label: Label for x-axis (default: "Peak Intensity (a.u.)")
         title_prefix: Optional prefix for plot titles (e.g., "MCF7")
+        colors: Optional dict mapping series labels to colors, passed to
+            plot_peak_intensity_histogram.
 
     Output files:
         peak_intensity_histogram_{prefix}_{molecule}.png for each group/molecule
@@ -602,6 +605,7 @@ def plot_peak_histograms(
                 y_max=y_max,
                 x_label=x_label,
                 title_prefix=title_prefix,
+                colors=colors,
             )
             print(f"  ✓ Saved: {filename}")
 
@@ -665,6 +669,7 @@ def plot_peak_histograms_from_samples(
     x_max: float | None = None,
     y_max: int | None = None,
     title_prefix: str = "",
+    colors: dict[str, str] | None = None,
 ) -> None:
     """
     Plot peak intensity histograms for molecules directly from sample replicates.
@@ -685,6 +690,8 @@ def plot_peak_histograms_from_samples(
         x_max: X-axis maximum. If None, calculated from data.
         y_max: Y-axis maximum. If None, calculated from data.
         title_prefix: Optional prefix for plot titles (e.g., "MCF7")
+        colors: Optional color mapping for histogram series. Can be a dict
+            mapping series labels (sample names) to colors.
     """
     # Infer molecules from samples if not provided
     if molecules is None:
@@ -708,4 +715,5 @@ def plot_peak_histograms_from_samples(
         y_max,
         x_label="Intensity (baseline-corrected)",
         title_prefix=title_prefix,
+        colors=colors,
     )
