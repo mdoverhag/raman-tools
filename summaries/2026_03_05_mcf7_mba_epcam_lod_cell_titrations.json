@@ -1,0 +1,206 @@
+[
+  {
+    "sample_name": "MBA EpCAM 10e3 1",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "EpCAM"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 6227.6,
+        "std": 438.9,
+        "wavenumber": 1078
+      }
+    }
+  },
+  {
+    "sample_name": "MBA EpCAM 10e3 2",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "EpCAM"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 5816.8,
+        "std": 1516.1,
+        "wavenumber": 1078
+      }
+    }
+  },
+  {
+    "sample_name": "MBA EpCAM 10e3 3",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "EpCAM"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 3718.2,
+        "std": 519.0,
+        "wavenumber": 1078
+      }
+    }
+  },
+  {
+    "sample_name": "MBA EpCAM 10e4 1",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "EpCAM"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 3818.3,
+        "std": 512.8,
+        "wavenumber": 1078
+      }
+    }
+  },
+  {
+    "sample_name": "MBA EpCAM 10e4 2",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "EpCAM"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 5269.5,
+        "std": 593.8,
+        "wavenumber": 1078
+      }
+    }
+  },
+  {
+    "sample_name": "MBA EpCAM 10e4 3",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "EpCAM"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 2741.6,
+        "std": 791.6,
+        "wavenumber": 1078
+      }
+    }
+  },
+  {
+    "sample_name": "MBA EpCAM 10e5 1",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "EpCAM"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 772.2,
+        "std": 199.5,
+        "wavenumber": 1078
+      }
+    }
+  },
+  {
+    "sample_name": "MBA EpCAM 10e5 2",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "EpCAM"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 643.1,
+        "std": 130.5,
+        "wavenumber": 1078
+      }
+    }
+  },
+  {
+    "sample_name": "MBA EpCAM 10e5 3",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "EpCAM"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 799.9,
+        "std": 210.6,
+        "wavenumber": 1078
+      }
+    }
+  },
+  {
+    "sample_name": "MBA EpCAM 10e6 1",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "EpCAM"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 727.7,
+        "std": 69.5,
+        "wavenumber": 1078
+      }
+    }
+  },
+  {
+    "sample_name": "MBA EpCAM 10e6 2",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "EpCAM"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 811.7,
+        "std": 76.0,
+        "wavenumber": 1078
+      }
+    }
+  },
+  {
+    "sample_name": "MBA EpCAM 10e6 3",
+    "count": 50,
+    "molecule_conjugates": [
+      [
+        "MBA",
+        "EpCAM"
+      ]
+    ],
+    "peak_intensities": {
+      "MBA": {
+        "mean": 731.1,
+        "std": 36.5,
+        "wavenumber": 1078
+      }
+    }
+  }
+]
