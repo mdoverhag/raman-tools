@@ -5,21 +5,27 @@ import os
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime
 from pathlib import Path
 
 WORKERS = os.cpu_count()
+RUN_ID = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 experiments_dir = Path(__file__).parent / "experiments"
 scripts = sorted(experiments_dir.glob("*.py"))
 
 print(f"Found {len(scripts)} experiments, running {WORKERS} at a time\n")
+print(f"Summary run id: {RUN_ID}\n")
 
 
 def run_script(script):
+    env = os.environ.copy()
+    env["RAMAN_SUMMARY_RUN_ID"] = RUN_ID
     result = subprocess.run(
         [sys.executable, str(script)],
         capture_output=True,
         text=True,
+        env=env,
     )
     return script.name, result
 

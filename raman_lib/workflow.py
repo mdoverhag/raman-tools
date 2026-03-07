@@ -20,6 +20,21 @@ from .normalization import normalize_spectra_l2
 from .deconvolution import deconvolve_nnls
 
 
+def _default_baseline_processing() -> dict:
+    """Return the effective baseline configuration used by workflow helpers."""
+    return {
+        "baseline": {
+            "method": "als",
+            "params": {
+                "lambda": 1e7,
+                "p": 0.01,
+                "d": 2,
+                "max_iterations": 10,
+            },
+        }
+    }
+
+
 def build_reference_dict(reference_list: list[dict]) -> dict:
     """
     Build a references dict from a list of reference data.
@@ -113,6 +128,8 @@ def load_and_process_reference(
     # Add molecule and conjugate tags
     averaged["molecule"] = molecule
     averaged["conjugate"] = conjugate
+    averaged["replicates"] = corrected_spectra
+    averaged["processing"] = _default_baseline_processing()
 
     # Generate plot - flat structure with prefix
     plot_path = f"{output_dir}/reference_{molecule}_{conjugate}.png"
@@ -187,6 +204,7 @@ def load_and_process_sample(
     # Add metadata tags to averaged data
     averaged["molecule_conjugates"] = molecule_conjugates
     averaged["name"] = name
+    averaged["processing"] = _default_baseline_processing()
 
     # Add replicates to the result
     averaged["replicates"] = corrected_spectra
@@ -269,6 +287,19 @@ def normalize_and_deconvolve_samples(
         sample_references = {
             mol_conj: references[mol_conj] for mol_conj in sample_molecule_conjugates
         }
+
+        sample_data.setdefault("processing", {}).update(
+            {
+                "normalization": {
+                    "method": "l2",
+                    "range": list(wavenumber_range),
+                },
+                "deconvolution": {
+                    "method": "nnls",
+                    "range": list(wavenumber_range),
+                },
+            }
+        )
 
         # Process each replicate
         replicate_results = []

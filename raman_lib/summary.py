@@ -9,6 +9,7 @@ JSON export for version-controlled experiment tracking.
 import json
 import os
 from collections import defaultdict
+from datetime import datetime
 
 import numpy as np
 
@@ -58,13 +59,28 @@ def experiment_summary(
     print("\nPlots saved in:")
     print(f"  {output_dir}/")
 
-    summary_path = os.path.join("summaries", f"{experiment}.json")
-    records = []
-    for sample_key, sample_data in samples.items():
+    summary_path = _summary_path(experiment)
+    summary = {
+        "results": {
+            "references": [],
+            "samples": [],
+        }
+    }
+
+    if references:
+        for reference_key, reference_data in sorted(references.items()):
+            summary["results"]["references"].append(
+                _build_reference_record(reference_key, reference_data)
+            )
+
+    for sample_key, sample_data in sorted(samples.items(), key=lambda x: x[1]["name"]):
         sample_deconv = deconv_results.get(sample_key) if deconv_results else None
-        records.append(_build_sample_record(sample_data, sample_deconv))
-    _write_json(records, summary_path)
-    print(f"\nJSON summary written to:")
+        summary["results"]["samples"].append(
+            _build_sample_record(sample_key, sample_data, sample_deconv)
+        )
+
+    _write_json(summary, summary_path)
+    print("\nJSON summary written to:")
     print(f"  {summary_path}")
 
 
@@ -129,10 +145,95 @@ def _print_deconvolution_tables(samples, deconv_results):
             print(row)
 
 
-def _build_sample_record(sample, replicate_results=None):
+def _label_molecule_conjugate(molecule, conjugate):
+    """Build a stable label for a molecule-conjugate pair."""
+    return f"{molecule}-{conjugate}"
+
+
+def _summary_path(experiment):
+    """Build the summary path for this experiment run."""
+    run_id = os.environ.get("RAMAN_SUMMARY_RUN_ID")
+    if not run_id:
+        run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+    return os.path.join("summaries", run_id, f"{experiment}.json")
+
+
+def _round_float(value, decimals=3):
+    """Round a numeric value for stable JSON output."""
+    return round(float(value), decimals)
+
+
+def _distribution_stats(values, decimals=3):
+    """Summarize a numeric distribution for diff-friendly JSON."""
+    arr = np.array(values, dtype=float)
+    if arr.size == 0:
+        return None
+
+    std = np.std(arr, ddof=1) if arr.size > 1 else 0.0
+
+    return {
+        "n": int(arr.size),
+        "mean": _round_float(np.mean(arr), decimals),
+        "std": _round_float(std, decimals),
+        "median": _round_float(np.median(arr), decimals),
+        "min": _round_float(np.min(arr), decimals),
+        "max": _round_float(np.max(arr), decimals),
+        "p05": _round_float(np.percentile(arr, 5), decimals),
+        "p95": _round_float(np.percentile(arr, 95), decimals),
+    }
+
+
+def _series_record(values, decimals=3):
+    """Build a values + stats record for a numeric series."""
+    return {
+        "values": [_round_float(value, decimals) for value in values],
+        "stats": _distribution_stats(values, decimals),
+    }
+
+
+def _extract_peak_values(replicates, peak_wn):
+    """Extract corrected intensities at a peak from replicate spectra."""
+    values = []
+    for replicate in replicates:
+        wavenumbers = np.array(replicate["wavenumbers"], dtype=float)
+        corrected = np.array(replicate["corrected"], dtype=float)
+        peak_idx = np.argmin(np.abs(wavenumbers - peak_wn))
+        values.append(corrected[peak_idx])
+    return values
+
+
+def _build_reference_record(reference_key, reference):
+    """Build a JSON-ready summary record for a reference spectrum."""
+    molecule, conjugate = reference_key
+    peak_wn = get_peak(molecule)
+    replicates = reference.get("replicates", [])
+
+    if replicates:
+        peak_values = _extract_peak_values(replicates, peak_wn)
+    else:
+        wavenumbers = np.array(reference["wavenumbers"], dtype=float)
+        corrected_avg = np.array(reference["corrected_avg"], dtype=float)
+        peak_idx = np.argmin(np.abs(wavenumbers - peak_wn))
+        peak_values = [corrected_avg[peak_idx]]
+
+    return {
+        "reference_name": _label_molecule_conjugate(molecule, conjugate),
+        "molecule": molecule,
+        "conjugate": conjugate,
+        "count": reference["count"],
+        "processing": reference.get("processing", {}),
+        "peak_intensity": {
+            "wavenumber": peak_wn,
+            **_series_record(peak_values),
+        },
+    }
+
+
+def _build_sample_record(sample_key, sample, replicate_results=None):
     """Build a JSON-ready summary record for a single sample.
 
     Args:
+        sample_key: Stable sample key from the experiment script.
         sample: Sample dict from load_and_process_sample.
         replicate_results: Optional list of per-replicate deconvolution
                            results for this sample.
@@ -141,57 +242,69 @@ def _build_sample_record(sample, replicate_results=None):
 
     for molecule, conjugate in sample["molecule_conjugates"]:
         peak_wn = get_peak(molecule)
-        intensities = []
-
-        for replicate in sample["replicates"]:
-            wavenumbers = np.array(replicate["wavenumbers"])
-            corrected = np.array(replicate["corrected"])
-            peak_idx = np.argmin(np.abs(wavenumbers - peak_wn))
-            intensities.append(corrected[peak_idx])
-
-        arr = np.array(intensities)
-        peak_intensities[molecule] = {
-            "mean": round(float(np.mean(arr)), 1),
-            "std": round(float(np.std(arr, ddof=1)), 1),
+        peak_values = _extract_peak_values(sample["replicates"], peak_wn)
+        peak_intensities[_label_molecule_conjugate(molecule, conjugate)] = {
             "wavenumber": peak_wn,
+            **_series_record(peak_values),
         }
 
     record = {
+        "sample_key": sample_key,
         "sample_name": sample["name"],
         "count": sample["count"],
         "molecule_conjugates": [list(mc) for mc in sample["molecule_conjugates"]],
+        "processing": sample.get("processing", {}),
         "peak_intensities": peak_intensities,
     }
 
     if replicate_results:
         mol_conjs = sample["molecule_conjugates"]
         contributions = {mc: [] for mc in mol_conjs}
+        coefficients = {mc: [] for mc in mol_conjs}
+        norm_factors = []
         r_squared_values = []
+        rmse_values = []
+        residual_norm_values = []
 
         for result in replicate_results:
             for mc in mol_conjs:
                 contributions[mc].append(result["contributions"][mc])
+                coefficients[mc].append(result["coefficients"][mc])
+            if result["norm_factor"] is not None:
+                norm_factors.append(result["norm_factor"])
             r_squared_values.append(result["metrics"]["r_squared"])
+            rmse_values.append(result["metrics"]["rmse"])
+            residual_norm_values.append(result["metrics"]["residual_norm"])
 
-        record["deconvolution"] = {}
-        for mol, conj in mol_conjs:
-            vals = np.array(contributions[(mol, conj)])
-            record["deconvolution"][f"{mol}-{conj}"] = {
-                "mean": round(float(np.mean(vals)), 1),
-                "std": round(float(np.std(vals, ddof=1)), 1),
+        if norm_factors:
+            record["normalization"] = {
+                "norm_factors": _series_record(norm_factors),
             }
-        r2 = np.array(r_squared_values)
-        record["deconvolution"]["r_squared"] = {
-            "mean": round(float(np.mean(r2)), 3),
-            "std": round(float(np.std(r2, ddof=1)), 3),
+
+        record["deconvolution"] = {
+            "contributions": {},
+            "coefficients": {},
+            "fit_metrics": {
+                "r_squared": _series_record(r_squared_values),
+                "rmse": _series_record(rmse_values),
+                "residual_norm": _series_record(residual_norm_values),
+            },
         }
+        for mol, conj in mol_conjs:
+            label = _label_molecule_conjugate(mol, conj)
+            record["deconvolution"]["contributions"][label] = _series_record(
+                contributions[(mol, conj)]
+            )
+            record["deconvolution"]["coefficients"][label] = _series_record(
+                coefficients[(mol, conj)]
+            )
 
     return record
 
 
-def _write_json(records, path):
-    """Write records as JSON with indent=2 and trailing newline."""
+def _write_json(summary, path):
+    """Write summary JSON with indent=2 and trailing newline."""
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
     with open(path, "w") as f:
-        json.dump(records, f, indent=2)
+        json.dump(summary, f, indent=2)
         f.write("\n")
