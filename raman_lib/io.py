@@ -4,6 +4,7 @@ Input/Output functions for Raman spectroscopy data.
 Handles loading spectrum files from disk and saving plots.
 """
 
+import json
 from pathlib import Path
 
 
@@ -11,7 +12,36 @@ def load_spectrum(filepath: str) -> dict:
     """
     Load a single spectrum file.
 
-    Expected format: Tab-delimited text file with two columns:
+    Supported formats:
+    - .txt: Tab-delimited file with wavenumber and intensity columns
+    - .rmn: JSON export with FirstWavenumber, ResolutionFactor, and Intensities
+
+    Args:
+        filepath: Path to the spectrum .txt or .rmn file
+
+    Returns:
+        Dictionary with 'wavenumbers' and 'intensities' as lists
+
+    Raises:
+        FileNotFoundError: If file doesn't exist
+        ValueError: If file format is invalid
+    """
+    path = Path(filepath)
+
+    if not path.exists():
+        raise FileNotFoundError(f"Spectrum file not found: {path}")
+
+    if path.suffix.lower() == ".rmn":
+        return load_rmn_spectrum(str(path))
+
+    return load_text_spectrum(str(path))
+
+
+def load_text_spectrum(filepath: str) -> dict:
+    """
+    Load a single tab-delimited text spectrum file.
+
+    Expected format:
     - Column 1: Wavenumber (cm⁻¹)
     - Column 2: Intensity
 
@@ -69,21 +99,108 @@ def load_spectrum(filepath: str) -> dict:
     }
 
 
+def load_rmn_spectrum(filepath: str) -> dict:
+    """
+    Load a single .rmn spectrum file.
+
+    Expected format: JSON list containing one spectrum object with:
+    - FirstWavenumber: starting wavenumber
+    - ResolutionFactor: spacing between wavenumber points
+    - Intensities: intensity values
+
+    Args:
+        filepath: Path to the spectrum .rmn file
+
+    Returns:
+        Dictionary with 'wavenumbers' and 'intensities' as lists
+
+    Raises:
+        FileNotFoundError: If file doesn't exist
+        ValueError: If file format is invalid
+    """
+    path = Path(filepath)
+
+    if not path.exists():
+        raise FileNotFoundError(f"Spectrum file not found: {path}")
+
+    with open(path, "r") as f:
+        try:
+            data = json.load(f)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Invalid JSON in {path.name}: {e}") from e
+
+    if not isinstance(data, list) or len(data) != 1:
+        raise ValueError(
+            f"Invalid RMN format in {path.name}: expected a list with one spectrum"
+        )
+
+    record = data[0]
+    if not isinstance(record, dict):
+        raise ValueError(f"Invalid RMN format in {path.name}: spectrum is not an object")
+
+    required = ["FirstWavenumber", "ResolutionFactor", "Intensities"]
+    missing = [key for key in required if key not in record]
+    if missing:
+        raise ValueError(
+            f"Invalid RMN format in {path.name}: missing {', '.join(missing)}"
+        )
+
+    try:
+        first_wavenumber = float(record["FirstWavenumber"])
+        resolution = float(record["ResolutionFactor"])
+    except (TypeError, ValueError) as e:
+        raise ValueError(f"Invalid RMN wavenumber metadata in {path.name}: {e}") from e
+
+    intensities_raw = record["Intensities"]
+    if not isinstance(intensities_raw, list) or not intensities_raw:
+        raise ValueError(f"Invalid RMN format in {path.name}: no intensities found")
+
+    try:
+        intensities = [float(value) for value in intensities_raw]
+    except (TypeError, ValueError) as e:
+        raise ValueError(f"Invalid RMN intensity in {path.name}: {e}") from e
+
+    expected_count_raw = record.get("IntensitiesCount")
+    if expected_count_raw is not None:
+        try:
+            expected_count = int(expected_count_raw)
+        except (TypeError, ValueError) as e:
+            raise ValueError(
+                f"Invalid RMN IntensitiesCount in {path.name}: {expected_count_raw}"
+            ) from e
+
+        if expected_count != len(intensities):
+            raise ValueError(
+                f"Invalid RMN format in {path.name}: IntensitiesCount is "
+                f"{expected_count}, got {len(intensities)} intensity values"
+            )
+
+    wavenumbers = [
+        first_wavenumber + i * resolution for i in range(len(intensities))
+    ]
+
+    return {
+        "wavenumbers": wavenumbers,
+        "intensities": intensities,
+        "filename": path.name,
+    }
+
+
 def load_spectra(directory: str) -> list[dict]:
     """
     Load all spectrum files from a directory.
 
-    Scans for all .txt files in the directory and loads them as spectra.
+    Scans for all .txt and .rmn files in the directory and loads them as spectra.
 
     Args:
-        directory: Path to directory containing spectrum .txt files
+        directory: Path to directory containing spectrum .txt or .rmn files
 
     Returns:
         List of spectrum dictionaries, sorted by filename
 
     Raises:
         FileNotFoundError: If directory doesn't exist
-        ValueError: If no .txt files found or files have invalid format
+        ValueError: If no supported files found or files have invalid format
     """
     dir_path = Path(directory)
 
@@ -93,16 +210,22 @@ def load_spectra(directory: str) -> list[dict]:
     if not dir_path.is_dir():
         raise ValueError(f"Not a directory: {dir_path}")
 
-    # Find all .txt files
-    txt_files = sorted(dir_path.glob("*.txt"))
+    # Find all supported single-spectrum files
+    spectrum_files = sorted(
+        [
+            filepath
+            for filepath in dir_path.iterdir()
+            if filepath.is_file() and filepath.suffix.lower() in {".txt", ".rmn"}
+        ]
+    )
 
-    if not txt_files:
-        raise ValueError(f"No .txt files found in {directory}")
+    if not spectrum_files:
+        raise ValueError(f"No .txt or .rmn files found in {directory}")
 
     spectra = []
     errors = []
 
-    for filepath in txt_files:
+    for filepath in spectrum_files:
         try:
             spectrum = load_spectrum(str(filepath))
             spectra.append(spectrum)

@@ -5,7 +5,7 @@ These functions encapsulate common multi-step workflows to simplify experiment s
 """
 
 import os
-from .io import load_spectra, load_multicolumn_spectra
+from .io import load_spectrum, load_spectra, load_multicolumn_spectra
 from .baseline import apply_baseline_correction
 from .averaging import calculate_average
 from .plotting import (
@@ -186,7 +186,10 @@ def load_and_process_sample(
 
     # Load spectra — auto-detect file vs directory
     if os.path.isfile(path):
-        spectra = load_multicolumn_spectra(path)
+        if os.path.splitext(path)[1].lower() == ".rmn":
+            spectra = [load_spectrum(path)]
+        else:
+            spectra = load_multicolumn_spectra(path)
     else:
         spectra = load_spectra(path)
     print(f"✓ Loaded {len(spectra)} spectra")
