@@ -5,7 +5,12 @@ These functions encapsulate common multi-step workflows to simplify experiment s
 """
 
 import os
-from .io import load_spectrum, load_spectra, load_multicolumn_spectra
+from .io import (
+    export_raw_spectra_csv,
+    load_spectrum,
+    load_spectra,
+    load_multicolumn_spectra,
+)
 from .baseline import apply_baseline_correction
 from .averaging import calculate_average
 from .plotting import (
@@ -145,6 +150,7 @@ def load_and_process_sample(
     name: str,
     molecule_conjugates: list[tuple[str, str]],
     output_dir: str,
+    raw_output_dir: str | None = None,
 ) -> dict:
     """
     Load sample spectra, apply ALS baseline correction, average, and plot.
@@ -162,6 +168,8 @@ def load_and_process_sample(
         molecule_conjugates: List of (molecule, conjugate) tuples present in sample
                            (e.g., [("MBA", "EpCAM"), ("DTNB", "HER2"), ("TFMBA", "TROP2")])
         output_dir: Base output directory (will create 'samples/' subdirectory)
+        raw_output_dir: Optional directory where raw replicate spectra should be
+                        exported as one CSV file for this sample
 
     Returns:
         dict: Averaged spectrum data with the following structure:
@@ -193,6 +201,10 @@ def load_and_process_sample(
     else:
         spectra = load_spectra(path)
     print(f"✓ Loaded {len(spectra)} spectra")
+
+    if raw_output_dir:
+        raw_csv_path = export_raw_spectra_csv(spectra, raw_output_dir, name)
+        print(f"✓ Raw data CSV saved: {raw_csv_path}")
 
     # Apply baseline correction to each spectrum
     print("Applying baseline correction...")

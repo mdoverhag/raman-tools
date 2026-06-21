@@ -4,6 +4,7 @@ Input/Output functions for Raman spectroscopy data.
 Handles loading spectrum files from disk and saving plots.
 """
 
+import csv
 import json
 from pathlib import Path
 
@@ -323,6 +324,81 @@ def load_multicolumn_spectra(filepath: str) -> list[dict]:
         })
 
     return spectra
+
+
+def export_raw_spectra_csv(
+    spectra: list[dict], output_dir: str, sample_name: str
+) -> str:
+    """
+    Export raw replicate spectra to one CSV file.
+
+    The CSV has one shared wavenumber column followed by one intensity column
+    per spectrum, named from each spectrum's source filename.
+
+    Args:
+        spectra: List of loaded raw spectrum dictionaries.
+        output_dir: Directory where the CSV should be written.
+        sample_name: Sample name used to build the CSV filename.
+
+    Returns:
+        Path to the written CSV file.
+
+    Raises:
+        ValueError: If spectra are empty or do not share the same wavenumbers.
+    """
+    if not spectra:
+        raise ValueError("Cannot export raw data for empty spectra list")
+
+    reference_wavenumbers = spectra[0]["wavenumbers"]
+    n_points = len(reference_wavenumbers)
+
+    for i, spectrum in enumerate(spectra, start=1):
+        wavenumbers = spectrum["wavenumbers"]
+        intensities = spectrum["intensities"]
+
+        if len(wavenumbers) != n_points:
+            raise ValueError(
+                f"Spectrum {i} has {len(wavenumbers)} wavenumbers, "
+                f"expected {n_points}"
+            )
+
+        if len(intensities) != n_points:
+            raise ValueError(
+                f"Spectrum {i} has {len(intensities)} intensities, "
+                f"expected {n_points}"
+            )
+
+        if wavenumbers != reference_wavenumbers:
+            filename = spectrum.get("filename", f"spectrum_{i:03d}")
+            raise ValueError(
+                f"Cannot export raw data for {sample_name}: "
+                f"{filename} has different wavenumbers"
+            )
+
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    safe_name = sample_name.replace(" ", "_").replace("/", "-")
+    csv_path = output_path / f"{safe_name}.csv"
+
+    header = ["wavenumber"]
+    header.extend(
+        spectrum.get("filename", f"spectrum_{i:03d}")
+        for i, spectrum in enumerate(spectra, start=1)
+    )
+
+    intensity_columns = [spectrum["intensities"] for spectrum in spectra]
+
+    with open(csv_path, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+
+        for row_idx, wavenumber in enumerate(reference_wavenumbers):
+            row = [wavenumber]
+            row.extend(column[row_idx] for column in intensity_columns)
+            writer.writerow(row)
+
+    return str(csv_path)
 
 
 def create_output_dir(name: str, base_dir: str = ".") -> str:

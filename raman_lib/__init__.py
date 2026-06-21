@@ -19,6 +19,7 @@ from .io import (
     load_rmn_spectrum,
     load_spectra,
     load_multicolumn_spectra,
+    export_raw_spectra_csv,
     create_output_dir,
     ensure_output_subdir
 )
@@ -85,6 +86,7 @@ __all__ = [
     "load_rmn_spectrum",
     "load_spectra",
     "load_multicolumn_spectra",
+    "export_raw_spectra_csv",
     "create_output_dir",
     "ensure_output_subdir",
 
